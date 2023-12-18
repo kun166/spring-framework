@@ -73,7 +73,7 @@ created, we will close the issue as superseded by the pull request, and the disc
 about the issue will continue under the pull request.
 
 1. Always check out the `main` branch and submit pull requests against it
-(for target version see [settings.gradle](settings.gradle)).
+(for target version see [settings.gradle](settings.gradle_old)).
 Backports to prior versions will be considered on a case-by-case basis and reflected as
 the fix version in the issue tracker.
 
