@@ -49,6 +49,11 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	@Nullable
 	private PropertyPlaceholderHelper nonStrictHelper;
 
+	/**
+	 * 在方法{@link AbstractPropertyResolver#resolveRequiredPlaceholders(java.lang.String)}
+	 * 中被赋值
+	 * {@link PropertyPlaceholderHelper}
+	 */
 	@Nullable
 	private PropertyPlaceholderHelper strictHelper;
 
@@ -90,6 +95,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	/**
 	 * Set the prefix that placeholders replaced by this resolver must begin with.
 	 * <p>The default is "${".
+	 *
 	 * @see org.springframework.util.SystemPropertyUtils#PLACEHOLDER_PREFIX
 	 */
 	@Override
@@ -101,6 +107,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	/**
 	 * Set the suffix that placeholders replaced by this resolver must end with.
 	 * <p>The default is "}".
+	 *
 	 * @see org.springframework.util.SystemPropertyUtils#PLACEHOLDER_SUFFIX
 	 */
 	@Override
@@ -114,6 +121,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	 * resolver and their associated default value, or {@code null} if no such
 	 * special character should be processed as a value separator.
 	 * <p>The default is ":".
+	 *
 	 * @see org.springframework.util.SystemPropertyUtils#VALUE_SEPARATOR
 	 */
 	@Override
@@ -128,6 +136,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	 * that unresolvable nested placeholders should be passed through in their unresolved
 	 * ${...} form.
 	 * <p>The default is {@code false}.
+	 *
 	 * @since 3.2
 	 */
 	@Override
@@ -140,6 +149,10 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		Collections.addAll(this.requiredProperties, requiredProperties);
 	}
 
+	/**
+	 * {@link AbstractEnvironment#validateRequiredProperties()}
+	 * 中调用
+	 */
 	@Override
 	public void validateRequiredProperties() {
 		MissingRequiredPropertiesException ex = new MissingRequiredPropertiesException();
@@ -202,6 +215,9 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		return doResolvePlaceholders(text, this.nonStrictHelper);
 	}
 
+	/**
+	 * 在{@link AbstractEnvironment#resolveRequiredPlaceholders(java.lang.String)}中被调用
+	 */
 	@Override
 	public String resolveRequiredPlaceholders(String text) throws IllegalArgumentException {
 		if (this.strictHelper == null) {
@@ -219,8 +235,9 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	 * {@link #resolveRequiredPlaceholders} do <i>not</i> delegate
 	 * to this method but rather perform their own handling of unresolvable
 	 * placeholders, as specified by each of those methods.
-	 * @since 3.2
+	 *
 	 * @see #setIgnoreUnresolvableNestedPlaceholders
+	 * @since 3.2
 	 */
 	protected String resolveNestedPlaceholders(String value) {
 		if (value.isEmpty()) {
@@ -230,18 +247,47 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 				resolvePlaceholders(value) : resolveRequiredPlaceholders(value));
 	}
 
+	/**
+	 * 在{@link AbstractPropertyResolver#resolveRequiredPlaceholders(java.lang.String)}中被调用
+	 * 参数传递为false
+	 *
+	 * @param ignoreUnresolvablePlaceholders
+	 * @return {@link PropertyPlaceholderHelper#PropertyPlaceholderHelper(java.lang.String, java.lang.String, java.lang.String, boolean)}
+	 */
 	private PropertyPlaceholderHelper createPlaceholderHelper(boolean ignoreUnresolvablePlaceholders) {
 		return new PropertyPlaceholderHelper(this.placeholderPrefix, this.placeholderSuffix,
 				this.valueSeparator, ignoreUnresolvablePlaceholders);
 	}
 
+	/**
+	 * 在方法{@link AbstractPropertyResolver#resolveRequiredPlaceholders(java.lang.String)}
+	 * 中被调用
+	 *
+	 * @param text   要被替换的字符串
+	 * @param helper {@link PropertyPlaceholderHelper}
+	 * @return
+	 */
 	private String doResolvePlaceholders(String text, PropertyPlaceholderHelper helper) {
+		/**
+		 * 这个地方需要特别说明一下.
+		 * helper的方法{@link PropertyPlaceholderHelper#replacePlaceholders(java.lang.String, org.springframework.util.PropertyPlaceholderHelper.PlaceholderResolver)}
+		 * 需要两个参数，第二个参数是
+		 * {@link PropertyPlaceholderHelper.PlaceholderResolver}
+		 * 而通过如下方法调用,即等价于
+		 */
+//		return helper.replacePlaceholders(text, new PropertyPlaceholderHelper.PlaceholderResolver() {
+//			@Override
+//			public String resolvePlaceholder(String placeholderName) {
+//				return AbstractPropertyResolver.this.getPropertyAsRawString(placeholderName);
+//			}
+//		});
 		return helper.replacePlaceholders(text, this::getPropertyAsRawString);
 	}
 
 	/**
 	 * Convert the given value to the specified target type, if necessary.
-	 * @param value the original property value
+	 *
+	 * @param value      the original property value
 	 * @param targetType the specified target type for property retrieval
 	 * @return the converted value, or the original value if no conversion
 	 * is necessary
@@ -269,6 +315,7 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	/**
 	 * Retrieve the specified property as a raw String,
 	 * i.e. without resolution of nested placeholders.
+	 *
 	 * @param key the property name to resolve
 	 * @return the property value or {@code null} if none found
 	 */

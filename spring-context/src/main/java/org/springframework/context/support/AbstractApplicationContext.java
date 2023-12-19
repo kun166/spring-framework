@@ -277,17 +277,20 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * Statically specified listeners.
+	 * {@link AbstractApplicationContext#prepareRefresh()}有调用
 	 */
 	private final Set<ApplicationListener<?>> applicationListeners = new LinkedHashSet<>();
 
 	/**
 	 * Local listeners registered before refresh.
+	 * {@link AbstractApplicationContext#prepareRefresh()}初始化
 	 */
 	@Nullable
 	private Set<ApplicationListener<?>> earlyApplicationListeners;
 
 	/**
 	 * ApplicationEvents published before the multicaster setup.
+	 * {@link AbstractApplicationContext#prepareRefresh()} 有调用
 	 */
 	@Nullable
 	private Set<ApplicationEvent> earlyApplicationEvents;
@@ -612,12 +615,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return this.applicationListeners;
 	}
 
+	/**
+	 * 这个方法是整个spring的灵魂
+	 *
+	 * @throws BeansException
+	 * @throws IllegalStateException
+	 */
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			StartupStep contextRefresh = this.applicationStartup.start("spring.context.refresh");
 
 			// Prepare this context for refreshing.
+			// ApplicationContext刷新前的准备工作
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
@@ -701,9 +711,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
+		// 这个目前看，暂时没有什么需要校验
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
+		// 如果earlyApplicationListeners为空，给一个默认值
 		if (this.earlyApplicationListeners == null) {
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
 		} else {
@@ -719,6 +731,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * <p>Replace any stub property sources with actual instances.
+	 * 子类可以实现的方法
 	 *
 	 * @see org.springframework.core.env.PropertySource.StubPropertySource
 	 * @see org.springframework.web.context.support.WebApplicationContextUtils#initServletPropertySources
@@ -729,13 +742,20 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * Tell the subclass to refresh the internal bean factory.
+	 * {@link AbstractApplicationContext#refresh()}中调用
 	 *
 	 * @return the fresh BeanFactory instance
 	 * @see #refreshBeanFactory()
 	 * @see #getBeanFactory()
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+		/**
+		 * {@link AbstractRefreshableApplicationContext#refreshBeanFactory()}
+		 */
 		refreshBeanFactory();
+		/**
+		 * {@link AbstractRefreshableApplicationContext#getBeanFactory()}
+		 */
 		return getBeanFactory();
 	}
 
@@ -1177,6 +1197,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>Can be overridden to add context-specific bean destruction steps
 	 * right before or right after standard singleton destruction,
 	 * while the context's BeanFactory is still active.
+	 * <p>
+	 * {@link AbstractRefreshableApplicationContext#refreshBeanFactory()}中调用
+	 * </p>
 	 *
 	 * @see #getBeanFactory()
 	 * @see org.springframework.beans.factory.config.ConfigurableBeanFactory#destroySingletons()
@@ -1438,6 +1461,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Return the internal bean factory of the parent context if it implements
 	 * ConfigurableApplicationContext; else, return the parent context itself.
+	 * <p>
+	 * {@link AbstractRefreshableApplicationContext#createBeanFactory()}中调用
 	 *
 	 * @see org.springframework.context.ConfigurableApplicationContext#getBeanFactory
 	 */

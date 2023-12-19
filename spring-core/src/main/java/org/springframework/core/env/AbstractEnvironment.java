@@ -606,6 +606,12 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 		this.propertyResolver.setRequiredProperties(requiredProperties);
 	}
 
+	/**
+	 * {@link org.springframework.context.support.AbstractApplicationContext#prepareRefresh()}
+	 * 中调用
+	 *
+	 * @throws MissingRequiredPropertiesException
+	 */
 	@Override
 	public void validateRequiredProperties() throws MissingRequiredPropertiesException {
 		this.propertyResolver.validateRequiredProperties();
@@ -658,8 +664,19 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 		return this.propertyResolver.resolvePlaceholders(text);
 	}
 
+	/**
+	 * 在{@link org.springframework.context.support.AbstractRefreshableConfigApplicationContext#resolvePath(java.lang.String)}
+	 * 中被调用
+	 *
+	 * @param text
+	 * @return
+	 * @throws IllegalArgumentException
+	 */
 	@Override
 	public String resolveRequiredPlaceholders(String text) throws IllegalArgumentException {
+		/**
+		 * 调用的是{@link AbstractPropertyResolver#resolveRequiredPlaceholders(java.lang.String)}
+		 */
 		return this.propertyResolver.resolveRequiredPlaceholders(text);
 	}
 

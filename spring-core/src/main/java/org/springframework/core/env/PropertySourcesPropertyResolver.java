@@ -77,6 +77,14 @@ public class PropertySourcesPropertyResolver extends AbstractPropertyResolver {
 		return getProperty(key, targetValueType, true);
 	}
 
+	/**
+	 * 在{@link AbstractPropertyResolver#doResolvePlaceholders(java.lang.String, org.springframework.util.PropertyPlaceholderHelper)}
+	 * 中被调用
+	 * raw未经加工的
+	 *
+	 * @param key the property name to resolve
+	 * @return
+	 */
 	@Override
 	@Nullable
 	protected String getPropertyAsRawString(String key) {
