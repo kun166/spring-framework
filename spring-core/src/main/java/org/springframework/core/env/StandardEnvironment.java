@@ -27,7 +27,7 @@ package org.springframework.core.env;
  * <li>{@linkplain AbstractEnvironment#getSystemProperties() system properties}
  * <li>{@linkplain AbstractEnvironment#getSystemEnvironment() system environment variables}
  * </ul>
- *
+ * <p>
  * That is, if the key "xyz" is present both in the JVM system properties as well as in
  * the set of environment variables for the current process, the value of key "xyz" from
  * system properties will return from a call to {@code environment.getProperty("xyz")}.
@@ -47,17 +47,21 @@ package org.springframework.core.env;
  *
  * @author Chris Beams
  * @author Phillip Webb
- * @since 3.1
  * @see ConfigurableEnvironment
  * @see SystemEnvironmentPropertySource
  * @see org.springframework.web.context.support.StandardServletEnvironment
+ * @since 3.1
  */
 public class StandardEnvironment extends AbstractEnvironment {
 
-	/** System environment property source name: {@value}. */
+	/**
+	 * System environment property source name: {@value}.
+	 */
 	public static final String SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME = "systemEnvironment";
 
-	/** JVM system properties property source name: {@value}. */
+	/**
+	 * JVM system properties property source name: {@value}.
+	 */
 	public static final String SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME = "systemProperties";
 
 
@@ -71,6 +75,7 @@ public class StandardEnvironment extends AbstractEnvironment {
 	/**
 	 * Create a new {@code StandardEnvironment} instance with a specific
 	 * {@link MutablePropertySources} instance.
+	 *
 	 * @param propertySources property sources to use
 	 * @since 5.3.4
 	 */
@@ -88,6 +93,10 @@ public class StandardEnvironment extends AbstractEnvironment {
 	 * </ul>
 	 * <p>Properties present in {@value #SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME} will
 	 * take precedence over those in {@value #SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME}.
+	 * <p>
+	 * 在{@link AbstractEnvironment#AbstractEnvironment(org.springframework.core.env.MutablePropertySources)}中被调用
+	 * </p>
+	 *
 	 * @see AbstractEnvironment#customizePropertySources(MutablePropertySources)
 	 * @see #getSystemProperties()
 	 * @see #getSystemEnvironment()
