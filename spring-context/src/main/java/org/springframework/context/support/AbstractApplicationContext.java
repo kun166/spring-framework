@@ -333,6 +333,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		this.id = id;
 	}
 
+	/**
+	 * {@link AbstractRefreshableApplicationContext#refreshBeanFactory()}中调用
+	 *
+	 * @return
+	 */
 	@Override
 	public String getId() {
 		return this.id;

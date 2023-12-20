@@ -131,9 +131,13 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 			closeBeanFactory();
 		}
 		try {
+			// 1,创建DefaultListableBeanFactory
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
+			// 2,设置serializationId
 			beanFactory.setSerializationId(getId());
+			// 3,设置bean定义被覆盖,循环依赖
 			customizeBeanFactory(beanFactory);
+			// 4,加载beanFactory
 			loadBeanDefinitions(beanFactory);
 			this.beanFactory = beanFactory;
 		} catch (IOException ex) {
@@ -225,6 +229,10 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 * and {@linkplain #setAllowCircularReferences "allowCircularReferences"} settings,
 	 * if specified. Can be overridden in subclasses to customize any of
 	 * {@link DefaultListableBeanFactory}'s settings.
+	 * <p>
+	 * 在{@link AbstractRefreshableApplicationContext#refreshBeanFactory()}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param beanFactory the newly created bean factory for this context
 	 * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding
@@ -234,9 +242,11 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 */
 	protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
 		if (this.allowBeanDefinitionOverriding != null) {
+			// 覆盖
 			beanFactory.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
 		}
 		if (this.allowCircularReferences != null) {
+			// 循环依赖
 			beanFactory.setAllowCircularReferences(this.allowCircularReferences);
 		}
 	}
@@ -244,6 +254,10 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	/**
 	 * Load bean definitions into the given bean factory, typically through
 	 * delegating to one or more bean definition readers.
+	 * <p>
+	 * {@link AbstractRefreshableApplicationContext#refreshBeanFactory()}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param beanFactory the bean factory to load bean definitions into
 	 * @throws BeansException if parsing of the bean definitions failed
