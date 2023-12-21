@@ -57,6 +57,9 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 
 	/**
 	 * Create a new AbstractXmlApplicationContext with the given parent context.
+	 * {@link FileSystemXmlApplicationContext#FileSystemXmlApplicationContext(java.lang.String[], boolean, org.springframework.context.ApplicationContext)}
+	 * 中调用
+	 * 传参为null
 	 *
 	 * @param parent the parent context
 	 */

@@ -201,8 +201,18 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 
 
 	/**
+	 * 两个地方用到了，分别生成了两个对象。
+	 * 注意下面两个赋值互补影响。
+	 * <p>
+	 * 在{@link org.springframework.context.support.AbstractXmlApplicationContext#loadBeanDefinitions(org.springframework.beans.factory.support.DefaultListableBeanFactory)}
 	 * 在{@link PathMatchingResourcePatternResolver#PathMatchingResourcePatternResolver()}构造函数中赋值
 	 * 赋值为{@link DefaultResourceLoader#DefaultResourceLoader()}
+	 * <p>
+	 * 这个赋值是在{@link org.springframework.context.support.AbstractApplicationContext#AbstractApplicationContext()}
+	 * 初始化的时候
+	 * 在{@link org.springframework.context.support.AbstractApplicationContext#getResourcePatternResolver()}
+	 * 中被调用
+	 * 传参为{@link org.springframework.context.support.AbstractApplicationContext}
 	 */
 	private final ResourceLoader resourceLoader;
 
@@ -212,6 +222,8 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Create a new PathMatchingResourcePatternResolver with a DefaultResourceLoader.
 	 * <p>ClassLoader access will happen via the thread context class loader.
+	 * 在{@link org.springframework.beans.factory.support.AbstractBeanDefinitionReader#AbstractBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
+	 * 中被调用
 	 *
 	 * @see org.springframework.core.io.DefaultResourceLoader
 	 */
@@ -222,6 +234,9 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Create a new PathMatchingResourcePatternResolver.
 	 * <p>ClassLoader access will happen via the thread context class loader.
+	 * 在{@link org.springframework.context.support.AbstractApplicationContext#getResourcePatternResolver()}
+	 * 中被调用
+	 * 传参为{@link org.springframework.context.support.AbstractApplicationContext}
 	 *
 	 * @param resourceLoader the ResourceLoader to load root directories and
 	 *                       actual resources with
@@ -281,12 +296,30 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 		return getResourceLoader().getResource(location);
 	}
 
+	/**
+	 * 在{@link org.springframework.context.support.AbstractApplicationContext#getResources(java.lang.String)}
+	 * 中被调用
+	 * <p>
+	 * 在{@link PathMatchingResourcePatternResolver#findPathMatchingResources(java.lang.String)}中被调用
+	 *
+	 * @param locationPattern the location pattern to resolve
+	 * @return
+	 * @throws IOException
+	 */
 	@Override
 	public Resource[] getResources(String locationPattern) throws IOException {
 		Assert.notNull(locationPattern, "Location pattern must not be null");
 		if (locationPattern.startsWith(CLASSPATH_ALL_URL_PREFIX)) {
+			/**
+			 *"classpath*:"
+			 * {@link org.springframework.context.support.ClassPathXmlApplicationContext}
+			 */
 			// a class path resource (multiple resources for same name possible)
 			if (getPathMatcher().isPattern(locationPattern.substring(CLASSPATH_ALL_URL_PREFIX.length()))) {
+				/**
+				 * {@link AntPathMatcher#isPattern(java.lang.String)}
+				 * 判断是否有匹配符*?或者是占位符{}
+				 */
 				// a class path resource pattern
 				return findPathMatchingResources(locationPattern);
 			} else {
@@ -303,6 +336,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 				return findPathMatchingResources(locationPattern);
 			} else {
 				// a single resource with the given name
+				// 没有占位符的那部分路径
 				return new Resource[]{getResourceLoader().getResource(locationPattern)};
 			}
 		}
@@ -489,6 +523,9 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * Find all resources that match the given location pattern via the
 	 * Ant-style PathMatcher. Supports resources in jar files and zip files
 	 * and in the file system.
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#getResources(java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param locationPattern the location pattern to match
 	 * @return the result as Resource array
@@ -498,7 +535,9 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * @see org.springframework.util.PathMatcher
 	 */
 	protected Resource[] findPathMatchingResources(String locationPattern) throws IOException {
+		// 从前向后找，寻找没有占位符的最大路径
 		String rootDirPath = determineRootDir(locationPattern);
+		// 剩余部分的字符串
 		String subPattern = locationPattern.substring(rootDirPath.length());
 		Resource[] rootDirResources = getResources(rootDirPath);
 		Set<Resource> result = new LinkedHashSet<>(16);
@@ -534,15 +573,20 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * remainder of the location as pattern.
 	 * <p>Will return "/WEB-INF/" for the pattern "/WEB-INF/*.xml",
 	 * for example.
+	 * 从前向后找，寻找没有占位符的最大路径
+	 * {@link PathMatchingResourcePatternResolver#findPathMatchingResources(java.lang.String)}中调用
 	 *
 	 * @param location the location to check
 	 * @return the part of the location that denotes the root directory
 	 * @see #retrieveMatchingFiles
 	 */
 	protected String determineRootDir(String location) {
+		// 寻找:之后的那个位置,如果字符串中不含:,则返回0,包含则返回:之后的位置
 		int prefixEnd = location.indexOf(':') + 1;
+		// location长度
 		int rootDirEnd = location.length();
 		while (rootDirEnd > prefixEnd && getPathMatcher().isPattern(location.substring(prefixEnd, rootDirEnd))) {
+			// 这个循环是寻找不含占位符的最开始的那段路径
 			rootDirEnd = location.lastIndexOf('/', rootDirEnd - 2) + 1;
 		}
 		if (rootDirEnd == 0) {

@@ -39,6 +39,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.AbstractBeanDefinitionReader;
 import org.springframework.beans.support.ResourceEditorRegistrar;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -307,6 +308,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * Create a new AbstractApplicationContext with the given parent context.
+	 * {@link AbstractRefreshableApplicationContext#AbstractRefreshableApplicationContext(org.springframework.context.ApplicationContext)}
+	 * 调用
 	 *
 	 * @param parent the parent context
 	 */
@@ -1526,8 +1529,18 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	// Implementation of ResourcePatternResolver interface
 	//---------------------------------------------------------------------
 
+	/**
+	 * 在{@link AbstractBeanDefinitionReader#loadBeanDefinitions(java.lang.String, java.util.Set)}中被调用
+	 *
+	 * @param locationPattern the location pattern to resolve
+	 * @return
+	 * @throws IOException
+	 */
 	@Override
 	public Resource[] getResources(String locationPattern) throws IOException {
+		/**
+		 * {@link PathMatchingResourcePatternResolver#getResources(java.lang.String)}
+		 */
 		return this.resourcePatternResolver.getResources(locationPattern);
 	}
 

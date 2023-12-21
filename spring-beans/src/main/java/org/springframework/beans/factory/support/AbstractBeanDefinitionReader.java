@@ -100,6 +100,7 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	 * <p>
 	 * 在{@link XmlBeanDefinitionReader#XmlBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
 	 * 中被调用
+	 * 此时传参为{@link DefaultListableBeanFactory}
 	 * </p>
 	 *
 	 * @param registry the BeanFactory to load bean definitions into,
@@ -113,6 +114,10 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 
 		// Determine ResourceLoader to use.
 		if (this.registry instanceof ResourceLoader) {
+			/**
+			 * {@link DefaultListableBeanFactory}没有实现{@link ResourceLoader}
+			 * 因此，走下面的分支
+			 */
 			this.resourceLoader = (ResourceLoader) this.registry;
 		} else {
 			this.resourceLoader = new PathMatchingResourcePatternResolver();
@@ -248,6 +253,10 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	 * Load bean definitions from the specified resource location.
 	 * <p>The location can also be a location pattern, provided that the
 	 * ResourceLoader of this bean definition reader is a ResourcePatternResolver.
+	 * <p>
+	 * 在{@link AbstractBeanDefinitionReader#loadBeanDefinitions(java.lang.String)}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param location        the resource location, to be loaded with the ResourceLoader
 	 *                        (or ResourcePatternResolver) of this bean definition reader
@@ -261,6 +270,10 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	 * @see #loadBeanDefinitions(org.springframework.core.io.Resource[])
 	 */
 	public int loadBeanDefinitions(String location, @Nullable Set<Resource> actualResources) throws BeanDefinitionStoreException {
+		/**
+		 * 在{@link org.springframework.context.support.AbstractXmlApplicationContext#loadBeanDefinitions(org.springframework.beans.factory.support.DefaultListableBeanFactory)}
+		 * 中被覆盖，其实传入的就是最外层的{@link org.springframework.context.support.FileSystemXmlApplicationContext}
+		 */
 		ResourceLoader resourceLoader = getResourceLoader();
 		if (resourceLoader == null) {
 			throw new BeanDefinitionStoreException(
@@ -268,8 +281,12 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 		}
 
 		if (resourceLoader instanceof ResourcePatternResolver) {
+			// 走下面的逻辑
 			// Resource pattern matching available.
 			try {
+				/**
+				 * {@link org.springframework.context.support.AbstractApplicationContext#getResources(java.lang.String)}
+				 */
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
 				int count = loadBeanDefinitions(resources);
 				if (actualResources != null) {

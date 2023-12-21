@@ -85,6 +85,8 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 
 	/**
 	 * Create a new AbstractRefreshableApplicationContext with the given parent context.
+	 * {@link AbstractRefreshableConfigApplicationContext#AbstractRefreshableConfigApplicationContext(org.springframework.context.ApplicationContext)}
+	 * 调用
 	 *
 	 * @param parent the parent context
 	 */
