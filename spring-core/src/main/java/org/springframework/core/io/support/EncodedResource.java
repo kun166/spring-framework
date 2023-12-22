@@ -37,10 +37,10 @@ import org.springframework.util.ObjectUtils;
  *
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 1.2.6
  * @see Resource#getInputStream()
  * @see java.io.Reader
  * @see java.nio.charset.Charset
+ * @since 1.2.6
  */
 public class EncodedResource implements InputStreamSource {
 
@@ -56,6 +56,10 @@ public class EncodedResource implements InputStreamSource {
 	/**
 	 * Create a new {@code EncodedResource} for the given {@code Resource},
 	 * not specifying an explicit encoding or {@code Charset}.
+	 * <p>
+	 * {@link org.springframework.beans.factory.xml.XmlBeanDefinitionReader#loadBeanDefinitions(org.springframework.core.io.Resource)}中调用
+	 * </p>
+	 *
 	 * @param resource the {@code Resource} to hold (never {@code null})
 	 */
 	public EncodedResource(Resource resource) {
@@ -65,6 +69,7 @@ public class EncodedResource implements InputStreamSource {
 	/**
 	 * Create a new {@code EncodedResource} for the given {@code Resource},
 	 * using the specified {@code encoding}.
+	 *
 	 * @param resource the {@code Resource} to hold (never {@code null})
 	 * @param encoding the encoding to use for reading from the resource
 	 */
@@ -75,8 +80,9 @@ public class EncodedResource implements InputStreamSource {
 	/**
 	 * Create a new {@code EncodedResource} for the given {@code Resource},
 	 * using the specified {@code Charset}.
+	 *
 	 * @param resource the {@code Resource} to hold (never {@code null})
-	 * @param charset the {@code Charset} to use for reading from the resource
+	 * @param charset  the {@code Charset} to use for reading from the resource
 	 */
 	public EncodedResource(Resource resource, @Nullable Charset charset) {
 		this(resource, null, charset);
@@ -120,6 +126,7 @@ public class EncodedResource implements InputStreamSource {
 	 * Determine whether a {@link Reader} is required as opposed to an {@link InputStream},
 	 * i.e. whether an {@linkplain #getEncoding() encoding} or a {@link #getCharset() Charset}
 	 * has been specified.
+	 *
 	 * @see #getReader()
 	 * @see #getInputStream()
 	 */
@@ -131,6 +138,7 @@ public class EncodedResource implements InputStreamSource {
 	 * Open a {@code java.io.Reader} for the specified resource, using the specified
 	 * {@link #getCharset() Charset} or {@linkplain #getEncoding() encoding}
 	 * (if any).
+	 *
 	 * @throws IOException if opening the Reader failed
 	 * @see #requiresReader()
 	 * @see #getInputStream()
@@ -138,11 +146,9 @@ public class EncodedResource implements InputStreamSource {
 	public Reader getReader() throws IOException {
 		if (this.charset != null) {
 			return new InputStreamReader(this.resource.getInputStream(), this.charset);
-		}
-		else if (this.encoding != null) {
+		} else if (this.encoding != null) {
 			return new InputStreamReader(this.resource.getInputStream(), this.encoding);
-		}
-		else {
+		} else {
 			return new InputStreamReader(this.resource.getInputStream());
 		}
 	}
@@ -150,6 +156,7 @@ public class EncodedResource implements InputStreamSource {
 	/**
 	 * Open an {@code InputStream} for the specified resource, ignoring any specified
 	 * {@link #getCharset() Charset} or {@linkplain #getEncoding() encoding}.
+	 *
 	 * @throws IOException if opening the InputStream failed
 	 * @see #requiresReader()
 	 * @see #getReader()

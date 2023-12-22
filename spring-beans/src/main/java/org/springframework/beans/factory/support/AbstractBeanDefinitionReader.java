@@ -225,11 +225,21 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	}
 
 
+	/**
+	 * {@link AbstractBeanDefinitionReader#loadBeanDefinitions(java.lang.String, java.util.Set)}中被调用
+	 *
+	 * @param resources the resource descriptors
+	 * @return
+	 * @throws BeanDefinitionStoreException
+	 */
 	@Override
 	public int loadBeanDefinitions(Resource... resources) throws BeanDefinitionStoreException {
 		Assert.notNull(resources, "Resource array must not be null");
 		int count = 0;
 		for (Resource resource : resources) {
+			/**
+			 * 调用的{@link XmlBeanDefinitionReader#loadBeanDefinitions(org.springframework.core.io.Resource)}
+			 */
 			count += loadBeanDefinitions(resource);
 		}
 		return count;

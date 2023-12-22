@@ -336,7 +336,12 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 				return findPathMatchingResources(locationPattern);
 			} else {
 				// a single resource with the given name
-				// 没有占位符的那部分路径
+				/**
+				 * 没有占位符的那部分路径
+				 * 在{@link org.springframework.context.support.AbstractXmlApplicationContext#loadBeanDefinitions(org.springframework.beans.factory.support.DefaultListableBeanFactory)}
+				 * 在{@link PathMatchingResourcePatternResolver#PathMatchingResourcePatternResolver()}构造函数中赋值
+				 * 赋值为{@link DefaultResourceLoader#DefaultResourceLoader()}
+				 */
 				return new Resource[]{getResourceLoader().getResource(locationPattern)};
 			}
 		}
@@ -345,6 +350,10 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Find all class location resources with the given location via the ClassLoader.
 	 * Delegates to {@link #doFindAllClassPathResources(String)}.
+	 *
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#getResources(java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param location the absolute path within the classpath
 	 * @return the result as Resource array
@@ -367,6 +376,11 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Find all class location resources with the given path via the ClassLoader.
 	 * Called by {@link #findAllClassPathResources(String)}.
+	 * 这个方法很重要啊
+	 * 学学人家怎么获取classPath下面的资源
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#findAllClassPathResources(java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param path the absolute path within the classpath (never a leading slash)
 	 * @return a mutable Set of matching Resource instances
@@ -381,6 +395,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 			result.add(convertClassLoaderURL(url));
 		}
 		if (!StringUtils.hasLength(path)) {
+
 			// The above result is likely to be incomplete, i.e. only containing file system references.
 			// We need to have pointers to each of the jar files on the classpath as well...
 			addAllClassLoaderJarRoots(cl, result);
@@ -391,6 +406,9 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Convert the given URL as returned from the ClassLoader into a {@link Resource}.
 	 * <p>The default implementation simply creates a {@link UrlResource} instance.
+	 * <p>
+	 * 在{@link PathMatchingResourcePatternResolver#doFindAllClassPathResources(java.lang.String)}调用
+	 * </p>
 	 *
 	 * @param url a URL as returned from the ClassLoader
 	 * @return the corresponding Resource object
@@ -554,6 +572,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 			if (rootDirUrl.getProtocol().startsWith(ResourceUtils.URL_PROTOCOL_VFS)) {
 				result.addAll(VfsResourceMatchingDelegate.findMatchingResources(rootDirUrl, subPattern, getPathMatcher()));
 			} else if (ResourceUtils.isJarURL(rootDirUrl) || isJarResource(rootDirResource)) {
+				// jar包里的文件
 				result.addAll(doFindPathMatchingJarResources(rootDirResource, rootDirUrl, subPattern));
 			} else {
 				result.addAll(doFindPathMatchingFileResources(rootDirResource, subPattern));
@@ -601,6 +620,9 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	 * resolved into a standard jar file URL that be traversed using Spring's
 	 * standard jar file traversal algorithm. For any preceding custom resolution,
 	 * override this method and replace the resource handle accordingly.
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#findPathMatchingResources(java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param original the resource to resolve
 	 * @return the resolved resource (may be identical to the passed-in resource)
@@ -630,6 +652,10 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Find all resources in jar files that match the given location pattern
 	 * via the Ant-style PathMatcher.
+	 * 寻找jar包下的文件
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#findPathMatchingResources(java.lang.String)}
+	 * </p>
 	 *
 	 * @param rootDirResource the root directory as Resource
 	 * @param rootDirURL      the pre-resolved root directory URL

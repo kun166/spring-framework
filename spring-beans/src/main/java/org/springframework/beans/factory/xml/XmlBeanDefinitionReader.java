@@ -116,6 +116,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	private boolean namespaceAware = false;
 
+	/**
+	 * {@link DefaultBeanDefinitionDocumentReader}
+	 */
 	private Class<? extends BeanDefinitionDocumentReader> documentReaderClass =
 			DefaultBeanDefinitionDocumentReader.class;
 
@@ -333,6 +336,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	/**
 	 * Load bean definitions from the specified XML file.
+	 * <p>
+	 * {@link AbstractBeanDefinitionReader#loadBeanDefinitions(org.springframework.core.io.Resource...)}中被调用
+	 * </p>
 	 *
 	 * @param resource the resource descriptor for the XML file
 	 * @return the number of bean definitions found
@@ -345,6 +351,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	/**
 	 * Load bean definitions from the specified XML file.
+	 * <p>
+	 * {@link XmlBeanDefinitionReader#loadBeanDefinitions(org.springframework.core.io.Resource)}中调用
+	 * </p>
 	 *
 	 * @param encodedResource the resource descriptor for the XML file,
 	 *                        allowing to specify an encoding to use for parsing the file
@@ -411,6 +420,10 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	/**
 	 * Actually load bean definitions from the specified XML file.
 	 *
+	 * <p>
+	 * 在{@link XmlBeanDefinitionReader#loadBeanDefinitions(org.springframework.core.io.support.EncodedResource)}处调用
+	 * </p>
+	 *
 	 * @param inputSource the SAX InputSource to read from
 	 * @param resource    the resource descriptor for the XML file
 	 * @return the number of bean definitions found
@@ -450,6 +463,10 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	/**
 	 * Actually load the specified document using the configured DocumentLoader.
+	 * <p>
+	 * {@link XmlBeanDefinitionReader#doLoadBeanDefinitions(org.xml.sax.InputSource, org.springframework.core.io.Resource)}
+	 * 处调用
+	 * </p>
 	 *
 	 * @param inputSource the SAX InputSource to read from
 	 * @param resource    the resource descriptor for the XML file
@@ -459,6 +476,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see DocumentLoader#loadDocument
 	 */
 	protected Document doLoadDocument(InputSource inputSource, Resource resource) throws Exception {
+		/**
+		 * {@link DefaultDocumentLoader#loadDocument(org.xml.sax.InputSource, org.xml.sax.EntityResolver, org.xml.sax.ErrorHandler, int, boolean)}
+		 */
 		return this.documentLoader.loadDocument(inputSource, getEntityResolver(), this.errorHandler,
 				getValidationModeForResource(resource), isNamespaceAware());
 	}
@@ -526,6 +546,10 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * Called by {@code loadBeanDefinitions}.
 	 * <p>Creates a new instance of the parser class and invokes
 	 * {@code registerBeanDefinitions} on it.
+	 * <p>
+	 * {@link XmlBeanDefinitionReader#doLoadBeanDefinitions(org.xml.sax.InputSource, org.springframework.core.io.Resource)}
+	 * 处调用
+	 * </p>
 	 *
 	 * @param doc      the DOM document
 	 * @param resource the resource descriptor (for context information)
@@ -536,8 +560,14 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see BeanDefinitionDocumentReader#registerBeanDefinitions
 	 */
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
+		/**
+		 * {@link DefaultBeanDefinitionDocumentReader}
+		 */
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
 		int countBefore = getRegistry().getBeanDefinitionCount();
+		/**
+		 * {@link DefaultBeanDefinitionDocumentReader#registerBeanDefinitions(org.w3c.dom.Document, org.springframework.beans.factory.xml.XmlReaderContext)}
+		 */
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
@@ -546,6 +576,11 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * Create the {@link BeanDefinitionDocumentReader} to use for actually
 	 * reading bean definitions from an XML document.
 	 * <p>The default implementation instantiates the specified "documentReaderClass".
+	 * <p>
+	 * {@link XmlBeanDefinitionReader#registerBeanDefinitions(org.w3c.dom.Document, org.springframework.core.io.Resource)}
+	 * 处调用
+	 * 返回{@link DefaultBeanDefinitionDocumentReader}
+	 * </p>
 	 *
 	 * @see #setDocumentReaderClass
 	 */
@@ -555,6 +590,10 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	/**
 	 * Create the {@link XmlReaderContext} to pass over to the document reader.
+	 * <p>
+	 * {@link XmlBeanDefinitionReader#registerBeanDefinitions(org.w3c.dom.Document, org.springframework.core.io.Resource)}
+	 * 处调用
+	 * </p>
 	 */
 	public XmlReaderContext createReaderContext(Resource resource) {
 		return new XmlReaderContext(resource, this.problemReporter, this.eventListener,

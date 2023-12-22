@@ -16,6 +16,8 @@
 
 package org.springframework.beans.factory.parsing;
 
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
+import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.springframework.core.io.Resource;
 import org.springframework.lang.Nullable;
 
@@ -31,26 +33,55 @@ public class ReaderContext {
 
 	private final Resource resource;
 
+	/**
+	 * {@link ReaderContext#ReaderContext(org.springframework.core.io.Resource, org.springframework.beans.factory.parsing.ProblemReporter, org.springframework.beans.factory.parsing.ReaderEventListener, org.springframework.beans.factory.parsing.SourceExtractor)}
+	 * 处被调用
+	 * {@link XmlBeanDefinitionReader#problemReporter}
+	 */
 	private final ProblemReporter problemReporter;
 
+	/**
+	 * {@link ReaderContext#ReaderContext(org.springframework.core.io.Resource, org.springframework.beans.factory.parsing.ProblemReporter, org.springframework.beans.factory.parsing.ReaderEventListener, org.springframework.beans.factory.parsing.SourceExtractor)}
+	 * 处被调用
+	 * {@link XmlBeanDefinitionReader#eventListener}
+	 */
 	private final ReaderEventListener eventListener;
 
+	/**
+	 * {@link ReaderContext#ReaderContext(org.springframework.core.io.Resource, org.springframework.beans.factory.parsing.ProblemReporter, org.springframework.beans.factory.parsing.ReaderEventListener, org.springframework.beans.factory.parsing.SourceExtractor)}
+	 * 处被调用
+	 * {@link XmlBeanDefinitionReader#sourceExtractor}
+	 */
 	private final SourceExtractor sourceExtractor;
 
 
 	/**
 	 * Construct a new {@code ReaderContext}.
-	 * @param resource the XML bean definition resource
+	 * <p>
+	 * {@link XmlReaderContext#XmlReaderContext(org.springframework.core.io.Resource, org.springframework.beans.factory.parsing.ProblemReporter, org.springframework.beans.factory.parsing.ReaderEventListener, org.springframework.beans.factory.parsing.SourceExtractor, org.springframework.beans.factory.xml.XmlBeanDefinitionReader, org.springframework.beans.factory.xml.NamespaceHandlerResolver)}
+	 * 处被调用
+	 * </p>
+	 *
+	 * @param resource        the XML bean definition resource
 	 * @param problemReporter the problem reporter in use
-	 * @param eventListener the event listener in use
+	 * @param eventListener   the event listener in use
 	 * @param sourceExtractor the source extractor in use
 	 */
 	public ReaderContext(Resource resource, ProblemReporter problemReporter,
-			ReaderEventListener eventListener, SourceExtractor sourceExtractor) {
+						 ReaderEventListener eventListener, SourceExtractor sourceExtractor) {
 
 		this.resource = resource;
+		/**
+		 * {@link XmlBeanDefinitionReader#problemReporter}
+		 */
 		this.problemReporter = problemReporter;
+		/**
+		 * {@link XmlBeanDefinitionReader#eventListener}
+		 */
 		this.eventListener = eventListener;
+		/**
+		 * {@link XmlBeanDefinitionReader#sourceExtractor}
+		 */
 		this.sourceExtractor = sourceExtractor;
 	}
 
@@ -198,6 +229,7 @@ public class ReaderContext {
 
 	/**
 	 * Call the source extractor for the given source object.
+	 *
 	 * @param sourceCandidate the original source object
 	 * @return the source object to store, or {@code null} for none.
 	 * @see #getSourceExtractor()
