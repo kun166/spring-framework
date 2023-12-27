@@ -18,6 +18,7 @@ package org.springframework.beans.factory.parsing;
 
 import java.util.ArrayDeque;
 
+import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.lang.Nullable;
 
 /**
@@ -58,6 +59,8 @@ public final class ParseState {
 
 	/**
 	 * Add a new {@link Entry} to the {@link ArrayDeque}.
+	 * {@link BeanDefinitionParserDelegate#parseBeanDefinitionElement(org.w3c.dom.Element, java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中调用
 	 */
 	public void push(Entry entry) {
 		this.state.push(entry);

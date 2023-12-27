@@ -16,6 +16,8 @@
 
 package org.springframework.beans.factory.parsing;
 
+import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
+
 /**
  * {@link ParseState} entry representing a bean definition.
  *
@@ -29,6 +31,9 @@ public class BeanEntry implements ParseState.Entry {
 
 	/**
 	 * Create a new {@code BeanEntry} instance.
+	 * {@link BeanDefinitionParserDelegate#parseBeanDefinitionElement(org.w3c.dom.Element, java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中调用
+	 *
 	 * @param beanDefinitionName the name of the associated bean definition
 	 */
 	public BeanEntry(String beanDefinitionName) {

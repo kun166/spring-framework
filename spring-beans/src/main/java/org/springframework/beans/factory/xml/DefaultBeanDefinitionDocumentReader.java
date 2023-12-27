@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.core.env.StandardEnvironment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -80,6 +81,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * {@link DefaultBeanDefinitionDocumentReader#registerBeanDefinitions(org.w3c.dom.Document, org.springframework.beans.factory.xml.XmlReaderContext)}
 	 * 处调用
+	 * {@link XmlBeanDefinitionReader#createReaderContext(org.springframework.core.io.Resource)}
 	 */
 	@Nullable
 	private XmlReaderContext readerContext;
@@ -96,6 +98,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * <p>
 	 * {@link XmlBeanDefinitionReader#registerBeanDefinitions(org.w3c.dom.Document, org.springframework.core.io.Resource)}
 	 * 处调用
+	 * {@link XmlBeanDefinitionReader#createReaderContext(org.springframework.core.io.Resource)}
 	 * </p>
 	 */
 	@Override
@@ -141,7 +144,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		BeanDefinitionParserDelegate parent = this.delegate;
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
+		/**
+		 * {@link BeanDefinitionParserDelegate#BEANS_NAMESPACE_URI}
+		 */
 		if (this.delegate.isDefaultNamespace(root)) {
+			// profile https://blog.csdn.net/wjw465150/article/details/129468327
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -157,9 +164,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				}
 			}
 		}
-
+		// 预留接口
 		preProcessXml(root);
 		parseBeanDefinitions(root, this.delegate);
+		// 预留接口
 		postProcessXml(root);
 
 		this.delegate = parent;
@@ -169,7 +177,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * {@link DefaultBeanDefinitionDocumentReader#doRegisterBeanDefinitions(org.w3c.dom.Element)}
 	 * 处调用
 	 *
-	 * @param readerContext
+	 * @param readerContext  {@link XmlBeanDefinitionReader#createReaderContext(org.springframework.core.io.Resource)}
 	 * @param root
 	 * @param parentDelegate
 	 * @return
@@ -185,11 +193,15 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Parse the elements at the root level in the document:
 	 * "import", "alias", "bean".
+	 * <p>
+	 * 在{@link DefaultBeanDefinitionDocumentReader#doRegisterBeanDefinitions(org.w3c.dom.Element)}中调用
+	 * </p>
 	 *
 	 * @param root the DOM root element of the document
 	 */
 	protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
 		if (delegate.isDefaultNamespace(root)) {
+			// 要么namespace是空，要么是http://www.springframework.org/schema/beans
 			NodeList nl = root.getChildNodes();
 			for (int i = 0; i < nl.getLength(); i++) {
 				Node node = nl.item(i);
@@ -207,15 +219,27 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 	}
 
+	/**
+	 * 要么namespace是空，要么是http://www.springframework.org/schema/beans
+	 * {@link DefaultBeanDefinitionDocumentReader#parseBeanDefinitions(org.w3c.dom.Element, org.springframework.beans.factory.xml.BeanDefinitionParserDelegate)}
+	 * 中调用
+	 *
+	 * @param ele
+	 * @param delegate
+	 */
 	private void parseDefaultElement(Element ele, BeanDefinitionParserDelegate delegate) {
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
+			// import
 			importBeanDefinitionResource(ele);
 		} else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
+			// alias
 			processAliasRegistration(ele);
 		} else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
+			// bean
 			processBeanDefinition(ele, delegate);
 		} else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
 			// recurse
+			// beans
 			doRegisterBeanDefinitions(ele);
 		}
 	}
@@ -223,8 +247,14 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Parse an "import" element and load the bean definitions
 	 * from the given resource into the bean factory.
+	 * <p>
+	 * {@link DefaultBeanDefinitionDocumentReader#parseDefaultElement(org.w3c.dom.Element, org.springframework.beans.factory.xml.BeanDefinitionParserDelegate)}
+	 * 中调用
+	 * </p>
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
+		// resource
+		// <import resource="spring-common.xml"/>
 		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
 		if (!StringUtils.hasText(location)) {
 			getReaderContext().error("Resource location must not be empty", ele);
@@ -232,6 +262,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 
 		// Resolve system properties: e.g. "${user.dir}"
+		/**
+		 * {@link StandardEnvironment#StandardEnvironment()}
+		 */
 		location = getReaderContext().getEnvironment().resolveRequiredPlaceholders(location);
 
 		Set<Resource> actualResources = new LinkedHashSet<>(4);
@@ -285,9 +318,15 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 	/**
 	 * Process the given alias element, registering the alias with the registry.
+	 * <p>
+	 * {@link DefaultBeanDefinitionDocumentReader#parseDefaultElement(org.w3c.dom.Element, org.springframework.beans.factory.xml.BeanDefinitionParserDelegate)}
+	 * 中调用
+	 * </p>
 	 */
 	protected void processAliasRegistration(Element ele) {
+		// name
 		String name = ele.getAttribute(NAME_ATTRIBUTE);
+		// alias
 		String alias = ele.getAttribute(ALIAS_ATTRIBUTE);
 		boolean valid = true;
 		if (!StringUtils.hasText(name)) {
@@ -312,6 +351,12 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
+	 * <p>
+	 * {@link DefaultBeanDefinitionDocumentReader#parseDefaultElement(org.w3c.dom.Element, org.springframework.beans.factory.xml.BeanDefinitionParserDelegate)}
+	 * 中调用
+	 * delegate传参为
+	 * {@link DefaultBeanDefinitionDocumentReader#createDelegate(org.springframework.beans.factory.xml.XmlReaderContext, org.w3c.dom.Element, org.springframework.beans.factory.xml.BeanDefinitionParserDelegate)}
+	 * </p>
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
@@ -339,6 +384,10 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Implementors have access to the parser's bean definition reader and the
 	 * underlying XML resource, through the corresponding accessors.
 	 *
+	 * <p>
+	 * 在{@link DefaultBeanDefinitionDocumentReader#doRegisterBeanDefinitions(org.w3c.dom.Element)}被调用
+	 * </p>
+	 *
 	 * @see #getReaderContext()
 	 */
 	protected void preProcessXml(Element root) {
@@ -352,6 +401,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * convert custom elements into standard Spring bean definitions, for example.
 	 * Implementors have access to the parser's bean definition reader and the
 	 * underlying XML resource, through the corresponding accessors.
+	 * <p>
+	 * 在{@link DefaultBeanDefinitionDocumentReader#doRegisterBeanDefinitions(org.w3c.dom.Element)}被调用
+	 * </p>
 	 *
 	 * @see #getReaderContext()
 	 */
