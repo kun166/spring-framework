@@ -42,8 +42,8 @@ import org.springframework.util.ResourceUtils;
  * @author Juergen Hoeller
  * @author Rob Harrop
  * @author Sebastien Deleuze
- * @since 2.0
  * @see PropertiesLoaderSupport
+ * @since 2.0
  */
 public abstract class PropertiesLoaderUtils {
 
@@ -60,6 +60,7 @@ public abstract class PropertiesLoaderUtils {
 	/**
 	 * Load properties from the given EncodedResource,
 	 * potentially defining a specific encoding for the properties file.
+	 *
 	 * @see #fillProperties(java.util.Properties, EncodedResource)
 	 */
 	public static Properties loadProperties(EncodedResource resource) throws IOException {
@@ -71,7 +72,8 @@ public abstract class PropertiesLoaderUtils {
 	/**
 	 * Fill the given properties from the given EncodedResource,
 	 * potentially defining a specific encoding for the properties file.
-	 * @param props the Properties instance to load into
+	 *
+	 * @param props    the Properties instance to load into
 	 * @param resource the resource to load from
 	 * @throws IOException in case of I/O errors
 	 */
@@ -83,8 +85,9 @@ public abstract class PropertiesLoaderUtils {
 
 	/**
 	 * Actually load properties from the given EncodedResource into the given Properties instance.
-	 * @param props the Properties instance to load into
-	 * @param resource the resource to load from
+	 *
+	 * @param props     the Properties instance to load into
+	 * @param resource  the resource to load from
 	 * @param persister the PropertiesPersister to use
 	 * @throws IOException in case of I/O errors
 	 */
@@ -101,17 +104,14 @@ public abstract class PropertiesLoaderUtils {
 				}
 				stream = resource.getInputStream();
 				persister.loadFromXml(props, stream);
-			}
-			else if (resource.requiresReader()) {
+			} else if (resource.requiresReader()) {
 				reader = resource.getReader();
 				persister.load(props, reader);
-			}
-			else {
+			} else {
 				stream = resource.getInputStream();
 				persister.load(props, stream);
 			}
-		}
-		finally {
+		} finally {
 			if (stream != null) {
 				stream.close();
 			}
@@ -123,6 +123,7 @@ public abstract class PropertiesLoaderUtils {
 
 	/**
 	 * Load properties from the given resource (in ISO-8859-1 encoding).
+	 *
 	 * @param resource the resource to load from
 	 * @return the populated Properties instance
 	 * @throws IOException if loading failed
@@ -136,7 +137,8 @@ public abstract class PropertiesLoaderUtils {
 
 	/**
 	 * Fill the given properties from the given resource (in ISO-8859-1 encoding).
-	 * @param props the Properties instance to fill
+	 *
+	 * @param props    the Properties instance to fill
 	 * @param resource the resource to load from
 	 * @throws IOException if loading failed
 	 */
@@ -148,8 +150,7 @@ public abstract class PropertiesLoaderUtils {
 					throw new UnsupportedOperationException("XML support disabled");
 				}
 				props.loadFromXML(is);
-			}
-			else {
+			} else {
 				props.load(is);
 			}
 		}
@@ -160,6 +161,7 @@ public abstract class PropertiesLoaderUtils {
 	 * (in ISO-8859-1 encoding), using the default class loader.
 	 * <p>Merges properties if more than one resource of the same name
 	 * found in the class path.
+	 *
 	 * @param resourceName the name of the class path resource
 	 * @return the populated Properties instance
 	 * @throws IOException if loading failed
@@ -173,9 +175,14 @@ public abstract class PropertiesLoaderUtils {
 	 * (in ISO-8859-1 encoding), using the given class loader.
 	 * <p>Merges properties if more than one resource of the same name
 	 * found in the class path.
+	 * <p>
+	 * {@link org.springframework.beans.factory.xml.DefaultNamespaceHandlerResolver#getHandlerMappings()}
+	 * 中被调用
+	 * </p>
+	 *
 	 * @param resourceName the name of the class path resource
-	 * @param classLoader the ClassLoader to use for loading
-	 * (or {@code null} to use the default class loader)
+	 * @param classLoader  the ClassLoader to use for loading
+	 *                     (or {@code null} to use the default class loader)
 	 * @return the populated Properties instance
 	 * @throws IOException if loading failed
 	 */
@@ -185,6 +192,7 @@ public abstract class PropertiesLoaderUtils {
 		if (classLoaderToUse == null) {
 			classLoaderToUse = ClassUtils.getDefaultClassLoader();
 		}
+		// 又是getResources
 		Enumeration<URL> urls = (classLoaderToUse != null ? classLoaderToUse.getResources(resourceName) :
 				ClassLoader.getSystemResources(resourceName));
 		Properties props = new Properties();
@@ -198,8 +206,7 @@ public abstract class PropertiesLoaderUtils {
 						throw new UnsupportedOperationException("XML support disabled");
 					}
 					props.loadFromXML(is);
-				}
-				else {
+				} else {
 					props.load(is);
 				}
 			}

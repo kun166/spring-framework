@@ -1426,6 +1426,10 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse a custom element (outside the default namespace).
+	 * <p>
+	 * {@link DefaultBeanDefinitionDocumentReader#parseBeanDefinitions(org.w3c.dom.Element, org.springframework.beans.factory.xml.BeanDefinitionParserDelegate)}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param ele the element to parse
 	 * @return the resulting bean definition
@@ -1437,6 +1441,10 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Parse a custom element (outside the default namespace).
+	 * <p>
+	 * {@link BeanDefinitionParserDelegate#parseCustomElement(org.w3c.dom.Element)}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param ele          the element to parse
 	 * @param containingBd the containing bean definition (if any)
@@ -1448,6 +1456,9 @@ public class BeanDefinitionParserDelegate {
 		if (namespaceUri == null) {
 			return null;
 		}
+		/**
+		 * 注:在方法里面调用了
+		 */
 		NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 		if (handler == null) {
 			error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
@@ -1458,6 +1469,8 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Decorate the given bean definition through a namespace handler, if applicable.
+	 * {@link DefaultBeanDefinitionDocumentReader#processBeanDefinition(org.w3c.dom.Element, org.springframework.beans.factory.xml.BeanDefinitionParserDelegate)}
+	 * 中被调用
 	 *
 	 * @param ele         the current element
 	 * @param originalDef the current bean definition
@@ -1469,6 +1482,8 @@ public class BeanDefinitionParserDelegate {
 
 	/**
 	 * Decorate the given bean definition through a namespace handler, if applicable.
+	 * {@link BeanDefinitionParserDelegate#decorateBeanDefinitionIfRequired(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinitionHolder)}
+	 * 中被调用
 	 *
 	 * @param ele          the current element
 	 * @param originalDef  the current bean definition
@@ -1481,6 +1496,7 @@ public class BeanDefinitionParserDelegate {
 		BeanDefinitionHolder finalDefinition = originalDef;
 
 		// Decorate based on custom attributes first.
+		// meta标签定义的
 		NamedNodeMap attributes = ele.getAttributes();
 		for (int i = 0; i < attributes.getLength(); i++) {
 			Node node = attributes.item(i);
@@ -1501,6 +1517,8 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Decorate the given bean definition through a namespace handler,
 	 * if applicable.
+	 * {@link BeanDefinitionParserDelegate#decorateBeanDefinitionIfRequired(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中被调用
 	 *
 	 * @param node         the current child node
 	 * @param originalDef  the current bean definition
