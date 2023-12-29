@@ -83,6 +83,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.metrics.ApplicationStartup;
+import org.springframework.core.metrics.DefaultApplicationStartup;
 import org.springframework.core.metrics.StartupStep;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -275,6 +276,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * Application startup metrics.
+	 * {@link DefaultApplicationStartup}
 	 **/
 	private ApplicationStartup applicationStartup = ApplicationStartup.DEFAULT;
 
