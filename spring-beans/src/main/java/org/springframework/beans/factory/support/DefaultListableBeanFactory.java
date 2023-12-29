@@ -75,6 +75,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.core.annotation.MergedAnnotations.SearchStrategy;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.log.LogMessage;
 import org.springframework.core.metrics.StartupStep;
 import org.springframework.lang.Nullable;
@@ -170,6 +171,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Map from dependency type to corresponding autowired value.
+	 * key:{@link BeanFactory} value:自身
+	 * key:{@link ResourceLoader} value:{@link org.springframework.context.support.AbstractApplicationContext}
+	 * key:{@link org.springframework.context.ApplicationEventPublisher} value:{@link org.springframework.context.support.AbstractApplicationContext}
+	 * key:{@link org.springframework.context.ApplicationContext} value:{@link org.springframework.context.support.AbstractApplicationContext}
 	 */
 	private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
 
@@ -824,6 +829,19 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	// Implementation of ConfigurableListableBeanFactory interface
 	//---------------------------------------------------------------------
 
+	/**
+	 * <p>
+	 * {@link org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
+	 * 中被调用
+	 * </p>
+	 *
+	 * @param dependencyType the dependency type to register. This will typically
+	 *                       be a base interface such as BeanFactory, with extensions of it resolved
+	 *                       as well if declared as an autowiring dependency (e.g. ListableBeanFactory),
+	 *                       as long as the given value actually implements the extended interface.
+	 * @param autowiredValue the corresponding autowired value. This may also be an
+	 *                       implementation of the {@link org.springframework.beans.factory.ObjectFactory}
+	 */
 	@Override
 	public void registerResolvableDependency(Class<?> dependencyType, @Nullable Object autowiredValue) {
 		Assert.notNull(dependencyType, "Dependency type must not be null");

@@ -157,9 +157,21 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	/**
 	 * Dependency interfaces to ignore on dependency check and autowire, as Set of
 	 * Class objects. By default, only the BeanFactory interface is ignored.
+	 * <p>
 	 * {@link BeanNameAware}
 	 * {@link BeanFactoryAware}
 	 * {@link BeanClassLoaderAware}
+	 * <p>
+	 * {@link org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
+	 * 中被调用。
+	 * {@link org.springframework.context.EnvironmentAware}
+	 * {@link org.springframework.context.EmbeddedValueResolverAware}
+	 * {@link org.springframework.context.ResourceLoaderAware}
+	 * {@link org.springframework.context.ApplicationEventPublisherAware}
+	 * {@link org.springframework.context.MessageSourceAware}
+	 * {@link org.springframework.context.ApplicationContextAware}
+	 * {@link org.springframework.context.ApplicationStartupAware}
+	 * </p>
 	 */
 	private final Set<Class<?>> ignoredDependencyInterfaces = new HashSet<>();
 
@@ -331,6 +343,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * 在{@link AbstractAutowireCapableBeanFactory#AbstractAutowireCapableBeanFactory()}
 	 * 中被调用
 	 * </p>
+	 * {@link org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
+	 * 中被调用
 	 *
 	 * @see org.springframework.beans.factory.BeanFactoryAware
 	 * @see org.springframework.context.ApplicationContextAware

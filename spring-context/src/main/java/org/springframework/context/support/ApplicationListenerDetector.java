@@ -52,6 +52,12 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 	private final transient Map<String, Boolean> singletonNames = new ConcurrentHashMap<>(256);
 
 
+	/**
+	 * {@link AbstractApplicationContext#prepareBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
+	 * 中被调用
+	 *
+	 * @param applicationContext
+	 */
 	public ApplicationListenerDetector(AbstractApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
@@ -77,8 +83,7 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 			if (Boolean.TRUE.equals(flag)) {
 				// singleton bean (top-level or inner): register on the fly
 				this.applicationContext.addApplicationListener((ApplicationListener<?>) bean);
-			}
-			else if (Boolean.FALSE.equals(flag)) {
+			} else if (Boolean.FALSE.equals(flag)) {
 				if (logger.isWarnEnabled() && !this.applicationContext.containsBean(beanName)) {
 					// inner bean with other scope - can't reliably process events
 					logger.warn("Inner bean '" + beanName + "' implements ApplicationListener interface " +
@@ -99,8 +104,7 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 				ApplicationEventMulticaster multicaster = this.applicationContext.getApplicationEventMulticaster();
 				multicaster.removeApplicationListener((ApplicationListener<?>) bean);
 				multicaster.removeApplicationListenerBean(beanName);
-			}
-			catch (IllegalStateException ex) {
+			} catch (IllegalStateException ex) {
 				// ApplicationEventMulticaster not initialized yet - no need to remove a listener
 			}
 		}
