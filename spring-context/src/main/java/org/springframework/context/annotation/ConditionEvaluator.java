@@ -23,6 +23,7 @@ import java.util.List;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ConfigurationCondition.ConfigurationPhase;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
@@ -52,9 +53,15 @@ class ConditionEvaluator {
 
 	/**
 	 * Create a new {@link ConditionEvaluator} instance.
+	 * {@link AnnotatedBeanDefinitionReader#AnnotatedBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment)}
+	 * 中被调用
+	 *
+	 * @param registry       {@link AnnotationConfigApplicationContext}
+	 * @param environment    {@link StandardEnvironment#StandardEnvironment()}
+	 * @param resourceLoader null
 	 */
 	public ConditionEvaluator(@Nullable BeanDefinitionRegistry registry,
-			@Nullable Environment environment, @Nullable ResourceLoader resourceLoader) {
+							  @Nullable Environment environment, @Nullable ResourceLoader resourceLoader) {
 
 		this.context = new ConditionContextImpl(registry, environment, resourceLoader);
 	}
@@ -64,6 +71,7 @@ class ConditionEvaluator {
 	 * Determine if an item should be skipped based on {@code @Conditional} annotations.
 	 * The {@link ConfigurationPhase} will be deduced from the type of item (i.e. a
 	 * {@code @Configuration} class will be {@link ConfigurationPhase#PARSE_CONFIGURATION})
+	 *
 	 * @param metadata the meta data
 	 * @return if the item should be skipped
 	 */
@@ -73,8 +81,9 @@ class ConditionEvaluator {
 
 	/**
 	 * Determine if an item should be skipped based on {@code @Conditional} annotations.
+	 *
 	 * @param metadata the meta data
-	 * @param phase the phase of the call
+	 * @param phase    the phase of the call
 	 * @return if the item should be skipped
 	 */
 	public boolean shouldSkip(@Nullable AnnotatedTypeMetadata metadata, @Nullable ConfigurationPhase phase) {
@@ -131,35 +140,78 @@ class ConditionEvaluator {
 	 */
 	private static class ConditionContextImpl implements ConditionContext {
 
+		/**
+		 * {@link AnnotationConfigApplicationContext}
+		 */
 		@Nullable
 		private final BeanDefinitionRegistry registry;
 
+		/**
+		 * {@link DefaultListableBeanFactory}
+		 */
 		@Nullable
 		private final ConfigurableListableBeanFactory beanFactory;
 
+		/**
+		 * {@link StandardEnvironment#StandardEnvironment()}
+		 */
 		private final Environment environment;
 
+		/**
+		 * {@link AnnotationConfigApplicationContext}
+		 */
 		private final ResourceLoader resourceLoader;
 
+		/**
+		 * {@link ClassUtils#getDefaultClassLoader()}
+		 */
 		@Nullable
 		private final ClassLoader classLoader;
 
+		/**
+		 * {@link ConditionEvaluator#ConditionEvaluator(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment, org.springframework.core.io.ResourceLoader)}
+		 * 中被调用
+		 *
+		 * @param registry       {@link AnnotationConfigApplicationContext}
+		 * @param environment    {@link StandardEnvironment#StandardEnvironment()}
+		 * @param resourceLoader null
+		 */
 		public ConditionContextImpl(@Nullable BeanDefinitionRegistry registry,
-				@Nullable Environment environment, @Nullable ResourceLoader resourceLoader) {
+									@Nullable Environment environment, @Nullable ResourceLoader resourceLoader) {
 
 			this.registry = registry;
+			/**
+			 * {@link DefaultListableBeanFactory}
+			 */
 			this.beanFactory = deduceBeanFactory(registry);
+			/**
+			 * {@link StandardEnvironment#StandardEnvironment()}
+			 */
 			this.environment = (environment != null ? environment : deduceEnvironment(registry));
+			/**
+			 * {@link AnnotationConfigApplicationContext}
+			 */
 			this.resourceLoader = (resourceLoader != null ? resourceLoader : deduceResourceLoader(registry));
+			/**
+			 * {@link ClassUtils#getDefaultClassLoader()}
+			 */
 			this.classLoader = deduceClassLoader(resourceLoader, this.beanFactory);
 		}
 
+		/**
+		 * {@link ConditionContextImpl#ConditionContextImpl(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment, org.springframework.core.io.ResourceLoader)}
+		 * 中被调用
+		 *
+		 * @param source
+		 * @return
+		 */
 		@Nullable
 		private ConfigurableListableBeanFactory deduceBeanFactory(@Nullable BeanDefinitionRegistry source) {
 			if (source instanceof ConfigurableListableBeanFactory) {
 				return (ConfigurableListableBeanFactory) source;
 			}
 			if (source instanceof ConfigurableApplicationContext) {
+				// 走下面这个
 				return (((ConfigurableApplicationContext) source).getBeanFactory());
 			}
 			return null;
@@ -172,16 +224,32 @@ class ConditionEvaluator {
 			return new StandardEnvironment();
 		}
 
+		/**
+		 * {@link ConditionContextImpl#ConditionContextImpl(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment, org.springframework.core.io.ResourceLoader)}
+		 * 中被调用
+		 *
+		 * @param source {@link AnnotationConfigApplicationContext}
+		 * @return
+		 */
 		private ResourceLoader deduceResourceLoader(@Nullable BeanDefinitionRegistry source) {
 			if (source instanceof ResourceLoader) {
+				// 走下面这个
 				return (ResourceLoader) source;
 			}
 			return new DefaultResourceLoader();
 		}
 
+		/**
+		 * {@link ConditionContextImpl#ConditionContextImpl(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment, org.springframework.core.io.ResourceLoader)}
+		 * 中调用
+		 *
+		 * @param resourceLoader null
+		 * @param beanFactory    {@link DefaultListableBeanFactory}
+		 * @return
+		 */
 		@Nullable
 		private ClassLoader deduceClassLoader(@Nullable ResourceLoader resourceLoader,
-				@Nullable ConfigurableListableBeanFactory beanFactory) {
+											  @Nullable ConfigurableListableBeanFactory beanFactory) {
 
 			if (resourceLoader != null) {
 				ClassLoader classLoader = resourceLoader.getClassLoader();

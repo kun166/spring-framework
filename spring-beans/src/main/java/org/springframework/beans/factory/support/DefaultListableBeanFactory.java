@@ -72,6 +72,7 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.config.NamedBeanHolder;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.ResolvableType;
+import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.core.annotation.MergedAnnotations.SearchStrategy;
@@ -160,12 +161,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Optional OrderComparator for dependency Lists and arrays.
+	 * {@link AnnotationAwareOrderComparator#INSTANCE}
 	 */
 	@Nullable
 	private Comparator<Object> dependencyComparator;
 
 	/**
 	 * Resolver to use for checking if a bean definition is an autowire candidate.
+	 * 如果是{@link org.springframework.context.annotation.AnnotationConfigApplicationContext}
+	 * 创建的,
+	 * 这个赋值为{@link {@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver}}
 	 */
 	private AutowireCandidateResolver autowireCandidateResolver = SimpleAutowireCandidateResolver.INSTANCE;
 
@@ -318,6 +323,12 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Set a {@link java.util.Comparator} for dependency Lists and arrays.
 	 *
+	 * <p>
+	 * {@link org.springframework.context.annotation.AnnotationConfigUtils#registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)}
+	 * 中调用
+	 * 传参{@link AnnotationAwareOrderComparator#INSTANCE}
+	 * </p>
+	 *
 	 * @see org.springframework.core.OrderComparator
 	 * @see org.springframework.core.annotation.AnnotationAwareOrderComparator
 	 * @since 4.0
@@ -340,6 +351,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * Set a custom autowire candidate resolver for this BeanFactory to use
 	 * when deciding whether a bean definition should be considered as a
 	 * candidate for autowiring.
+	 * <p>
+	 * {@link org.springframework.context.annotation.AnnotationConfigUtils#registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)}
+	 * 中调用
+	 * 传参{@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver}
+	 * </p>
 	 */
 	public void setAutowireCandidateResolver(AutowireCandidateResolver autowireCandidateResolver) {
 		Assert.notNull(autowireCandidateResolver, "AutowireCandidateResolver must not be null");
