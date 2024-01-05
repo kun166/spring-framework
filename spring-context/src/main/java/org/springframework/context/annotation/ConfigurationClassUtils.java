@@ -78,7 +78,8 @@ abstract class ConfigurationClassUtils {
 	 * Check whether the given bean definition is a candidate for a configuration class
 	 * (or a nested component class declared within a configuration/component class,
 	 * to be auto-registered as well), and mark it accordingly.
-	 * @param beanDef the bean definition to check
+	 *
+	 * @param beanDef               the bean definition to check
 	 * @param metadataReaderFactory the current factory in use by the caller
 	 * @return whether the candidate qualifies as (any kind of) configuration class
 	 */
@@ -95,8 +96,7 @@ abstract class ConfigurationClassUtils {
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
-		}
-		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
+		} else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
@@ -107,13 +107,11 @@ abstract class ConfigurationClassUtils {
 				return false;
 			}
 			metadata = AnnotationMetadata.introspect(beanClass);
-		}
-		else {
+		} else {
 			try {
 				MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(className);
 				metadata = metadataReader.getAnnotationMetadata();
-			}
-			catch (IOException ex) {
+			} catch (IOException ex) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Could not find class file for introspecting configuration annotations: " +
 							className, ex);
@@ -125,11 +123,9 @@ abstract class ConfigurationClassUtils {
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
-		}
-		else if (config != null || isConfigurationCandidate(metadata)) {
+		} else if (config != null || isConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
-		}
-		else {
+		} else {
 			return false;
 		}
 
@@ -143,8 +139,14 @@ abstract class ConfigurationClassUtils {
 	}
 
 	/**
+	 * 检测给的metadata是否是configuration class候选者
 	 * Check the given metadata for a configuration class candidate
 	 * (or nested component class declared within a configuration/component class).
+	 * <p>
+	 * {@link ConditionEvaluator#shouldSkip(org.springframework.core.type.AnnotatedTypeMetadata, org.springframework.context.annotation.ConfigurationCondition.ConfigurationPhase)}
+	 * 中调用
+	 * </p>
+	 *
 	 * @param metadata the metadata of the annotated class
 	 * @return {@code true} if the given class is to be registered for
 	 * configuration class processing; {@code false} otherwise
@@ -152,12 +154,14 @@ abstract class ConfigurationClassUtils {
 	public static boolean isConfigurationCandidate(AnnotationMetadata metadata) {
 		// Do not consider an interface or an annotation...
 		if (metadata.isInterface()) {
+			// 如果是一个接口，返回false
 			return false;
 		}
 
 		// Any of the typical annotations found?
 		for (String indicator : candidateIndicators) {
 			if (metadata.isAnnotated(indicator)) {
+				// 如果有以上注解，返回true
 				return true;
 			}
 		}
@@ -166,11 +170,18 @@ abstract class ConfigurationClassUtils {
 		return hasBeanMethods(metadata);
 	}
 
+	/**
+	 * 判断该metadata持有的class类，是否有{@link Bean}注解
+	 * {@link ConfigurationClassUtils#isConfigurationCandidate(org.springframework.core.type.AnnotationMetadata)}
+	 * 中被调用
+	 *
+	 * @param metadata
+	 * @return
+	 */
 	static boolean hasBeanMethods(AnnotationMetadata metadata) {
 		try {
 			return metadata.hasAnnotatedMethods(Bean.class.getName());
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Failed to introspect @Bean methods on class [" + metadata.getClassName() + "]: " + ex);
 			}
@@ -180,6 +191,7 @@ abstract class ConfigurationClassUtils {
 
 	/**
 	 * Determine the order for the given configuration class metadata.
+	 *
 	 * @param metadata the metadata of the annotated class
 	 * @return the {@code @Order} annotation value on the configuration class,
 	 * or {@code Ordered.LOWEST_PRECEDENCE} if none declared
@@ -194,6 +206,7 @@ abstract class ConfigurationClassUtils {
 	/**
 	 * Determine the order for the given configuration class bean definition,
 	 * as set by {@link #checkConfigurationClassCandidate}.
+	 *
 	 * @param beanDef the bean definition to check
 	 * @return the {@link Order @Order} annotation value on the configuration class,
 	 * or {@link Ordered#LOWEST_PRECEDENCE} if none declared

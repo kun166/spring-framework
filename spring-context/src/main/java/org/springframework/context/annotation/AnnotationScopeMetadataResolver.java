@@ -33,8 +33,8 @@ import org.springframework.util.Assert;
  * @author Mark Fisher
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 2.5
  * @see org.springframework.context.annotation.Scope
+ * @since 2.5
  */
 public class AnnotationScopeMetadataResolver implements ScopeMetadataResolver {
 
@@ -45,6 +45,7 @@ public class AnnotationScopeMetadataResolver implements ScopeMetadataResolver {
 
 	/**
 	 * Construct a new {@code AnnotationScopeMetadataResolver}.
+	 *
 	 * @see #AnnotationScopeMetadataResolver(ScopedProxyMode)
 	 * @see ScopedProxyMode#NO
 	 */
@@ -55,6 +56,7 @@ public class AnnotationScopeMetadataResolver implements ScopeMetadataResolver {
 	/**
 	 * Construct a new {@code AnnotationScopeMetadataResolver} using the
 	 * supplied default {@link ScopedProxyMode}.
+	 *
 	 * @param defaultProxyMode the default scoped-proxy mode
 	 */
 	public AnnotationScopeMetadataResolver(ScopedProxyMode defaultProxyMode) {
@@ -66,6 +68,7 @@ public class AnnotationScopeMetadataResolver implements ScopeMetadataResolver {
 	/**
 	 * Set the type of annotation that is checked for by this
 	 * {@code AnnotationScopeMetadataResolver}.
+	 *
 	 * @param scopeAnnotationType the target annotation type
 	 */
 	public void setScopeAnnotationType(Class<? extends Annotation> scopeAnnotationType) {
@@ -74,6 +77,13 @@ public class AnnotationScopeMetadataResolver implements ScopeMetadataResolver {
 	}
 
 
+	/**
+	 * {@link AnnotatedBeanDefinitionReader#doRegisterBean(java.lang.Class, java.lang.String, java.lang.Class[], java.util.function.Supplier, org.springframework.beans.factory.config.BeanDefinitionCustomizer[])}
+	 * 中调用
+	 *
+	 * @param definition the target bean definition
+	 * @return
+	 */
 	@Override
 	public ScopeMetadata resolveScopeMetadata(BeanDefinition definition) {
 		ScopeMetadata metadata = new ScopeMetadata();

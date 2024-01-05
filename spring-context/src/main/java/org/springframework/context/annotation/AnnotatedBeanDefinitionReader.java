@@ -57,6 +57,11 @@ public class AnnotatedBeanDefinitionReader {
 
 	private ScopeMetadataResolver scopeMetadataResolver = new AnnotationScopeMetadataResolver();
 
+	/**
+	 * {@link AnnotatedBeanDefinitionReader#AnnotatedBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment)}
+	 * 中被调用
+	 * {@link ConditionEvaluator}
+	 */
 	private ConditionEvaluator conditionEvaluator;
 
 
@@ -149,6 +154,10 @@ public class AnnotatedBeanDefinitionReader {
 	 * Register one or more component classes to be processed.
 	 * <p>Calls to {@code register} are idempotent; adding the same
 	 * component class more than once has no additional effect.
+	 * <p>
+	 * {@link AnnotationConfigApplicationContext#register(java.lang.Class[])}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param componentClasses one or more component classes,
 	 *                         e.g. {@link Configuration @Configuration} classes
@@ -162,6 +171,10 @@ public class AnnotatedBeanDefinitionReader {
 	/**
 	 * Register a bean from the given bean class, deriving its metadata from
 	 * class-declared annotations.
+	 * <p>
+	 * {@link AnnotatedBeanDefinitionReader#register(java.lang.Class[])}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param beanClass the class of the bean
 	 */
@@ -264,6 +277,10 @@ public class AnnotatedBeanDefinitionReader {
 	/**
 	 * Register a bean from the given bean class, deriving its metadata from
 	 * class-declared annotations.
+	 * <p>
+	 * {@link AnnotatedBeanDefinitionReader#registerBean(java.lang.Class)}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param beanClass   the class of the bean
 	 * @param name        an explicit name for the bean
@@ -285,6 +302,7 @@ public class AnnotatedBeanDefinitionReader {
 		}
 
 		abd.setInstanceSupplier(supplier);
+		// scope
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
 		abd.setScope(scopeMetadata.getScopeName());
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));

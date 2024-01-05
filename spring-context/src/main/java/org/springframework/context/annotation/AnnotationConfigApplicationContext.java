@@ -61,12 +61,19 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 */
 	private final AnnotatedBeanDefinitionReader reader;
 
+	/**
+	 * {@link ClassPathBeanDefinitionScanner}
+	 */
 	private final ClassPathBeanDefinitionScanner scanner;
 
 
 	/**
 	 * Create a new AnnotationConfigApplicationContext that needs to be populated
 	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
+	 * <p>
+	 * {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(java.lang.Class[])}
+	 * 中被调用
+	 * </p>
 	 */
 	public AnnotationConfigApplicationContext() {
 		/**
@@ -170,6 +177,10 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * Register one or more component classes to be processed.
 	 * <p>Note that {@link #refresh()} must be called in order for the context
 	 * to fully process the new classes.
+	 * <p>
+	 * {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(java.lang.Class[])}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param componentClasses one or more component classes &mdash; for example,
 	 *                         {@link Configuration @Configuration} classes

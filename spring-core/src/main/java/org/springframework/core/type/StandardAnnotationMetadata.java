@@ -17,18 +17,15 @@
 package org.springframework.core.type;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.annotation.MergedAnnotation;
-import org.springframework.core.annotation.MergedAnnotations;
+import org.springframework.core.annotation.*;
 import org.springframework.core.annotation.MergedAnnotations.SearchStrategy;
-import org.springframework.core.annotation.RepeatableContainers;
 import org.springframework.lang.Nullable;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ReflectionUtils;
@@ -46,8 +43,15 @@ import org.springframework.util.ReflectionUtils;
  */
 public class StandardAnnotationMetadata extends StandardClassMetadata implements AnnotationMetadata {
 
+	/**
+	 * {@link TypeMappedAnnotations}
+	 */
 	private final MergedAnnotations mergedAnnotations;
 
+	/**
+	 * {@link StandardAnnotationMetadata#StandardAnnotationMetadata(java.lang.Class, boolean)}
+	 * 中被调用,传入true
+	 */
 	private final boolean nestedAnnotationsAsMap;
 
 	@Nullable
@@ -56,6 +60,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 
 	/**
 	 * Create a new {@code StandardAnnotationMetadata} wrapper for the given Class.
+	 *
 	 * @param introspectedClass the Class to introspect
 	 * @see #StandardAnnotationMetadata(Class, boolean)
 	 * @deprecated since 5.2 in favor of the factory method {@link AnnotationMetadata#introspect(Class)}
@@ -70,10 +75,15 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	 * providing the option to return any nested annotations or annotation arrays in the
 	 * form of {@link org.springframework.core.annotation.AnnotationAttributes} instead
 	 * of actual {@link Annotation} instances.
-	 * @param introspectedClass the Class to introspect
+	 * <p>
+	 * {@link StandardAnnotationMetadata#from(java.lang.Class)}
+	 * 中被调用
+	 * </p>
+	 *
+	 * @param introspectedClass      the Class to introspect
 	 * @param nestedAnnotationsAsMap return nested annotations and annotation arrays as
-	 * {@link org.springframework.core.annotation.AnnotationAttributes} for compatibility
-	 * with ASM-based {@link AnnotationMetadata} implementations
+	 *                               {@link org.springframework.core.annotation.AnnotationAttributes} for compatibility
+	 *                               with ASM-based {@link AnnotationMetadata} implementations
 	 * @since 3.1.1
 	 * @deprecated since 5.2 in favor of the factory method {@link AnnotationMetadata#introspect(Class)}.
 	 * Use {@link MergedAnnotation#asMap(org.springframework.core.annotation.MergedAnnotation.Adapt...) MergedAnnotation.asMap}
@@ -83,6 +93,10 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	@Deprecated
 	public StandardAnnotationMetadata(Class<?> introspectedClass, boolean nestedAnnotationsAsMap) {
 		super(introspectedClass);
+		/**
+		 * 关于{@link AnnotatedElement},
+		 * 可以参考:https://blog.csdn.net/xichenguan/article/details/87856550
+		 */
 		this.mergedAnnotations = MergedAnnotations.from(introspectedClass,
 				SearchStrategy.INHERITED_ANNOTATIONS, RepeatableContainers.none());
 		this.nestedAnnotationsAsMap = nestedAnnotationsAsMap;
@@ -94,6 +108,12 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 		return this.mergedAnnotations;
 	}
 
+	/**
+	 * {@link org.springframework.context.annotation.AnnotationBeanNameGenerator#determineBeanNameFromAnnotation(org.springframework.beans.factory.annotation.AnnotatedBeanDefinition)}
+	 * 中被调用
+	 *
+	 * @return
+	 */
 	@Override
 	public Set<String> getAnnotationTypes() {
 		Set<String> annotationTypes = this.annotationTypes;
@@ -114,6 +134,15 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 				getIntrospectedClass(), annotationName, classValuesAsString, false);
 	}
 
+	/**
+	 * {@link org.springframework.context.annotation.ConditionEvaluator#getConditionClasses(org.springframework.core.type.AnnotatedTypeMetadata)}
+	 * 中被调用
+	 *
+	 * @param annotationName      the fully qualified class name of the annotation
+	 *                            type to look for
+	 * @param classValuesAsString whether to convert class references to String
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public MultiValueMap<String, Object> getAllAnnotationAttributes(String annotationName, boolean classValuesAsString) {
@@ -124,6 +153,13 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 				getIntrospectedClass(), annotationName, classValuesAsString, false);
 	}
 
+	/**
+	 * {@link org.springframework.context.annotation.ConfigurationClassUtils#hasBeanMethods(org.springframework.core.type.AnnotationMetadata)}
+	 * 中调用
+	 *
+	 * @param annotationName the fully qualified class name of the annotation
+	 * @return
+	 */
 	@Override
 	public boolean hasAnnotatedMethods(String annotationName) {
 		if (AnnotationUtils.isCandidateClass(getIntrospectedClass(), annotationName)) {
@@ -134,8 +170,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 						return true;
 					}
 				}
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				throw new IllegalStateException("Failed to introspect annotated methods on " + getIntrospectedClass(), ex);
 			}
 		}
@@ -157,8 +192,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 						annotatedMethods.add(new StandardMethodMetadata(method, this.nestedAnnotationsAsMap));
 					}
 				}
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				throw new IllegalStateException("Failed to introspect annotated methods on " + getIntrospectedClass(), ex);
 			}
 		}
@@ -171,6 +205,13 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 				AnnotatedElementUtils.isAnnotated(method, annotationName);
 	}
 
+	/**
+	 * {@link AnnotationMetadata#introspect(java.lang.Class)}
+	 * 中被调用
+	 *
+	 * @param introspectedClass
+	 * @return
+	 */
 	static AnnotationMetadata from(Class<?> introspectedClass) {
 		return new StandardAnnotationMetadata(introspectedClass, true);
 	}

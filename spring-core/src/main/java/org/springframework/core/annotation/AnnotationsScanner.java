@@ -39,8 +39,8 @@ import org.springframework.util.ReflectionUtils;
  *
  * @author Phillip Webb
  * @author Sam Brannen
- * @since 5.2
  * @see AnnotationsProcessor
+ * @since 5.2
  */
 abstract class AnnotationsScanner {
 
@@ -63,24 +63,41 @@ abstract class AnnotationsScanner {
 	/**
 	 * Scan the hierarchy of the specified element for relevant annotations and
 	 * call the processor as required.
-	 * @param context an optional context object that will be passed back to the
-	 * processor
-	 * @param source the source element to scan
-	 * @param searchStrategy the search strategy to use
-	 * @param processor the processor that receives the annotations
+	 *
+	 * <p>
+	 * {@link TypeMappedAnnotations#scan(java.lang.Object, org.springframework.core.annotation.AnnotationsProcessor)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param context        {@link TypeMappedAnnotations}
+	 * @param source         the source element to scan
+	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 * @param processor      {@link TypeMappedAnnotations.AggregatesCollector}
 	 * @return the result of {@link AnnotationsProcessor#finish(Object)}
 	 */
 	@Nullable
 	static <C, R> R scan(C context, AnnotatedElement source, SearchStrategy searchStrategy,
-			AnnotationsProcessor<C, R> processor) {
+						 AnnotationsProcessor<C, R> processor) {
 
 		R result = process(context, source, searchStrategy, processor);
 		return processor.finish(result);
 	}
 
+	/**
+	 * {@link AnnotationsScanner#scan(java.lang.Object, java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
+	 * 中调用
+	 *
+	 * @param context        {@link TypeMappedAnnotations}
+	 * @param source
+	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 * @param processor      {@link TypeMappedAnnotations.AggregatesCollector}
+	 * @param <C>
+	 * @param <R>
+	 * @return
+	 */
 	@Nullable
 	private static <C, R> R process(C context, AnnotatedElement source,
-			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
+									SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
 
 		if (source instanceof Class) {
 			return processClass(context, (Class<?>) source, searchStrategy, processor);
@@ -91,9 +108,21 @@ abstract class AnnotationsScanner {
 		return processElement(context, source, processor);
 	}
 
+	/**
+	 * {@link AnnotationsScanner#process(java.lang.Object, java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
+	 * 中调用
+	 *
+	 * @param context        {@link TypeMappedAnnotations}
+	 * @param source
+	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 * @param processor      {@link TypeMappedAnnotations.AggregatesCollector}
+	 * @param <C>
+	 * @param <R>
+	 * @return
+	 */
 	@Nullable
 	private static <C, R> R processClass(C context, Class<?> source,
-			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
+										 SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
 
 		switch (searchStrategy) {
 			case DIRECT:
@@ -110,9 +139,22 @@ abstract class AnnotationsScanner {
 		throw new IllegalStateException("Unsupported search strategy " + searchStrategy);
 	}
 
+	/**
+	 * {@link AnnotationsScanner#processClass(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
+	 * 中被调用
+	 * {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 *
+	 * @param context        {@link TypeMappedAnnotations}
+	 * @param source
+	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 * @param processor      {@link TypeMappedAnnotations.AggregatesCollector}
+	 * @param <C>
+	 * @param <R>
+	 * @return
+	 */
 	@Nullable
 	private static <C, R> R processClassInheritedAnnotations(C context, Class<?> source,
-			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
+															 SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
 
 		try {
 			if (isWithoutHierarchy(source, searchStrategy)) {
@@ -157,8 +199,7 @@ abstract class AnnotationsScanner {
 				source = source.getSuperclass();
 				aggregateIndex++;
 			}
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			AnnotationUtils.handleIntrospectionFailure(source, ex);
 		}
 		return null;
@@ -166,15 +207,15 @@ abstract class AnnotationsScanner {
 
 	@Nullable
 	private static <C, R> R processClassHierarchy(C context, Class<?> source,
-			AnnotationsProcessor<C, R> processor, boolean includeInterfaces, boolean includeEnclosing) {
+												  AnnotationsProcessor<C, R> processor, boolean includeInterfaces, boolean includeEnclosing) {
 
-		return processClassHierarchy(context, new int[] {0}, source, processor,
+		return processClassHierarchy(context, new int[]{0}, source, processor,
 				includeInterfaces, includeEnclosing);
 	}
 
 	@Nullable
 	private static <C, R> R processClassHierarchy(C context, int[] aggregateIndex, Class<?> source,
-			AnnotationsProcessor<C, R> processor, boolean includeInterfaces, boolean includeEnclosing) {
+												  AnnotationsProcessor<C, R> processor, boolean includeInterfaces, boolean includeEnclosing) {
 
 		try {
 			R result = processor.doWithAggregate(context, aggregateIndex[0]);
@@ -193,7 +234,7 @@ abstract class AnnotationsScanner {
 			if (includeInterfaces) {
 				for (Class<?> interfaceType : source.getInterfaces()) {
 					R interfacesResult = processClassHierarchy(context, aggregateIndex,
-						interfaceType, processor, true, includeEnclosing);
+							interfaceType, processor, true, includeEnclosing);
 					if (interfacesResult != null) {
 						return interfacesResult;
 					}
@@ -202,7 +243,7 @@ abstract class AnnotationsScanner {
 			Class<?> superclass = source.getSuperclass();
 			if (superclass != Object.class && superclass != null) {
 				R superclassResult = processClassHierarchy(context, aggregateIndex,
-					superclass, processor, includeInterfaces, includeEnclosing);
+						superclass, processor, includeInterfaces, includeEnclosing);
 				if (superclassResult != null) {
 					return superclassResult;
 				}
@@ -217,18 +258,16 @@ abstract class AnnotationsScanner {
 					Class<?> enclosingClass = source.getEnclosingClass();
 					if (enclosingClass != null) {
 						R enclosingResult = processClassHierarchy(context, aggregateIndex,
-							enclosingClass, processor, includeInterfaces, true);
+								enclosingClass, processor, includeInterfaces, true);
 						if (enclosingResult != null) {
 							return enclosingResult;
 						}
 					}
-				}
-				catch (Throwable ex) {
+				} catch (Throwable ex) {
 					AnnotationUtils.handleIntrospectionFailure(source, ex);
 				}
 			}
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			AnnotationUtils.handleIntrospectionFailure(source, ex);
 		}
 		return null;
@@ -236,18 +275,18 @@ abstract class AnnotationsScanner {
 
 	@Nullable
 	private static <C, R> R processMethod(C context, Method source,
-			SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
+										  SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
 
 		switch (searchStrategy) {
 			case DIRECT:
 			case INHERITED_ANNOTATIONS:
 				return processMethodInheritedAnnotations(context, source, processor);
 			case SUPERCLASS:
-				return processMethodHierarchy(context, new int[] {0}, source.getDeclaringClass(),
+				return processMethodHierarchy(context, new int[]{0}, source.getDeclaringClass(),
 						processor, source, false);
 			case TYPE_HIERARCHY:
 			case TYPE_HIERARCHY_AND_ENCLOSING_CLASSES:
-				return processMethodHierarchy(context, new int[] {0}, source.getDeclaringClass(),
+				return processMethodHierarchy(context, new int[]{0}, source.getDeclaringClass(),
 						processor, source, true);
 		}
 		throw new IllegalStateException("Unsupported search strategy " + searchStrategy);
@@ -255,14 +294,13 @@ abstract class AnnotationsScanner {
 
 	@Nullable
 	private static <C, R> R processMethodInheritedAnnotations(C context, Method source,
-			AnnotationsProcessor<C, R> processor) {
+															  AnnotationsProcessor<C, R> processor) {
 
 		try {
 			R result = processor.doWithAggregate(context, 0);
 			return (result != null ? result :
-				processMethodAnnotations(context, 0, source, processor));
-		}
-		catch (Throwable ex) {
+					processMethodAnnotations(context, 0, source, processor));
+		} catch (Throwable ex) {
 			AnnotationUtils.handleIntrospectionFailure(source, ex);
 		}
 		return null;
@@ -270,8 +308,8 @@ abstract class AnnotationsScanner {
 
 	@Nullable
 	private static <C, R> R processMethodHierarchy(C context, int[] aggregateIndex,
-			Class<?> sourceClass, AnnotationsProcessor<C, R> processor, Method rootMethod,
-			boolean includeInterfaces) {
+												   Class<?> sourceClass, AnnotationsProcessor<C, R> processor, Method rootMethod,
+												   boolean includeInterfaces) {
 
 		try {
 			R result = processor.doWithAggregate(context, aggregateIndex[0]);
@@ -284,17 +322,16 @@ abstract class AnnotationsScanner {
 			boolean calledProcessor = false;
 			if (sourceClass == rootMethod.getDeclaringClass()) {
 				result = processMethodAnnotations(context, aggregateIndex[0],
-					rootMethod, processor);
+						rootMethod, processor);
 				calledProcessor = true;
 				if (result != null) {
 					return result;
 				}
-			}
-			else {
+			} else {
 				for (Method candidateMethod : getBaseTypeMethods(context, sourceClass)) {
 					if (candidateMethod != null && isOverride(rootMethod, candidateMethod)) {
 						result = processMethodAnnotations(context, aggregateIndex[0],
-							candidateMethod, processor);
+								candidateMethod, processor);
 						calledProcessor = true;
 						if (result != null) {
 							return result;
@@ -311,7 +348,7 @@ abstract class AnnotationsScanner {
 			if (includeInterfaces) {
 				for (Class<?> interfaceType : sourceClass.getInterfaces()) {
 					R interfacesResult = processMethodHierarchy(context, aggregateIndex,
-						interfaceType, processor, rootMethod, true);
+							interfaceType, processor, rootMethod, true);
 					if (interfacesResult != null) {
 						return interfacesResult;
 					}
@@ -320,13 +357,12 @@ abstract class AnnotationsScanner {
 			Class<?> superclass = sourceClass.getSuperclass();
 			if (superclass != Object.class && superclass != null) {
 				R superclassResult = processMethodHierarchy(context, aggregateIndex,
-					superclass, processor, rootMethod, includeInterfaces);
+						superclass, processor, rootMethod, includeInterfaces);
 				if (superclassResult != null) {
 					return superclassResult;
 				}
 			}
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			AnnotationUtils.handleIntrospectionFailure(rootMethod, ex);
 		}
 		return null;
@@ -396,7 +432,7 @@ abstract class AnnotationsScanner {
 
 	@Nullable
 	private static <C, R> R processMethodAnnotations(C context, int aggregateIndex, Method source,
-			AnnotationsProcessor<C, R> processor) {
+													 AnnotationsProcessor<C, R> processor) {
 
 		Annotation[] annotations = getDeclaredAnnotations(source, false);
 		R result = processor.doWithAnnotations(context, aggregateIndex, source, annotations);
@@ -416,16 +452,28 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	/**
+	 * {@link SearchStrategy#DIRECT}
+	 * <p>
+	 * {@link AnnotationsScanner#processClass(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
+	 * 中调用
+	 *
+	 * @param context   {@link TypeMappedAnnotations}
+	 * @param source
+	 * @param processor {@link TypeMappedAnnotations.AggregatesCollector}
+	 * @param <C>
+	 * @param <R>
+	 * @return
+	 */
 	@Nullable
 	private static <C, R> R processElement(C context, AnnotatedElement source,
-			AnnotationsProcessor<C, R> processor) {
+										   AnnotationsProcessor<C, R> processor) {
 
 		try {
 			R result = processor.doWithAggregate(context, 0);
 			return (result != null ? result : processor.doWithAnnotations(
-				context, 0, source, getDeclaredAnnotations(source, false)));
-		}
-		catch (Throwable ex) {
+					context, 0, source, getDeclaredAnnotations(source, false)));
+		} catch (Throwable ex) {
 			AnnotationUtils.handleIntrospectionFailure(source, ex);
 		}
 		return null;
@@ -443,23 +491,37 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	/**
+	 * {@link AnnotationsScanner#processElement(java.lang.Object, java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.AnnotationsProcessor)}
+	 * 中被调用
+	 *
+	 * @param source
+	 * @param defensive false
+	 * @return
+	 */
 	static Annotation[] getDeclaredAnnotations(AnnotatedElement source, boolean defensive) {
 		boolean cached = false;
+		// 去缓存中找
 		Annotation[] annotations = declaredAnnotationCache.get(source);
 		if (annotations != null) {
 			cached = true;
-		}
-		else {
+		} else {
+			/**
+			 * https://blog.csdn.net/qq_38350925/article/details/105820151
+			 * getDeclaredAnnotations方法只会返回当前类的注解，不会返回父类的注解
+			 */
 			annotations = source.getDeclaredAnnotations();
 			if (annotations.length != 0) {
 				boolean allIgnored = true;
 				for (int i = 0; i < annotations.length; i++) {
 					Annotation annotation = annotations[i];
+					/**
+					 * annotationType方法会返回该annotation的class
+					 */
 					if (isIgnorable(annotation.annotationType()) ||
 							!AttributeMethods.forAnnotationType(annotation.annotationType()).isValid(annotation)) {
 						annotations[i] = null;
-					}
-					else {
+					} else {
 						allIgnored = false;
 					}
 				}
@@ -476,15 +538,39 @@ abstract class AnnotationsScanner {
 		return annotations.clone();
 	}
 
+	/**
+	 * 传入的annotationType所在的包名，
+	 * 是否以"java.lang", "org.springframework.lang"等开头
+	 * {@link AnnotationsScanner#getDeclaredAnnotations(java.lang.reflect.AnnotatedElement, boolean)}
+	 * 中调用
+	 *
+	 * @param annotationType
+	 * @return
+	 */
 	private static boolean isIgnorable(Class<?> annotationType) {
+		/**
+		 * {@link PackagesAnnotationFilter#matches(java.lang.String)}
+		 */
 		return AnnotationFilter.PLAIN.matches(annotationType);
 	}
 
+	/**
+	 * {@link TypeMappedAnnotations#from(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.RepeatableContainers, org.springframework.core.annotation.AnnotationFilter)}
+	 * 中调用
+	 *
+	 * @param source
+	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 * @return
+	 */
 	static boolean isKnownEmpty(AnnotatedElement source, SearchStrategy searchStrategy) {
 		if (hasPlainJavaAnnotationsOnly(source)) {
 			return true;
 		}
 		if (searchStrategy == SearchStrategy.DIRECT || isWithoutHierarchy(source, searchStrategy)) {
+			/**
+			 * {@link Method#isBridge()}可以参考
+			 * https://vimsky.com/examples/usage/method-class-isbridge-method-in-java.html
+			 */
 			if (source instanceof Method && ((Method) source).isBridge()) {
 				return false;
 			}
@@ -493,28 +579,59 @@ abstract class AnnotationsScanner {
 		return false;
 	}
 
+	/**
+	 * 判断传入的class是否以包名java开头,或者自身是{@link Ordered}
+	 * 如果传入的是{@link Member},则看归属的class是否符合上述规则
+	 * 其它返回false
+	 * {@link AnnotationsScanner#isKnownEmpty(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy)}
+	 * 中调用
+	 *
+	 * @param annotatedElement
+	 * @return
+	 */
 	static boolean hasPlainJavaAnnotationsOnly(@Nullable Object annotatedElement) {
 		if (annotatedElement instanceof Class) {
 			return hasPlainJavaAnnotationsOnly((Class<?>) annotatedElement);
-		}
-		else if (annotatedElement instanceof Member) {
+		} else if (annotatedElement instanceof Member) {
+			/**
+			 * 关于Member的资料:https://blog.csdn.net/yaomingyang/article/details/81412180
+			 * 获取该方法所归属的类
+			 */
 			return hasPlainJavaAnnotationsOnly(((Member) annotatedElement).getDeclaringClass());
-		}
-		else {
+		} else {
 			return false;
 		}
 	}
 
+	/**
+	 * 判断是否在java下面的包里，或者自身是{@link Ordered}
+	 * {@link AnnotationsScanner#hasPlainJavaAnnotationsOnly(java.lang.Object)}
+	 * 中调用
+	 *
+	 * @param type
+	 * @return
+	 */
 	static boolean hasPlainJavaAnnotationsOnly(Class<?> type) {
 		return (type.getName().startsWith("java.") || type == Ordered.class);
 	}
 
+	/**
+	 * 无等级的
+	 * {@link AnnotationsScanner#isKnownEmpty(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy)}
+	 * 中被调用
+	 *
+	 * @param source
+	 * @param searchStrategy
+	 * @return
+	 */
 	private static boolean isWithoutHierarchy(AnnotatedElement source, SearchStrategy searchStrategy) {
 		if (source == Object.class) {
+			// 如果传入的对象是Object.class返回true
 			return true;
 		}
 		if (source instanceof Class) {
 			Class<?> sourceClass = (Class<?>) source;
+			// 父class是Object.class,且没有实现任何接口
 			boolean noSuperTypes = (sourceClass.getSuperclass() == Object.class &&
 					sourceClass.getInterfaces().length == 0);
 			return (searchStrategy == SearchStrategy.TYPE_HIERARCHY_AND_ENCLOSING_CLASSES ? noSuperTypes &&

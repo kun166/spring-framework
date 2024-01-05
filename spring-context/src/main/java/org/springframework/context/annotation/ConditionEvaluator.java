@@ -34,6 +34,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -71,8 +72,12 @@ class ConditionEvaluator {
 	 * Determine if an item should be skipped based on {@code @Conditional} annotations.
 	 * The {@link ConfigurationPhase} will be deduced from the type of item (i.e. a
 	 * {@code @Configuration} class will be {@link ConfigurationPhase#PARSE_CONFIGURATION})
+	 * <p>
+	 * {@link AnnotatedBeanDefinitionReader#doRegisterBean(java.lang.Class, java.lang.String, java.lang.Class[], java.util.function.Supplier, org.springframework.beans.factory.config.BeanDefinitionCustomizer[])}
+	 * 中被调用
+	 * </p>
 	 *
-	 * @param metadata the meta data
+	 * @param metadata the meta data {@link StandardAnnotationMetadata}
 	 * @return if the item should be skipped
 	 */
 	public boolean shouldSkip(AnnotatedTypeMetadata metadata) {
@@ -81,12 +86,20 @@ class ConditionEvaluator {
 
 	/**
 	 * Determine if an item should be skipped based on {@code @Conditional} annotations.
+	 * <p>
+	 * {@link ConditionEvaluator#shouldSkip(org.springframework.core.type.AnnotatedTypeMetadata)}
+	 * 中被调用
+	 * </p>
 	 *
-	 * @param metadata the meta data
+	 * @param metadata the meta data {@link StandardAnnotationMetadata}
 	 * @param phase    the phase of the call
+	 *                 传递null
 	 * @return if the item should be skipped
 	 */
 	public boolean shouldSkip(@Nullable AnnotatedTypeMetadata metadata, @Nullable ConfigurationPhase phase) {
+		/**
+		 * metadata为空，或者是没有{@link Conditional}注解，返回false
+		 */
 		if (metadata == null || !metadata.isAnnotated(Conditional.class.getName())) {
 			return false;
 		}
@@ -94,6 +107,9 @@ class ConditionEvaluator {
 		if (phase == null) {
 			if (metadata instanceof AnnotationMetadata &&
 					ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) {
+				/**
+				 * 有{@link Configuration}注解,或者方法有{@link Bean}注解
+				 */
 				return shouldSkip(metadata, ConfigurationPhase.PARSE_CONFIGURATION);
 			}
 			return shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);
@@ -122,6 +138,13 @@ class ConditionEvaluator {
 		return false;
 	}
 
+	/**
+	 * {@link ConditionEvaluator#shouldSkip(org.springframework.core.type.AnnotatedTypeMetadata, org.springframework.context.annotation.ConfigurationCondition.ConfigurationPhase)}
+	 * 中调用
+	 *
+	 * @param metadata
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	private List<String[]> getConditionClasses(AnnotatedTypeMetadata metadata) {
 		MultiValueMap<String, Object> attributes = metadata.getAllAnnotationAttributes(Conditional.class.getName(), true);

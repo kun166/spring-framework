@@ -29,6 +29,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.lang.Nullable;
 
 /**
@@ -53,22 +54,40 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	@Nullable
 	private final AnnotatedElement element;
 
+	/**
+	 * {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 */
 	@Nullable
 	private final SearchStrategy searchStrategy;
 
 	@Nullable
 	private final Annotation[] annotations;
 
+	/**
+	 * {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}
+	 */
 	private final RepeatableContainers repeatableContainers;
 
+	/**
+	 * {@link AnnotationFilter#PLAIN}
+	 */
 	private final AnnotationFilter annotationFilter;
 
 	@Nullable
 	private volatile List<Aggregate> aggregates;
 
 
+	/**
+	 * {@link TypeMappedAnnotations#from(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.RepeatableContainers, org.springframework.core.annotation.AnnotationFilter)}
+	 * 中被调用
+	 *
+	 * @param element
+	 * @param searchStrategy       {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 * @param repeatableContainers {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}
+	 * @param annotationFilter     {@link AnnotationFilter#PLAIN}
+	 */
 	private TypeMappedAnnotations(AnnotatedElement element, SearchStrategy searchStrategy,
-			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
 		this.source = element;
 		this.element = element;
@@ -79,7 +98,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 	private TypeMappedAnnotations(@Nullable Object source, Annotation[] annotations,
-			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
 		this.source = source;
 		this.element = null;
@@ -133,15 +152,15 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(Class<A> annotationType,
-			@Nullable Predicate<? super MergedAnnotation<A>> predicate) {
+														  @Nullable Predicate<? super MergedAnnotation<A>> predicate) {
 
 		return get(annotationType, predicate, null);
 	}
 
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(Class<A> annotationType,
-			@Nullable Predicate<? super MergedAnnotation<A>> predicate,
-			@Nullable MergedAnnotationSelector<A> selector) {
+														  @Nullable Predicate<? super MergedAnnotation<A>> predicate,
+														  @Nullable MergedAnnotationSelector<A> selector) {
 
 		if (this.annotationFilter.matches(annotationType)) {
 			return MergedAnnotation.missing();
@@ -158,15 +177,15 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(String annotationType,
-			@Nullable Predicate<? super MergedAnnotation<A>> predicate) {
+														  @Nullable Predicate<? super MergedAnnotation<A>> predicate) {
 
 		return get(annotationType, predicate, null);
 	}
 
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(String annotationType,
-			@Nullable Predicate<? super MergedAnnotation<A>> predicate,
-			@Nullable MergedAnnotationSelector<A> selector) {
+														  @Nullable Predicate<? super MergedAnnotation<A>> predicate,
+														  @Nullable MergedAnnotationSelector<A> selector) {
 
 		if (this.annotationFilter.matches(annotationType)) {
 			return MergedAnnotation.missing();
@@ -192,6 +211,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return StreamSupport.stream(spliterator(annotationType), false);
 	}
 
+	/**
+	 * {@link AnnotationMetadata#getAnnotationTypes()}调用
+	 *
+	 * @return
+	 */
 	@Override
 	public Stream<MergedAnnotation<Annotation>> stream() {
 		if (this.annotationFilter == AnnotationFilter.ALL) {
@@ -208,6 +232,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return Spliterators.iterator(spliterator());
 	}
 
+	/**
+	 * {@link TypeMappedAnnotations#stream()}中调用
+	 *
+	 * @return
+	 */
 	@Override
 	public Spliterator<MergedAnnotation<Annotation>> spliterator() {
 		if (this.annotationFilter == AnnotationFilter.ALL) {
@@ -216,10 +245,23 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return spliterator(null);
 	}
 
+	/**
+	 * {@link TypeMappedAnnotations#spliterator()}中调用
+	 *
+	 * @param annotationType
+	 * @param <A>
+	 * @return
+	 */
 	private <A extends Annotation> Spliterator<MergedAnnotation<A>> spliterator(@Nullable Object annotationType) {
 		return new AggregatesSpliterator<>(annotationType, getAggregates());
 	}
 
+	/**
+	 * {@link TypeMappedAnnotations#spliterator(java.lang.Object)}
+	 * 中调用
+	 *
+	 * @return
+	 */
 	private List<Aggregate> getAggregates() {
 		List<Aggregate> aggregates = this.aggregates;
 		if (aggregates == null) {
@@ -232,9 +274,19 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return aggregates;
 	}
 
+	/**
+	 * {@link TypeMappedAnnotations#getAggregates()}中调用
+	 *
+	 * @param criteria
+	 * @param processor {@link AggregatesCollector}
+	 * @param <C>
+	 * @param <R>
+	 * @return
+	 */
 	@Nullable
 	private <C, R> R scan(C criteria, AnnotationsProcessor<C, R> processor) {
 		if (this.annotations != null) {
+			// 不走这个分支
 			R result = processor.doWithAnnotations(criteria, 0, this.source, this.annotations);
 			return processor.finish(result);
 		}
@@ -245,8 +297,18 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 
+	/**
+	 * {@link MergedAnnotations#from(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.RepeatableContainers, org.springframework.core.annotation.AnnotationFilter)}
+	 * 中被调用
+	 *
+	 * @param element
+	 * @param searchStrategy       {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 * @param repeatableContainers {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}
+	 * @param annotationFilter     {@link AnnotationFilter#PLAIN}
+	 * @return
+	 */
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
-			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
 		if (AnnotationsScanner.isKnownEmpty(element, searchStrategy)) {
 			return NONE;
@@ -255,7 +317,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 	static MergedAnnotations from(@Nullable Object source, Annotation[] annotations,
-			RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
 		if (annotations.length == 0) {
 			return NONE;
@@ -264,7 +326,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 	private static boolean isMappingForType(AnnotationTypeMapping mapping,
-			AnnotationFilter annotationFilter, @Nullable Object requiredType) {
+											AnnotationFilter annotationFilter, @Nullable Object requiredType) {
 
 		Class<? extends Annotation> actualType = mapping.getAnnotationType();
 		return (!annotationFilter.matches(actualType) &&
@@ -283,6 +345,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		 * the common combinations.
 		 */
 		private static final IsPresent[] SHARED;
+
 		static {
 			SHARED = new IsPresent[4];
 			SHARED[0] = new IsPresent(RepeatableContainers.none(), AnnotationFilter.PLAIN, true);
@@ -298,7 +361,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private final boolean directOnly;
 
 		private IsPresent(RepeatableContainers repeatableContainers,
-				AnnotationFilter annotationFilter, boolean directOnly) {
+						  AnnotationFilter annotationFilter, boolean directOnly) {
 
 			this.repeatableContainers = repeatableContainers;
 			this.annotationFilter = annotationFilter;
@@ -308,7 +371,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Override
 		@Nullable
 		public Boolean doWithAnnotations(Object requiredType, int aggregateIndex,
-				@Nullable Object source, Annotation[] annotations) {
+										 @Nullable Object source, Annotation[] annotations) {
 
 			for (Annotation annotation : annotations) {
 				if (annotation != null) {
@@ -342,7 +405,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		}
 
 		static IsPresent get(RepeatableContainers repeatableContainers,
-				AnnotationFilter annotationFilter, boolean directOnly) {
+							 AnnotationFilter annotationFilter, boolean directOnly) {
 
 			// Use a single shared instance for common combinations
 			if (annotationFilter == AnnotationFilter.PLAIN) {
@@ -375,7 +438,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private MergedAnnotation<A> result;
 
 		MergedAnnotationFinder(Object requiredType, @Nullable Predicate<? super MergedAnnotation<A>> predicate,
-				@Nullable MergedAnnotationSelector<A> selector) {
+							   @Nullable MergedAnnotationSelector<A> selector) {
 
 			this.requiredType = requiredType;
 			this.predicate = predicate;
@@ -391,7 +454,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Override
 		@Nullable
 		public MergedAnnotation<A> doWithAnnotations(Object type, int aggregateIndex,
-				@Nullable Object source, Annotation[] annotations) {
+													 @Nullable Object source, Annotation[] annotations) {
 
 			for (Annotation annotation : annotations) {
 				if (annotation != null && !annotationFilter.matches(annotation)) {
@@ -450,15 +513,36 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 		private final List<Aggregate> aggregates = new ArrayList<>();
 
+		/**
+		 * {@link AnnotationsScanner#processElement(java.lang.Object, java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.AnnotationsProcessor)}
+		 * 中被调用
+		 *
+		 * @param criteria       {@link TypeMappedAnnotations}
+		 * @param aggregateIndex the aggregate index of the provided annotations
+		 * @param source         the original source of the annotations, if known
+		 * @param annotations    the annotations to process (this array may contain
+		 *                       {@code null} elements)
+		 *                       source上面的需要关注的注解
+		 * @return
+		 */
 		@Override
 		@Nullable
 		public List<Aggregate> doWithAnnotations(Object criteria, int aggregateIndex,
-				@Nullable Object source, Annotation[] annotations) {
+												 @Nullable Object source, Annotation[] annotations) {
 
 			this.aggregates.add(createAggregate(aggregateIndex, source, annotations));
 			return null;
 		}
 
+		/**
+		 * {@link AggregatesCollector#doWithAnnotations(java.lang.Object, int, java.lang.Object, java.lang.annotation.Annotation[])}
+		 * 中被调用
+		 *
+		 * @param aggregateIndex
+		 * @param source
+		 * @param annotations
+		 * @return
+		 */
 		private Aggregate createAggregate(int aggregateIndex, @Nullable Object source, Annotation[] annotations) {
 			List<Annotation> aggregateAnnotations = getAggregateAnnotations(annotations);
 			return new Aggregate(aggregateIndex, source, aggregateAnnotations);
@@ -476,8 +560,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 					Annotation[] repeatedAnnotations = repeatableContainers.findRepeatedAnnotations(annotation);
 					if (repeatedAnnotations != null) {
 						addAggregateAnnotations(aggregateAnnotations, repeatedAnnotations);
-					}
-					else {
+					} else {
 						aggregateAnnotations.add(annotation);
 					}
 				}
@@ -491,6 +574,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 
+	/**
+	 * 聚合
+	 */
 	private static class Aggregate {
 
 		private final int aggregateIndex;
@@ -498,6 +584,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Nullable
 		private final Object source;
 
+		/**
+		 * 注解集合？
+		 */
 		private final List<Annotation> annotations;
 
 		private final AnnotationTypeMappings[] mappings;
@@ -629,7 +718,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		public long estimateSize() {
 			int size = 0;
 			for (int aggregateIndex = this.aggregateCursor;
-					aggregateIndex < this.aggregates.size(); aggregateIndex++) {
+				 aggregateIndex < this.aggregates.size(); aggregateIndex++) {
 				Aggregate aggregate = this.aggregates.get(aggregateIndex);
 				for (int annotationIndex = 0; annotationIndex < aggregate.size(); annotationIndex++) {
 					AnnotationTypeMappings mappings = aggregate.getMappings(annotationIndex);

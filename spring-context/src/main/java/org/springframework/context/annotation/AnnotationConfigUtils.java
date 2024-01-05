@@ -319,11 +319,27 @@ public abstract class AnnotationConfigUtils {
 		return ScopedProxyCreator.createScopedProxy(definition, registry, proxyTargetClass);
 	}
 
+	/**
+	 * {@link AnnotationScopeMetadataResolver#resolveScopeMetadata(org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中被调用
+	 *
+	 * @param metadata
+	 * @param annotationClass
+	 * @return
+	 */
 	@Nullable
 	static AnnotationAttributes attributesFor(AnnotatedTypeMetadata metadata, Class<?> annotationClass) {
 		return attributesFor(metadata, annotationClass.getName());
 	}
 
+	/**
+	 * {@link AnnotationConfigUtils#attributesFor(org.springframework.core.type.AnnotatedTypeMetadata, java.lang.Class)}
+	 * 中被调用
+	 *
+	 * @param metadata
+	 * @param annotationClassName
+	 * @return
+	 */
 	@Nullable
 	static AnnotationAttributes attributesFor(AnnotatedTypeMetadata metadata, String annotationClassName) {
 		return AnnotationAttributes.fromMap(metadata.getAnnotationAttributes(annotationClassName));
