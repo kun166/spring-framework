@@ -26,6 +26,15 @@ import java.lang.annotation.Annotation;
  * filter (for efficiency reasons). Any additional filters and even custom filter
  * implementations apply within this boundary and may only narrow further from here.
  *
+ * <p>
+ * 注解过滤器
+ * 一共有四种实现
+ * {@link AnnotationFilter#PLAIN}
+ * {@link AnnotationFilter#JAVA}
+ * {@link AnnotationFilter#ALL}
+ * {@link AnnotationFilter#NONE}
+ * </p>
+ *
  * @author Phillip Webb
  * @author Juergen Hoeller
  * @see MergedAnnotations
@@ -112,6 +121,8 @@ public interface AnnotationFilter {
 
 	/**
 	 * Test if the given annotation matches the filter.
+	 * 检测给定的注解是否符合该过滤器
+	 * 注解的全限定名
 	 *
 	 * @param annotation the annotation to test
 	 * @return {@code true} if the annotation matches
@@ -122,6 +133,8 @@ public interface AnnotationFilter {
 
 	/**
 	 * Test if the given type matches the filter.
+	 * 检测给定的class是否符合该过滤器
+	 * class的全限定名
 	 *
 	 * @param type the annotation type to test
 	 * @return {@code true} if the annotation matches
@@ -132,6 +145,7 @@ public interface AnnotationFilter {
 
 	/**
 	 * Test if the given type name matches the filter.
+	 * 检测给定的typeName是否符合该过滤器
 	 *
 	 * @param typeName the fully qualified class name of the annotation type to test
 	 * @return {@code true} if the annotation matches

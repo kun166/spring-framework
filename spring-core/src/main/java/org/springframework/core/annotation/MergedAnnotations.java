@@ -128,6 +128,19 @@ import org.springframework.util.Assert;
  * please use standard Java reflection or Spring's {@link AnnotationUtils}
  * for simple annotation retrieval purposes.
  *
+ * <p>
+ * MergedAnnotations是什么
+ * MergedAnnotations：合并了一个或多个注解的注解"集合"类
+ * <p>
+ * 因为在JDK中提供获取注解的api过于简易，稍微复杂一点的场景就无法胜任
+ * 所以Spring提供了MergedAnnotations，使获取注解上更加的容易和"人性化"
+ * 例如:
+ * 无法获取注解上的注解
+ * 子类无法获取父类的注解
+ * 子类无法获取接口的注解
+ * 内部类无法获取外部类的注解
+ * </p>
+ *
  * @author Phillip Webb
  * @author Sam Brannen
  * @see MergedAnnotation
@@ -307,11 +320,14 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * {@link #from(AnnotatedElement, SearchStrategy)} with an appropriate
 	 * {@link SearchStrategy}.
 	 *
-	 * @param element the source element
+	 * @param element 目标element，每一个class继承自AnnotatedElement
 	 * @return a {@code MergedAnnotations} instance containing the element's
 	 * annotations
 	 */
 	static MergedAnnotations from(AnnotatedElement element) {
+		/**
+		 * 默认{@link SearchStrategy},选择的是{@link SearchStrategy#DIRECT}
+		 */
 		return from(element, SearchStrategy.DIRECT);
 	}
 
@@ -326,6 +342,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * element annotations
 	 */
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy) {
+		/**
+		 * {@link RepeatableContainers}传递的是{@link RepeatableContainers.StandardRepeatableContainers#INSTANCE}
+		 */
 		return from(element, searchStrategy, RepeatableContainers.standardRepeatables());
 	}
 
@@ -347,6 +366,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
 								  RepeatableContainers repeatableContainers) {
 
+		/**
+		 * {@link AnnotationFilter}取的默认的{@link AnnotationFilter#PLAIN}
+		 */
 		return from(element, searchStrategy, repeatableContainers, AnnotationFilter.PLAIN);
 	}
 

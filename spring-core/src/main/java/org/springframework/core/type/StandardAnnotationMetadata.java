@@ -54,6 +54,9 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	 */
 	private final boolean nestedAnnotationsAsMap;
 
+	/**
+	 * {@link StandardAnnotationMetadata#getAnnotationTypes()}中赋值
+	 */
 	@Nullable
 	private Set<String> annotationTypes;
 
@@ -116,8 +119,10 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	 */
 	@Override
 	public Set<String> getAnnotationTypes() {
+		// 做了一个缓存
 		Set<String> annotationTypes = this.annotationTypes;
 		if (annotationTypes == null) {
+			// 如果没有值的话，就调用父类的该方法
 			annotationTypes = Collections.unmodifiableSet(AnnotationMetadata.super.getAnnotationTypes());
 			this.annotationTypes = annotationTypes;
 		}

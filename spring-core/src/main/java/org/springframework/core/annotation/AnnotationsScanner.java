@@ -70,7 +70,7 @@ abstract class AnnotationsScanner {
 	 * </p>
 	 *
 	 * @param context        {@link TypeMappedAnnotations}
-	 * @param source         the source element to scan
+	 * @param source         class对象
 	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 * @param processor      {@link TypeMappedAnnotations.AggregatesCollector}
 	 * @return the result of {@link AnnotationsProcessor#finish(Object)}
@@ -88,11 +88,11 @@ abstract class AnnotationsScanner {
 	 * 中调用
 	 *
 	 * @param context        {@link TypeMappedAnnotations}
-	 * @param source
+	 * @param source         原始的class对象
 	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 * @param processor      {@link TypeMappedAnnotations.AggregatesCollector}
-	 * @param <C>
-	 * @param <R>
+	 * @param <C>            {@link TypeMappedAnnotations}
+	 * @param <R>            List<Aggregate>
 	 * @return
 	 */
 	@Nullable
@@ -113,11 +113,11 @@ abstract class AnnotationsScanner {
 	 * 中调用
 	 *
 	 * @param context        {@link TypeMappedAnnotations}
-	 * @param source
+	 * @param source         class原始对象
 	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 * @param processor      {@link TypeMappedAnnotations.AggregatesCollector}
-	 * @param <C>
-	 * @param <R>
+	 * @param <C>            {@link TypeMappedAnnotations}
+	 * @param <R>            List<Aggregate>
 	 * @return
 	 */
 	@Nullable
@@ -453,16 +453,17 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
+	 * 搜索类型是
 	 * {@link SearchStrategy#DIRECT}
 	 * <p>
 	 * {@link AnnotationsScanner#processClass(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
 	 * 中调用
 	 *
 	 * @param context   {@link TypeMappedAnnotations}
-	 * @param source
+	 * @param source    原始的class对象
 	 * @param processor {@link TypeMappedAnnotations.AggregatesCollector}
-	 * @param <C>
-	 * @param <R>
+	 * @param <C>       {@link TypeMappedAnnotations}
+	 * @param <R>       {@link TypeMappedAnnotations.AggregatesCollector}能看到，是List<Aggregate>
 	 * @return
 	 */
 	@Nullable
@@ -492,11 +493,13 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
+	 * 返回source上的注解数组。
+	 * 这些注解，所有声明的方法上，参数长度都为0，且返回值不能是void
 	 * {@link AnnotationsScanner#processElement(java.lang.Object, java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.AnnotationsProcessor)}
 	 * 中被调用
 	 *
 	 * @param source
-	 * @param defensive false
+	 * @param defensive false,防御的。即返回原来的数据，还是clone一份返回
 	 * @return
 	 */
 	static Annotation[] getDeclaredAnnotations(AnnotatedElement source, boolean defensive) {
@@ -519,6 +522,12 @@ abstract class AnnotationsScanner {
 					 * annotationType方法会返回该annotation的class
 					 */
 					if (isIgnorable(annotation.annotationType()) ||
+							/**
+							 * AttributeMethods.forAnnotationType方法返回的是
+							 * {@link AttributeMethods},该对象持有了annotation.annotationType()的class,
+							 * 并且缓存了该注解的那些参数长度为0,即无参且返回不为void的那些方法
+							 * isValid方法，将上述的那些方法都在annotation上调用一遍，看是否有异常
+							 */
 							!AttributeMethods.forAnnotationType(annotation.annotationType()).isValid(annotation)) {
 						annotations[i] = null;
 					} else {

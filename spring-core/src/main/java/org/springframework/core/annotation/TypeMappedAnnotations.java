@@ -43,23 +43,34 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	/**
 	 * Shared instance that can be used when there are no annotations.
+	 * 传入的element没有注解
 	 */
 	static final MergedAnnotations NONE = new TypeMappedAnnotations(
 			null, new Annotation[0], RepeatableContainers.none(), AnnotationFilter.ALL);
 
 
+	/**
+	 * 同element
+	 */
 	@Nullable
 	private final Object source;
 
+	/**
+	 * 每一个Class对象都是一个AnnotatedElement
+	 */
 	@Nullable
 	private final AnnotatedElement element;
 
 	/**
+	 * 注解的搜索策略
 	 * {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 */
 	@Nullable
 	private final SearchStrategy searchStrategy;
 
+	/**
+	 * 注解数组
+	 */
 	@Nullable
 	private final Annotation[] annotations;
 
@@ -69,10 +80,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	private final RepeatableContainers repeatableContainers;
 
 	/**
+	 * 注解过滤器
 	 * {@link AnnotationFilter#PLAIN}
 	 */
 	private final AnnotationFilter annotationFilter;
 
+	/**
+	 * 聚合
+	 */
 	@Nullable
 	private volatile List<Aggregate> aggregates;
 
@@ -109,9 +124,17 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 
+	/**
+	 * 判断给定的注解是否存在
+	 *
+	 * @param annotationType the annotation type to check
+	 * @param <A>
+	 * @return
+	 */
 	@Override
 	public <A extends Annotation> boolean isPresent(Class<A> annotationType) {
 		if (this.annotationFilter.matches(annotationType)) {
+			// 给定的注解,符合过滤器规则，返回false
 			return false;
 		}
 		return Boolean.TRUE.equals(scan(annotationType,
@@ -219,8 +242,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	@Override
 	public Stream<MergedAnnotation<Annotation>> stream() {
 		if (this.annotationFilter == AnnotationFilter.ALL) {
+			/**
+			 * 如果{@link TypeMappedAnnotations#annotationFilter}是{@link AnnotationFilter#ALL}
+			 * 则所有的注解都过滤掉了，返回一个空的
+			 */
 			return Stream.empty();
 		}
+		// StreamSupport.stream 这个要学学啊
 		return StreamSupport.stream(spliterator(), false);
 	}
 
@@ -263,6 +291,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	 * @return
 	 */
 	private List<Aggregate> getAggregates() {
+		// 又是一个缓存
 		List<Aggregate> aggregates = this.aggregates;
 		if (aggregates == null) {
 			aggregates = scan(this, new AggregatesCollector());
@@ -275,12 +304,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 	/**
+	 * 扫描C,根据processor返回R
 	 * {@link TypeMappedAnnotations#getAggregates()}中调用
 	 *
-	 * @param criteria
+	 * @param criteria  {@link TypeMappedAnnotations}
 	 * @param processor {@link AggregatesCollector}
-	 * @param <C>
-	 * @param <R>
+	 * @param <C>       {@link TypeMappedAnnotations}
+	 * @param <R>       List<Aggregate>
 	 * @return
 	 */
 	@Nullable
@@ -343,6 +373,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		/**
 		 * Shared instances that save us needing to create a new processor for
 		 * the common combinations.
+		 * 缓存常用的四种IsPresent
 		 */
 		private static final IsPresent[] SHARED;
 
@@ -368,6 +399,16 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			this.directOnly = directOnly;
 		}
 
+		/**
+		 * 有用的好像只有这一个方法
+		 *
+		 * @param requiredType
+		 * @param aggregateIndex the aggregate index of the provided annotations
+		 * @param source         the original source of the annotations, if known
+		 * @param annotations    the annotations to process (this array may contain
+		 *                       {@code null} elements)
+		 * @return
+		 */
 		@Override
 		@Nullable
 		public Boolean doWithAnnotations(Object requiredType, int aggregateIndex,
@@ -408,6 +449,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 							 AnnotationFilter annotationFilter, boolean directOnly) {
 
 			// Use a single shared instance for common combinations
+			/**
+			 * 如果传入的{@link AnnotationFilter}是{@link AnnotationFilter.PLAIN}
+			 * 则和repeatableContainers就没关系了。只和directOnly有关系
+			 */
 			if (annotationFilter == AnnotationFilter.PLAIN) {
 				if (repeatableContainers == RepeatableContainers.none()) {
 					return SHARED[directOnly ? 0 : 1];
@@ -518,8 +563,8 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		 * 中被调用
 		 *
 		 * @param criteria       {@link TypeMappedAnnotations}
-		 * @param aggregateIndex the aggregate index of the provided annotations
-		 * @param source         the original source of the annotations, if known
+		 * @param aggregateIndex the aggregate index of the provided annotations,传的是0
+		 * @param source         最初的class
 		 * @param annotations    the annotations to process (this array may contain
 		 *                       {@code null} elements)
 		 *                       source上面的需要关注的注解
@@ -538,22 +583,40 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		 * {@link AggregatesCollector#doWithAnnotations(java.lang.Object, int, java.lang.Object, java.lang.annotation.Annotation[])}
 		 * 中被调用
 		 *
-		 * @param aggregateIndex
-		 * @param source
-		 * @param annotations
+		 * @param aggregateIndex 传入的0
+		 * @param source         最初的class
+		 * @param annotations    source上的注解数组，每个注解的方法，参数长度都是0，返回都不是void
 		 * @return
 		 */
 		private Aggregate createAggregate(int aggregateIndex, @Nullable Object source, Annotation[] annotations) {
 			List<Annotation> aggregateAnnotations = getAggregateAnnotations(annotations);
+			/**
+			 * 把一个source和它上面的注解，封装成一个Aggregate对象
+			 */
 			return new Aggregate(aggregateIndex, source, aggregateAnnotations);
 		}
 
+		/**
+		 * {@link AggregatesCollector#createAggregate(int, java.lang.Object, java.lang.annotation.Annotation[])}
+		 * 中被调用
+		 *
+		 * @param annotations
+		 * @return
+		 */
 		private List<Annotation> getAggregateAnnotations(Annotation[] annotations) {
 			List<Annotation> result = new ArrayList<>(annotations.length);
 			addAggregateAnnotations(result, annotations);
 			return result;
 		}
 
+		/**
+		 * 将annotations中的 注解，添加到aggregateAnnotations中
+		 * {@link AggregatesCollector#getAggregateAnnotations(java.lang.annotation.Annotation[])}
+		 * 中被调用
+		 *
+		 * @param aggregateAnnotations 空的list
+		 * @param annotations          注解数组
+		 */
 		private void addAggregateAnnotations(List<Annotation> aggregateAnnotations, Annotation[] annotations) {
 			for (Annotation annotation : annotations) {
 				if (annotation != null && !annotationFilter.matches(annotation)) {
@@ -561,6 +624,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 					if (repeatedAnnotations != null) {
 						addAggregateAnnotations(aggregateAnnotations, repeatedAnnotations);
 					} else {
+						// 走这个分支
 						aggregateAnnotations.add(annotation);
 					}
 				}
@@ -591,6 +655,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 		private final AnnotationTypeMappings[] mappings;
 
+		/**
+		 * {@link AggregatesCollector#createAggregate(int, java.lang.Object, java.lang.annotation.Annotation[])}
+		 * 中调用
+		 *
+		 * @param aggregateIndex
+		 * @param source         原始的{@link AnnotatedElement}对象
+		 * @param annotations    source上的注解
+		 */
 		Aggregate(int aggregateIndex, @Nullable Object source, List<Annotation> annotations) {
 			this.aggregateIndex = aggregateIndex;
 			this.source = source;
