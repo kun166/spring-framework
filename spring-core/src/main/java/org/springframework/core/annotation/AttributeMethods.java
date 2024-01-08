@@ -277,10 +277,16 @@ final class AttributeMethods {
 
 
 	/**
-	 * Get the attribute methods for the given annotation type.
 	 * <p>
 	 * {@link AnnotationsScanner#getDeclaredAnnotations(java.lang.reflect.AnnotatedElement, boolean)}
 	 * 中调用
+	 * {@link RepeatableContainers.StandardRepeatableContainers#computeRepeatedAnnotationsMethod(java.lang.Class)}
+	 * 中调用
+	 * </p>
+	 * Get the attribute methods for the given annotation type.
+	 * <p>
+	 * 获取annotationType的声明方法(不包含继承的),选取参数长度为0,返回不为void的方法数组,和annotationType封装成
+	 * {@link AttributeMethods}返回
 	 * </p>
 	 *
 	 * @param annotationType 这个是注解的class

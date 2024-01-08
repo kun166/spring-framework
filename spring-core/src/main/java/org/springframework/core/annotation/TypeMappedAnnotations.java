@@ -580,8 +580,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		}
 
 		/**
+		 * 把一个source和它上面的注解，封装成一个Aggregate对象
+		 * <p>
 		 * {@link AggregatesCollector#doWithAnnotations(java.lang.Object, int, java.lang.Object, java.lang.annotation.Annotation[])}
 		 * 中被调用
+		 * </p>
 		 *
 		 * @param aggregateIndex 传入的0
 		 * @param source         最初的class

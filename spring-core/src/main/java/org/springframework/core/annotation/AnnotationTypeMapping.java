@@ -40,8 +40,8 @@ import org.springframework.util.StringUtils;
  *
  * @author Phillip Webb
  * @author Sam Brannen
- * @since 5.2
  * @see AnnotationTypeMappings
+ * @since 5.2
  */
 final class AnnotationTypeMapping {
 
@@ -81,8 +81,18 @@ final class AnnotationTypeMapping {
 	private final Set<Method> claimedAliases = new HashSet<>();
 
 
+	/**
+	 * 通过source,建立注解的父子关系？
+	 * {@link AnnotationTypeMappings#addIfPossible(java.util.Deque, org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
+	 * 中调用
+	 *
+	 * @param source                 传的null,不太明白这个是啥。这个应该是记录annotationType归属的父AnnotationTypeMapping
+	 * @param annotationType         Annotation,调用{@link Annotation#annotationType()}获取的class
+	 * @param annotation             传入的null,不太明白是啥
+	 * @param visitedAnnotationTypes 访问过的AnnotationType
+	 */
 	AnnotationTypeMapping(@Nullable AnnotationTypeMapping source, Class<? extends Annotation> annotationType,
-			@Nullable Annotation annotation, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+						  @Nullable Annotation annotation, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 
 		this.source = source;
 		this.root = (source != null ? source.getRoot() : this);
@@ -137,7 +147,7 @@ final class AnnotationTypeMapping {
 		if (StringUtils.hasText(aliasFor.value()) && StringUtils.hasText(aliasFor.attribute())) {
 			throw new AnnotationConfigurationException(String.format(
 					"In @AliasFor declared on %s, attribute 'attribute' and its alias 'value' " +
-					"are present with values of '%s' and '%s', but only one is permitted.",
+							"are present with values of '%s' and '%s', but only one is permitted.",
 					AttributeMethods.describe(attribute), aliasFor.attribute(),
 					aliasFor.value()));
 		}
@@ -167,7 +177,7 @@ final class AnnotationTypeMapping {
 		if (target.equals(attribute)) {
 			throw new AnnotationConfigurationException(String.format(
 					"@AliasFor declaration on %s points to itself. " +
-					"Specify 'annotation' to point to a same-named attribute on a meta-annotation.",
+							"Specify 'annotation' to point to a same-named attribute on a meta-annotation.",
 					AttributeMethods.describe(attribute)));
 		}
 		if (!isCompatibleReturnType(attribute.getReturnType(), target.getReturnType())) {
@@ -300,7 +310,7 @@ final class AnnotationTypeMapping {
 	}
 
 	private boolean isBetterConventionAnnotationValue(int index, boolean isValueAttribute,
-			AnnotationTypeMapping mapping) {
+													  AnnotationTypeMapping mapping) {
 
 		if (this.annotationValueMappings[index] == -1) {
 			return true;
@@ -360,6 +370,10 @@ final class AnnotationTypeMapping {
 	}
 
 	/**
+	 * <p>
+	 * {@link AnnotationTypeMappings#AnnotationTypeMappings(org.springframework.core.annotation.RepeatableContainers, org.springframework.core.annotation.AnnotationFilter, java.lang.Class, java.util.Set)}
+	 * 中调用
+	 * </p>
 	 * Method called after all mappings have been set. At this point no further
 	 * lookups from child mappings will occur.
 	 */
@@ -371,9 +385,16 @@ final class AnnotationTypeMapping {
 		this.claimedAliases.clear();
 	}
 
+	/**
+	 *
+	 */
 	private void validateAllAliasesClaimed() {
 		for (int i = 0; i < this.attributes.size(); i++) {
+			// 遍历该注解的所有方法
 			Method attribute = this.attributes.get(i);
+			/**
+			 * 获取该方法上的{@link AliasFor}注解
+			 */
 			AliasFor aliasFor = AnnotationsScanner.getDeclaredAnnotation(attribute, AliasFor.class);
 			if (aliasFor != null && !this.claimedAliases.contains(attribute)) {
 				Method target = resolveAliasTarget(attribute, aliasFor);
@@ -405,6 +426,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the root mapping.
+	 *
 	 * @return the root mapping
 	 */
 	AnnotationTypeMapping getRoot() {
@@ -413,6 +435,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the source of the mapping or {@code null}.
+	 *
 	 * @return the source of the mapping
 	 */
 	@Nullable
@@ -422,6 +445,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the distance of this mapping.
+	 *
 	 * @return the distance of the mapping
 	 */
 	int getDistance() {
@@ -430,6 +454,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the type of the mapped annotation.
+	 *
 	 * @return the annotation type
 	 */
 	Class<? extends Annotation> getAnnotationType() {
@@ -443,6 +468,7 @@ final class AnnotationTypeMapping {
 	/**
 	 * Get the source annotation for this mapping. This will be the
 	 * meta-annotation, or {@code null} if this is the root mapping.
+	 *
 	 * @return the source annotation of the mapping
 	 */
 	@Nullable
@@ -452,6 +478,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the annotation attributes for the mapping annotation type.
+	 *
 	 * @return the attribute methods
 	 */
 	AttributeMethods getAttributes() {
@@ -463,6 +490,7 @@ final class AnnotationTypeMapping {
 	 * there is no mapping. The resulting value is the index of the attribute on
 	 * the root annotation that can be invoked in order to obtain the actual
 	 * value.
+	 *
 	 * @param attributeIndex the attribute index of the source attribute
 	 * @return the mapped attribute index or {@code -1}
 	 */
@@ -475,6 +503,7 @@ final class AnnotationTypeMapping {
 	 * if there is no mapping. The resulting value is the index of the attribute
 	 * on the root annotation that can be invoked in order to obtain the actual
 	 * value.
+	 *
 	 * @param attributeIndex the attribute index of the source attribute
 	 * @return the mapped attribute index or {@code -1}
 	 */
@@ -488,10 +517,11 @@ final class AnnotationTypeMapping {
 	 * <p>The resulting value is obtained from the closest meta-annotation,
 	 * taking into consideration both convention and alias based mapping rules.
 	 * For root mappings, this method will always return {@code null}.
-	 * @param attributeIndex the attribute index of the source attribute
+	 *
+	 * @param attributeIndex      the attribute index of the source attribute
 	 * @param metaAnnotationsOnly if only meta annotations should be considered.
-	 * If this parameter is {@code false} then aliases within the annotation will
-	 * also be considered.
+	 *                            If this parameter is {@code false} then aliases within the annotation will
+	 *                            also be considered.
 	 * @return the mapped annotation value, or {@code null}
 	 */
 	@Nullable
@@ -510,10 +540,11 @@ final class AnnotationTypeMapping {
 	/**
 	 * Determine if the specified value is equivalent to the default value of the
 	 * attribute at the given index.
+	 *
 	 * @param attributeIndex the attribute index of the source attribute
-	 * @param value the value to check
+	 * @param value          the value to check
 	 * @param valueExtractor the value extractor used to extract values from any
-	 * nested annotations
+	 *                       nested annotations
 	 * @return {@code true} if the value is equivalent to the default value
 	 */
 	boolean isEquivalentToDefaultValue(int attributeIndex, Object value, ValueExtractor valueExtractor) {
@@ -523,6 +554,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * Get the mirror sets for this type mapping.
+	 *
 	 * @return the attribute mirror sets
 	 */
 	MirrorSets getMirrorSets() {
@@ -533,6 +565,7 @@ final class AnnotationTypeMapping {
 	 * Determine if the mapped annotation is <em>synthesizable</em>.
 	 * <p>Consult the documentation for {@link MergedAnnotation#synthesize()}
 	 * for an explanation of what is considered synthesizable.
+	 *
 	 * @return {@code true} if the mapped annotation is synthesizable
 	 * @since 5.2.6
 	 */
@@ -548,13 +581,13 @@ final class AnnotationTypeMapping {
 	}
 
 	private static boolean isEquivalentToDefaultValue(Method attribute, Object value,
-			ValueExtractor valueExtractor) {
+													  ValueExtractor valueExtractor) {
 
 		return areEquivalent(attribute.getDefaultValue(), value, valueExtractor);
 	}
 
 	private static boolean areEquivalent(@Nullable Object value, @Nullable Object extractedValue,
-			ValueExtractor valueExtractor) {
+										 ValueExtractor valueExtractor) {
 
 		if (ObjectUtils.nullSafeEquals(value, extractedValue)) {
 			return true;
@@ -588,7 +621,7 @@ final class AnnotationTypeMapping {
 	}
 
 	private static boolean areEquivalent(Annotation annotation, @Nullable Object extractedValue,
-			ValueExtractor valueExtractor) {
+										 ValueExtractor valueExtractor) {
 
 		AttributeMethods attributes = AttributeMethods.forAnnotationType(annotation.annotationType());
 		for (int i = 0; i < attributes.size(); i++) {
@@ -597,8 +630,7 @@ final class AnnotationTypeMapping {
 			Object value2;
 			if (extractedValue instanceof TypeMappedAnnotation) {
 				value2 = ((TypeMappedAnnotation<?>) extractedValue).getValue(attribute.getName()).orElse(null);
-			}
-			else {
+			} else {
 				value2 = valueExtractor.extract(attribute, extractedValue);
 			}
 			if (!areEquivalent(value1, value2, valueExtractor)) {
@@ -717,7 +749,7 @@ final class AnnotationTypeMapping {
 						String on = (source != null) ? " declared on " + source : "";
 						throw new AnnotationConfigurationException(String.format(
 								"Different @AliasFor mirror values for annotation [%s]%s; attribute '%s' " +
-								"and its alias '%s' are declared with values of [%s] and [%s].",
+										"and its alias '%s' are declared with values of [%s] and [%s].",
 								getAnnotationType().getName(), on,
 								attributes.get(result).getName(),
 								attribute.getName(),
