@@ -87,6 +87,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	 * @param nestedAnnotationsAsMap return nested annotations and annotation arrays as
 	 *                               {@link org.springframework.core.annotation.AnnotationAttributes} for compatibility
 	 *                               with ASM-based {@link AnnotationMetadata} implementations
+	 *                               镶套的注解
 	 * @since 3.1.1
 	 * @deprecated since 5.2 in favor of the factory method {@link AnnotationMetadata#introspect(Class)}.
 	 * Use {@link MergedAnnotation#asMap(org.springframework.core.annotation.MergedAnnotation.Adapt...) MergedAnnotation.asMap}
@@ -106,6 +107,12 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	}
 
 
+	/**
+	 * {@link AnnotatedTypeMetadata#getAnnotationAttributes(java.lang.String, boolean)}
+	 * 中被调用
+	 *
+	 * @return
+	 */
 	@Override
 	public MergedAnnotations getAnnotations() {
 		return this.mergedAnnotations;

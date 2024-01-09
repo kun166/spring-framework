@@ -497,6 +497,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * Find only directly declared annotations, without considering
 		 * {@link Inherited @Inherited} annotations and without searching
 		 * superclasses or implemented interfaces.
+		 * <p>
+		 * 仅当前类
+		 * </p>
 		 */
 		DIRECT,
 
@@ -507,6 +510,10 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * types since the {@link Inherited @Inherited} annotation is ignored for
 		 * all other {@linkplain AnnotatedElement annotated elements}.
 		 * <p>This strategy does not search implemented interfaces.
+		 * <p>
+		 * 当前类 + 父类 ( @Inherited注解修饰的注解 )
+		 * INHERITED:继承，遗传
+		 * </p>
 		 */
 		INHERITED_ANNOTATIONS,
 
@@ -516,6 +523,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * the annotations do not need to be meta-annotated with
 		 * {@link Inherited @Inherited}.
 		 * <p>This strategy does not search implemented interfaces.
+		 * <p>
+		 * 当前类 + 父类
+		 * </p>
 		 */
 		SUPERCLASS,
 
@@ -524,6 +534,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * superclasses and implemented interfaces.
 		 * <p>Superclass annotations do not need to be meta-annotated with
 		 * {@link Inherited @Inherited}.
+		 * <p>
+		 * 当前类 + 父类 + 接口
+		 * </p>
 		 */
 		TYPE_HIERARCHY,
 
@@ -542,6 +555,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * whether the source type is an <em>inner class</em>, a {@code static}
 		 * nested class, or a nested interface. Thus, it may find more annotations
 		 * than you would expect.
+		 * <p>
+		 * 当前类 + 父类 + 接口 + 外部类 ( 当前类是内部类时才有外部类 )
+		 * </p>
 		 */
 		TYPE_HIERARCHY_AND_ENCLOSING_CLASSES
 

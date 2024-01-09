@@ -17,6 +17,7 @@
 package org.springframework.core.annotation;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Inherited;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -80,6 +81,12 @@ abstract class AnnotationsScanner {
 						 AnnotationsProcessor<C, R> processor) {
 
 		R result = process(context, source, searchStrategy, processor);
+		/**
+		 * 这个方法要特别注意，其实就是
+		 * {@link TypeMappedAnnotations.AggregatesCollector#finish(java.util.List)}方法,
+		 * 虽然上面的result是null，但是方法返回和传入的result没关系
+		 *
+		 */
 		return processor.finish(result);
 	}
 
@@ -126,10 +133,18 @@ abstract class AnnotationsScanner {
 
 		switch (searchStrategy) {
 			case DIRECT:
+				// 当前类
 				return processElement(context, source, processor);
 			case INHERITED_ANNOTATIONS:
+				/**
+				 * 当前类 + 父类
+				 * {@link Inherited}注解修饰的注解
+				 */
 				return processClassInheritedAnnotations(context, source, searchStrategy, processor);
 			case SUPERCLASS:
+				/**
+				 * 当前类 + 父类 + 接口
+				 */
 				return processClassHierarchy(context, source, processor, false, false);
 			case TYPE_HIERARCHY:
 				return processClassHierarchy(context, source, processor, true, false);
@@ -145,11 +160,11 @@ abstract class AnnotationsScanner {
 	 * {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 *
 	 * @param context        {@link TypeMappedAnnotations}
-	 * @param source
+	 * @param source         源class
 	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 * @param processor      {@link TypeMappedAnnotations.AggregatesCollector}
-	 * @param <C>
-	 * @param <R>
+	 * @param <C>            {@link TypeMappedAnnotations}
+	 * @param <R>            List<Aggregate>
 	 * @return
 	 */
 	@Nullable
@@ -158,6 +173,7 @@ abstract class AnnotationsScanner {
 
 		try {
 			if (isWithoutHierarchy(source, searchStrategy)) {
+				// 如果自身是Object.class或者父类是，且无实现接口
 				return processElement(context, source, processor);
 			}
 			Annotation[] relevant = null;
@@ -170,17 +186,23 @@ abstract class AnnotationsScanner {
 				if (result != null) {
 					return result;
 				}
+				// 获取source上的注解
 				Annotation[] declaredAnnotations = getDeclaredAnnotations(source, true);
 				if (relevant == null && declaredAnnotations.length > 0) {
+					// 所有注解，包括父类上的
 					relevant = root.getAnnotations();
+					// 所有注解的数量
 					remaining = relevant.length;
 				}
 				for (int i = 0; i < declaredAnnotations.length; i++) {
+					// 遍历自身的注解
 					if (declaredAnnotations[i] != null) {
 						boolean isRelevant = false;
 						for (int relevantIndex = 0; relevantIndex < relevant.length; relevantIndex++) {
+							// 遍历所有注解
 							if (relevant[relevantIndex] != null &&
 									declaredAnnotations[i].annotationType() == relevant[relevantIndex].annotationType()) {
+								// 如果自身的注解,在所有注解上找到了，则所有注解数组上该元素置为空
 								isRelevant = true;
 								relevant[relevantIndex] = null;
 								remaining--;
@@ -188,6 +210,7 @@ abstract class AnnotationsScanner {
 							}
 						}
 						if (!isRelevant) {
+							// 否则自身注解该位置置空
 							declaredAnnotations[i] = null;
 						}
 					}
@@ -616,6 +639,8 @@ abstract class AnnotationsScanner {
 	 * 判断是否在java下面的包里，或者自身是{@link Ordered}
 	 * {@link AnnotationsScanner#hasPlainJavaAnnotationsOnly(java.lang.Object)}
 	 * 中调用
+	 * {@link AnnotationsScanner#processClassInheritedAnnotations(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
+	 * 中被调用
 	 *
 	 * @param type
 	 * @return
@@ -626,11 +651,15 @@ abstract class AnnotationsScanner {
 
 	/**
 	 * 无等级的
+	 * <p>
 	 * {@link AnnotationsScanner#isKnownEmpty(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy)}
 	 * 中被调用
+	 * {@link AnnotationsScanner#processClassInheritedAnnotations(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
+	 * 中被调用
+	 * </p>
 	 *
-	 * @param source
-	 * @param searchStrategy
+	 * @param source         源class
+	 * @param searchStrategy 选择策略
 	 * @return
 	 */
 	private static boolean isWithoutHierarchy(AnnotatedElement source, SearchStrategy searchStrategy) {

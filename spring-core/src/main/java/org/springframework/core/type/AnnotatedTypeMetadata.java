@@ -85,8 +85,8 @@ public interface AnnotatedTypeMetadata {
 	 * 中被调用
 	 * </p>
 	 *
-	 * @param annotationName the fully qualified class name of the annotation
-	 *                       type to look for
+	 * @param annotationName 查询的注解的全类名
+	 *                       {@link Class#getName()}注解的name
 	 * @return a Map of attributes, with the attribute name as key (e.g. "value")
 	 * and the defined attribute value as Map value. This return value will be
 	 * {@code null} if no matching annotation is defined.
@@ -105,8 +105,7 @@ public interface AnnotatedTypeMetadata {
 	 * 中被调用
 	 * </p>
 	 *
-	 * @param annotationName      the fully qualified class name of the annotation
-	 *                            type to look for
+	 * @param annotationName      查询的注解的全类名
 	 * @param classValuesAsString whether to convert class references to String
 	 *                            class names for exposure as values in the returned Map, instead of Class
 	 *                            references which might potentially have to be loaded first

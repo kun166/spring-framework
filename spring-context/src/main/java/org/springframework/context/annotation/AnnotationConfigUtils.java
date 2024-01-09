@@ -275,10 +275,23 @@ public abstract class AnnotationConfigUtils {
 		}
 	}
 
+	/**
+	 * {@link AnnotatedBeanDefinitionReader#doRegisterBean(java.lang.Class, java.lang.String, java.lang.Class[], java.util.function.Supplier, org.springframework.beans.factory.config.BeanDefinitionCustomizer[])}
+	 * 中被调用
+	 *
+	 * @param abd
+	 */
 	public static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd) {
 		processCommonDefinitionAnnotations(abd, abd.getMetadata());
 	}
 
+	/**
+	 * {@link AnnotationConfigUtils#processCommonDefinitionAnnotations(org.springframework.beans.factory.annotation.AnnotatedBeanDefinition)}
+	 * 中被调用
+	 *
+	 * @param abd      {@link AnnotatedBeanDefinition}
+	 * @param metadata {@link AnnotatedBeanDefinition}的metadata
+	 */
 	static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd, AnnotatedTypeMetadata metadata) {
 		AnnotationAttributes lazy = attributesFor(metadata, Lazy.class);
 		if (lazy != null) {
@@ -322,9 +335,13 @@ public abstract class AnnotationConfigUtils {
 	/**
 	 * {@link AnnotationScopeMetadataResolver#resolveScopeMetadata(org.springframework.beans.factory.config.BeanDefinition)}
 	 * 中被调用
+	 * {@link AnnotationConfigUtils#processCommonDefinitionAnnotations(org.springframework.beans.factory.annotation.AnnotatedBeanDefinition, org.springframework.core.type.AnnotatedTypeMetadata)}
+	 * 中被调用
+	 * <p>
+	 * 获取metadata上的annotationClass注解
 	 *
 	 * @param metadata
-	 * @param annotationClass
+	 * @param annotationClass 注解
 	 * @return
 	 */
 	@Nullable

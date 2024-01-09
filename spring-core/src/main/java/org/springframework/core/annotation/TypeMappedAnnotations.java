@@ -29,6 +29,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.lang.Nullable;
 
@@ -205,6 +206,20 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return get(annotationType, predicate, null);
 	}
 
+	/**
+	 * {@link AnnotatedTypeMetadata#getAnnotationAttributes(java.lang.String, boolean)}
+	 * 中被调用
+	 *
+	 * @param annotationType 查询的注解的全类名
+	 * @param predicate      a predicate that must match, or {@code null} if only
+	 *                       type matching is required
+	 * @param selector       a selector used to choose the most appropriate annotation
+	 *                       within an aggregate, or {@code null} to select the
+	 *                       {@linkplain MergedAnnotationSelectors#nearest() nearest}
+	 *                       {@link MergedAnnotationSelectors.FirstDirectlyDeclared}
+	 * @param <A>
+	 * @return
+	 */
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(String annotationType,
 														  @Nullable Predicate<? super MergedAnnotation<A>> predicate,
@@ -281,6 +296,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	 * @return
 	 */
 	private <A extends Annotation> Spliterator<MergedAnnotation<A>> spliterator(@Nullable Object annotationType) {
+
 		return new AggregatesSpliterator<>(annotationType, getAggregates());
 	}
 
@@ -306,6 +322,8 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	/**
 	 * 扫描C,根据processor返回R
 	 * {@link TypeMappedAnnotations#getAggregates()}中调用
+	 * {@link TypeMappedAnnotations#get(java.lang.String, java.util.function.Predicate, org.springframework.core.annotation.MergedAnnotationSelector)}
+	 * 中调用
 	 *
 	 * @param criteria  {@link TypeMappedAnnotations}
 	 * @param processor {@link AggregatesCollector}
@@ -321,6 +339,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return processor.finish(result);
 		}
 		if (this.element != null && this.searchStrategy != null) {
+			/**
+			 * 这个方法里面要特别注意，其实就是
+			 * {@link AggregatesCollector#finish(java.util.List)}方法，返回对象和传入的对象无关
+			 */
 			return AnnotationsScanner.scan(criteria, this.element, this.searchStrategy, processor);
 		}
 		return null;
@@ -482,6 +504,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Nullable
 		private MergedAnnotation<A> result;
 
+		/**
+		 * {@link TypeMappedAnnotations#get(java.lang.String, java.util.function.Predicate, org.springframework.core.annotation.MergedAnnotationSelector)}
+		 * 中调用
+		 *
+		 * @param requiredType 查询的注解的全类名
+		 * @param predicate    null
+		 * @param selector     {@link MergedAnnotationSelectors.FirstDirectlyDeclared}
+		 */
 		MergedAnnotationFinder(Object requiredType, @Nullable Predicate<? super MergedAnnotation<A>> predicate,
 							   @Nullable MergedAnnotationSelector<A> selector) {
 
@@ -680,6 +710,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return this.annotations.size();
 		}
 
+		/**
+		 * {@link AggregatesSpliterator#getNextSuitableMapping(org.springframework.core.annotation.TypeMappedAnnotations.Aggregate, int)}
+		 * 中调用
+		 *
+		 * @param annotationIndex
+		 * @param mappingIndex
+		 * @return
+		 */
 		@Nullable
 		AnnotationTypeMapping getMapping(int annotationIndex, int mappingIndex) {
 			AnnotationTypeMappings mappings = getMappings(annotationIndex);
@@ -717,15 +755,28 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Nullable
 		private int[] mappingCursors;
 
+		/**
+		 * {@link TypeMappedAnnotations#spliterator(java.lang.Object)}中调用
+		 *
+		 * @param requiredType 空
+		 * @param aggregates   List<Aggregate>
+		 */
 		AggregatesSpliterator(@Nullable Object requiredType, List<Aggregate> aggregates) {
 			this.requiredType = requiredType;
 			this.aggregates = aggregates;
 			this.aggregateCursor = 0;
 		}
 
+		/**
+		 * 顺序处理每个元素，类似Iterator，如果还有元素要处理，则返回true，否则返回false
+		 *
+		 * @param action
+		 * @return
+		 */
 		@Override
 		public boolean tryAdvance(Consumer<? super MergedAnnotation<A>> action) {
 			while (this.aggregateCursor < this.aggregates.size()) {
+				// 遍历每一个Aggregate
 				Aggregate aggregate = this.aggregates.get(this.aggregateCursor);
 				if (tryAdvance(aggregate, action)) {
 					return true;
@@ -736,8 +787,17 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return false;
 		}
 
+		/**
+		 * {@link AggregatesSpliterator#tryAdvance(java.util.function.Consumer)}
+		 * 中调用
+		 *
+		 * @param aggregate
+		 * @param action
+		 * @return
+		 */
 		private boolean tryAdvance(Aggregate aggregate, Consumer<? super MergedAnnotation<A>> action) {
 			if (this.mappingCursors == null) {
+				// aggregate的注解数量
 				this.mappingCursors = new int[aggregate.size()];
 			}
 			int lowestDistance = Integer.MAX_VALUE;
@@ -766,8 +826,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return false;
 		}
 
+		/**
+		 * @param aggregate       aggregate
+		 * @param annotationIndex aggregate 注解数组的从0到size
+		 * @return
+		 */
 		@Nullable
 		private AnnotationTypeMapping getNextSuitableMapping(Aggregate aggregate, int annotationIndex) {
+			// 第一次进来，全是0啊
 			int[] cursors = this.mappingCursors;
 			if (cursors != null) {
 				AnnotationTypeMapping mapping;
