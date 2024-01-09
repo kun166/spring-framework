@@ -100,9 +100,17 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 		/**
 		 * 关于{@link AnnotatedElement},
 		 * 可以参考:https://blog.csdn.net/xichenguan/article/details/87856550
+		 * 1,{@link org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition}
+		 * 持有一个{@link StandardAnnotationMetadata}
+		 * 2,{@link StandardAnnotationMetadata}又持有一个{@link MergedAnnotations}
+		 *
+		 * 字面意思吧：
+		 * 注解Bean定义 持有一个 标准注解元数据
+		 * 标准注解元数据 又持有一个 合并注解
 		 */
 		this.mergedAnnotations = MergedAnnotations.from(introspectedClass,
 				SearchStrategy.INHERITED_ANNOTATIONS, RepeatableContainers.none());
+		// 镶套的注解as map?
 		this.nestedAnnotationsAsMap = nestedAnnotationsAsMap;
 	}
 
