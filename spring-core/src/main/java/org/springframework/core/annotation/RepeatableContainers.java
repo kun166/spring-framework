@@ -34,6 +34,8 @@ import org.springframework.util.ObjectUtils;
  *
  * <p>The {@link #of} method can be used to register relationships for
  * annotations that do not wish to use {@link Repeatable @Repeatable}.
+ * <p>
+ * 这应该是标注了{@link Repeatable}注解的容器？
  *
  * <p>To completely disable repeatable support use {@link #none()}.
  *
@@ -68,6 +70,14 @@ public abstract class RepeatableContainers {
 		return new ExplicitRepeatableContainer(this, repeatable, container);
 	}
 
+	/**
+	 * 整个{@link RepeatableContainers}应该就这一个方法有用了。
+	 * 默认实现就是委托给父容器查找
+	 * {@link StandardRepeatableContainers}重写了该方法
+	 *
+	 * @param annotation
+	 * @return
+	 */
 	@Nullable
 	Annotation[] findRepeatedAnnotations(Annotation annotation) {
 		if (this.parent == null) {
@@ -185,7 +195,7 @@ public abstract class RepeatableContainers {
 		 * 则返回该注解的value方法
 		 * </p>
 		 *
-		 * @param annotationType
+		 * @param annotationType 注解的class
 		 * @return
 		 */
 		@Nullable
@@ -214,6 +224,9 @@ public abstract class RepeatableContainers {
 		 * @return
 		 */
 		private static Object computeRepeatedAnnotationsMethod(Class<? extends Annotation> annotationType) {
+			/**
+			 * 获取annotationType的所有参数长度为0，且返回值不为void的方法
+			 */
 			AttributeMethods methods = AttributeMethods.forAnnotationType(annotationType);
 			// 获取名称为"value"的方法
 			Method method = methods.get(MergedAnnotation.VALUE);
@@ -241,6 +254,7 @@ public abstract class RepeatableContainers {
 
 	/**
 	 * A single explicit mapping.
+	 * 清晰，明确的
 	 */
 	private static class ExplicitRepeatableContainer extends RepeatableContainers {
 

@@ -381,7 +381,7 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * 中被调用
 	 * </p>
 	 *
-	 * @param element              the source element
+	 * @param element              源class对象。我们要处理的就是它上面的注解
 	 * @param searchStrategy       {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 * @param repeatableContainers {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}
 	 * @param annotationFilter     {@link AnnotationFilter#PLAIN}

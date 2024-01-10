@@ -17,6 +17,7 @@
 package org.springframework.core.type;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Repeatable;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -107,10 +108,17 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 		 * 字面意思吧：
 		 * 注解Bean定义 持有一个 标准注解元数据
 		 * 标准注解元数据 又持有一个 合并注解
+		 *
+		 * 3,一个{@link StandardAnnotationMetadata}持有一个{@link MergedAnnotations}
+		 * 具体实现是{@link TypeMappedAnnotations}
+		 * 此{@link TypeMappedAnnotations},比较重要的几个属性:一原始bean class;
+		 * 二搜索策略,采用的是{@link SearchStrategy#INHERITED_ANNOTATIONS};
+		 * 三{@link Repeatable}注解容器{@link RepeatableContainers},具体是{@link RepeatableContainers.NoRepeatableContainers#INSTANCE}
+		 * 四注解过滤器,{@link AnnotationFilter},具体实现{@link AnnotationFilter#PLAIN}
 		 */
 		this.mergedAnnotations = MergedAnnotations.from(introspectedClass,
 				SearchStrategy.INHERITED_ANNOTATIONS, RepeatableContainers.none());
-		// 镶套的注解as map?
+		// 镶套的注解以map形态?
 		this.nestedAnnotationsAsMap = nestedAnnotationsAsMap;
 	}
 

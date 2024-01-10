@@ -17,11 +17,15 @@
 package org.springframework.beans.factory.annotation;
 
 import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.core.annotation.MergedAnnotations;
+import org.springframework.core.annotation.TypeMappedAnnotations;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.MethodMetadata;
 import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+
+import java.lang.reflect.AnnotatedElement;
 
 /**
  * Extension of the {@link org.springframework.beans.factory.support.GenericBeanDefinition}
@@ -65,7 +69,17 @@ public class AnnotatedGenericBeanDefinition extends GenericBeanDefinition implem
 	 */
 	public AnnotatedGenericBeanDefinition(Class<?> beanClass) {
 		setBeanClass(beanClass);
-		// 下面这个metadata,神一样的难理解，神一样的重要啊
+		/**
+		 * 下面这个metadata,神一样的难理解，神一样的重要啊
+		 * 1,{@link org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition}
+		 * 持有一个{@link AnnotationMetadata},具体实现类是{@link StandardAnnotationMetadata}
+		 * 2,{@link StandardAnnotationMetadata}又持有一个{@link MergedAnnotations},
+		 * 具体实现类是{@link TypeMappedAnnotations}
+		 *
+		 * 字面意思吧：
+		 * 注解Bean定义 持有一个 注解元数据
+		 * 注解元数据 又持有一个 合并注解
+		 */
 		this.metadata = AnnotationMetadata.introspect(beanClass);
 	}
 

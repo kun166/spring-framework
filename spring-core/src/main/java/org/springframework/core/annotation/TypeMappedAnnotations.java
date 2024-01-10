@@ -17,6 +17,7 @@
 package org.springframework.core.annotation;
 
 import java.lang.annotation.Annotation;
+import java.lang.annotation.Repeatable;
 import java.lang.reflect.AnnotatedElement;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -353,10 +354,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	 * {@link MergedAnnotations#from(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.RepeatableContainers, org.springframework.core.annotation.AnnotationFilter)}
 	 * 中被调用
 	 *
-	 * @param element
-	 * @param searchStrategy       {@link SearchStrategy#INHERITED_ANNOTATIONS}
-	 * @param repeatableContainers {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}
-	 * @param annotationFilter     {@link AnnotationFilter#PLAIN}
+	 * @param element              目标源class,我们就是要处理它上面的注解
+	 * @param searchStrategy       {@link SearchStrategy#INHERITED_ANNOTATIONS} 查询策略
+	 * @param repeatableContainers {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}  {@link Repeatable}注解容器
+	 * @param annotationFilter     {@link AnnotationFilter#PLAIN} 注解过滤器
 	 * @return
 	 */
 	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
