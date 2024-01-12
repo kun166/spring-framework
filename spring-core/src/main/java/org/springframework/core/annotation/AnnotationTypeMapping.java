@@ -48,20 +48,38 @@ final class AnnotationTypeMapping {
 	private static final MirrorSet[] EMPTY_MIRROR_SETS = new MirrorSet[0];
 
 
+	/**
+	 * 参数annotationType这个注解归属的注解。也可以理解为父注解。如果传入的参数为空，则说明该注解是根注解。
+	 */
 	@Nullable
 	private final AnnotationTypeMapping source;
 
+	/**
+	 * 根注解。即最开始的那个注解
+	 */
 	private final AnnotationTypeMapping root;
 
+	/**
+	 * 当前注解和根注解的距离
+	 */
 	private final int distance;
 
+	/**
+	 * 这个是本类最重要的属性，所有的其它属性围绕它产生。可以认为是数据库中的主键
+	 */
 	private final Class<? extends Annotation> annotationType;
 
+	/**
+	 * 合并的注解，包括当前注解和所有父注解的注解。注意List是有序的
+	 */
 	private final List<Class<? extends Annotation>> metaTypes;
 
 	@Nullable
 	private final Annotation annotation;
 
+	/**
+	 * 注解{@link AnnotationTypeMapping#annotationType}上的属性方法，即参数长度为0，且返回不为void的方法集合
+	 */
 	private final AttributeMethods attributes;
 
 	private final MirrorSets mirrorSets;
@@ -74,6 +92,9 @@ final class AnnotationTypeMapping {
 
 	private final AnnotationTypeMapping[] annotationValueSource;
 
+	/**
+	 * 注解{@link AnnotationTypeMapping#annotationType}上属性方法上，如果标注了{@link AliasFor}注解的对应关系
+	 */
 	private final Map<Method, List<Method>> aliasedBy;
 
 	private final boolean synthesizable;
@@ -82,31 +103,56 @@ final class AnnotationTypeMapping {
 
 
 	/**
-	 * 通过source,建立注解的父子关系？
+	 * <p>
 	 * {@link AnnotationTypeMappings#addIfPossible(java.util.Deque, org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
 	 * 中调用
+	 * </p>
+	 * {@link AnnotationTypeMapping} 有层级关系。
+	 * 解决了注解之上有注解的问题。
+	 * 本类的初始属性就是传入的参数annotationType，由它产生了其它的属性。
 	 *
-	 * @param source                 传的null,不太明白这个是啥。这个应该是记录annotationType归属的父AnnotationTypeMapping
-	 * @param annotationType         Annotation,调用{@link Annotation#annotationType()}获取的class
-	 * @param annotation             传入的null,不太明白是啥
+	 * @param source
+	 * @param annotationType         Annotation调用{@link Annotation#annotationType()}获取的class。这个是本类最重要的属性
+	 * @param annotation
 	 * @param visitedAnnotationTypes 访问过的AnnotationType
 	 */
 	AnnotationTypeMapping(@Nullable AnnotationTypeMapping source, Class<? extends Annotation> annotationType,
 						  @Nullable Annotation annotation, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
-
+		/**
+		 * 参数annotationType这个注解归属的注解。也可以理解为父注解。如果传入的参数为空，则说明该注解是根注解。
+		 */
 		this.source = source;
+		/**
+		 * 根注解
+		 */
 		this.root = (source != null ? source.getRoot() : this);
+		/**
+		 * 当前注解和根注解的距离
+		 */
 		this.distance = (source == null ? 0 : source.getDistance() + 1);
+		/**
+		 * 这个是本类最重要的属性，所有的其它属性围绕它产生。可以认为是数据库中的主键
+		 */
 		this.annotationType = annotationType;
+		/**
+		 * 合并的注解，包括当前注解和所有父注解的注解。注意List是有序的
+		 */
 		this.metaTypes = merge(
 				source != null ? source.getMetaTypes() : null,
 				annotationType);
+		// 归属的注解？
 		this.annotation = annotation;
+		/**
+		 * 注解annotationType上的属性方法，即参数长度为0，且返回不为void的方法集合
+		 */
 		this.attributes = AttributeMethods.forAnnotationType(annotationType);
 		this.mirrorSets = new MirrorSets();
 		this.aliasMappings = filledIntArray(this.attributes.size());
 		this.conventionMappings = filledIntArray(this.attributes.size());
 		this.annotationValueMappings = filledIntArray(this.attributes.size());
+		/**
+		 * 这个数组待看
+		 */
 		this.annotationValueSource = new AnnotationTypeMapping[this.attributes.size()];
 		this.aliasedBy = resolveAliasedForTargets();
 		processAliases();
@@ -116,6 +162,16 @@ final class AnnotationTypeMapping {
 	}
 
 
+	/**
+	 * {@link AnnotationTypeMapping#AnnotationTypeMapping(org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
+	 * 中调用。
+	 * 将existing和element合并到一个新的List里
+	 *
+	 * @param existing
+	 * @param element
+	 * @param <T>
+	 * @return
+	 */
 	private static <T> List<T> merge(@Nullable List<T> existing, T element) {
 		if (existing == null) {
 			return Collections.singletonList(element);
@@ -126,10 +182,23 @@ final class AnnotationTypeMapping {
 		return Collections.unmodifiableList(merged);
 	}
 
+	/**
+	 * 处理{@link AnnotationTypeMapping#annotationType}上的属性方法上标注了{@link AliasFor}的方法关系
+	 * <p>
+	 * {@link AnnotationTypeMapping#AnnotationTypeMapping(org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @return
+	 */
 	private Map<Method, List<Method>> resolveAliasedForTargets() {
 		Map<Method, List<Method>> aliasedBy = new HashMap<>();
 		for (int i = 0; i < this.attributes.size(); i++) {
+			// 这个注解上的所有属性方法
 			Method attribute = this.attributes.get(i);
+			/**
+			 * 获取属性方法上的{@link AliasFor}注解
+			 */
 			AliasFor aliasFor = AnnotationsScanner.getDeclaredAnnotation(attribute, AliasFor.class);
 			if (aliasFor != null) {
 				Method target = resolveAliasTarget(attribute, aliasFor);
@@ -139,11 +208,34 @@ final class AnnotationTypeMapping {
 		return Collections.unmodifiableMap(aliasedBy);
 	}
 
+
+	/**
+	 * {@link AnnotationTypeMapping#resolveAliasedForTargets()}中调用
+	 *
+	 * @param attribute
+	 * @param aliasFor
+	 * @return
+	 */
 	private Method resolveAliasTarget(Method attribute, AliasFor aliasFor) {
 		return resolveAliasTarget(attribute, aliasFor, true);
 	}
 
+	/**
+	 * {@link AnnotationTypeMapping#resolveAliasTarget(java.lang.reflect.Method, org.springframework.core.annotation.AliasFor)}
+	 * 中调用
+	 *
+	 * @param attribute      注解的属性方法
+	 * @param aliasFor       该属性方法上的{@link AliasFor}注解
+	 * @param checkAliasPair 传递了true。这个校验两个参数是否配对，即aliasFor是否标注在attribute上
+	 * @return
+	 */
 	private Method resolveAliasTarget(Method attribute, AliasFor aliasFor, boolean checkAliasPair) {
+		/**
+		 * 关于{@link AliasFor}
+		 * 可以参考下:https://blog.csdn.net/weixin_43888891/article/details/126962698
+		 * https://blog.csdn.net/qq_41378597/article/details/129376891
+		 *{@link AliasFor}的value和attribute是同一个意思，不能都有值
+		 */
 		if (StringUtils.hasText(aliasFor.value()) && StringUtils.hasText(aliasFor.attribute())) {
 			throw new AnnotationConfigurationException(String.format(
 					"In @AliasFor declared on %s, attribute 'attribute' and its alias 'value' " +
@@ -153,17 +245,36 @@ final class AnnotationTypeMapping {
 		}
 		Class<? extends Annotation> targetAnnotation = aliasFor.annotation();
 		if (targetAnnotation == Annotation.class) {
+			/**
+			 * {@link Annotation}是默认值,
+			 * 走这个分支，说明方法属性返回的就是{@link AnnotationTypeMapping#annotationType}它本身
+			 * 可以参考{@link AliasFor}它自身
+			 */
 			targetAnnotation = this.annotationType;
 		}
 		String targetAttributeName = aliasFor.attribute();
 		if (!StringUtils.hasLength(targetAttributeName)) {
+			// 如果attribute无值，就取value
 			targetAttributeName = aliasFor.value();
 		}
 		if (!StringUtils.hasLength(targetAttributeName)) {
+			/**
+			 * 这个地方要特别特别的注意:
+			 * 1,先取{@link AliasFor#attribute()}
+			 * 2,再取{@link AliasFor#value()}
+			 * 3,最后取{@link Method#getName()}
+			 * 例子:{@link org.springframework.stereotype.Service}
+			 * {@link org.springframework.stereotype.Service}和{@link org.springframework.stereotype.Component}
+			 * 属性方法名称一样
+			 */
 			targetAttributeName = attribute.getName();
 		}
+
 		Method target = AttributeMethods.forAnnotationType(targetAnnotation).get(targetAttributeName);
 		if (target == null) {
+			/**
+			 * 这个地方可以参考{@link org.springframework.stereotype.Service}
+			 */
 			if (targetAnnotation == this.annotationType) {
 				throw new AnnotationConfigurationException(String.format(
 						"@AliasFor declaration on %s declares an alias for '%s' which is not present.",
@@ -181,6 +292,7 @@ final class AnnotationTypeMapping {
 					AttributeMethods.describe(attribute)));
 		}
 		if (!isCompatibleReturnType(attribute.getReturnType(), target.getReturnType())) {
+			// 两个方法的返回对象类型不一致
 			throw new AnnotationConfigurationException(String.format(
 					"Misconfigured aliases: %s and %s must declare the same return type.",
 					AttributeMethods.describe(attribute),
@@ -201,17 +313,38 @@ final class AnnotationTypeMapping {
 		return target;
 	}
 
+	/**
+	 * {@link AnnotationTypeMapping#resolveAliasTarget(java.lang.reflect.Method, org.springframework.core.annotation.AliasFor, boolean)}
+	 * 中调用
+	 * <p>
+	 * 返回目标方法的类归属,是否是本{@link AnnotationTypeMapping#annotationType}
+	 * </p>
+	 *
+	 * @param target 目标方法
+	 * @return
+	 */
 	private boolean isAliasPair(Method target) {
 		return (this.annotationType == target.getDeclaringClass());
 	}
 
 	private boolean isCompatibleReturnType(Class<?> attributeType, Class<?> targetType) {
+		/**
+		 * {@link Class#getComponentType()}
+		 * 说明：返回数组中元素的Class对象，如果不是Class对象那么返回null
+		 */
 		return (attributeType == targetType || attributeType == targetType.getComponentType());
 	}
 
+	/**
+	 * {@link AnnotationTypeMapping#AnnotationTypeMapping(org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
+	 * 构造函数中调用
+	 */
 	private void processAliases() {
 		List<Method> aliases = new ArrayList<>();
 		for (int i = 0; i < this.attributes.size(); i++) {
+			/**
+			 * 遍历
+			 */
 			aliases.clear();
 			aliases.add(this.attributes.get(i));
 			collectAliases(aliases);
@@ -574,6 +707,12 @@ final class AnnotationTypeMapping {
 	}
 
 
+	/**
+	 * 创建一个int数组,数组长度为传入参数size，元素默认值都为-1。
+	 *
+	 * @param size
+	 * @return
+	 */
 	private static int[] filledIntArray(int size) {
 		int[] array = new int[size];
 		Arrays.fill(array, -1);

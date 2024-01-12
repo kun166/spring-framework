@@ -34,6 +34,11 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  * annotation type. Performs a recursive breadth first crawl of all
  * meta-annotations to ultimately provide a quick way to map the attributes of
  * a root {@link Annotation}.
+ * <p>
+ * 为单个源提供｛@link AnnotationTypeMapping｝信息
+ * 注释类型。对所有内容执行递归广度优先爬网
+ * 元注释，最终提供一种快速映射属性的方法
+ * </p>
  *
  * <p>Supports convention based merging of meta-annotations as well as implicit
  * and explicit {@link AliasFor @AliasFor} aliases. Also provides information
@@ -56,7 +61,7 @@ final class AnnotationTypeMappings {
 	private static final Map<AnnotationFilter, Cache> noRepeatablesCache = new ConcurrentReferenceHashMap<>();
 
 	/**
-	 * 重复访问容器
+	 * {@link Repeatable}查找容器
 	 */
 	private final RepeatableContainers repeatableContainers;
 
@@ -86,7 +91,11 @@ final class AnnotationTypeMappings {
 								   AnnotationFilter filter, Class<? extends Annotation> annotationType,
 								   Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 
+		/**
+		 * {@link Repeatable}查找容器
+		 */
 		this.repeatableContainers = repeatableContainers;
+		// 注解过滤器
 		this.filter = filter;
 		this.mappings = new ArrayList<>();
 		addAllMappings(annotationType, visitedAnnotationTypes);
@@ -109,7 +118,7 @@ final class AnnotationTypeMappings {
 	private void addAllMappings(Class<? extends Annotation> annotationType,
 								Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 		/**
-		 * 初始化一个双端队列
+		 * 初始化一个双端队列。
 		 */
 		Deque<AnnotationTypeMapping> queue = new ArrayDeque<>();
 		addIfPossible(queue, null, annotationType, null, visitedAnnotationTypes);
@@ -280,7 +289,7 @@ final class AnnotationTypeMappings {
 	 * 中被调用
 	 * </p>
 	 *
-	 * @param annotationType 注解的class类,{@link Annotation#annotationType()}
+	 * @param annotationType 注解的class类,{@link Annotation#annotationType()},代表一个注解
 	 * @return type mappings for the annotation type
 	 */
 	static AnnotationTypeMappings forAnnotationType(Class<? extends Annotation> annotationType) {
@@ -299,7 +308,7 @@ final class AnnotationTypeMappings {
 	 * @param visitedAnnotationTypes the set of annotations that we have already
 	 *                               visited; used to avoid infinite recursion for recursive annotations which
 	 *                               some JVM languages support (such as Kotlin)
-	 *                               访问过的annotationType。这个注解上还有注解
+	 *                               我们已经访问过的注解的set,用来避免无穷递归调用注解
 	 * @return type mappings for the annotation type
 	 */
 	static AnnotationTypeMappings forAnnotationType(Class<? extends Annotation> annotationType,
@@ -338,9 +347,8 @@ final class AnnotationTypeMappings {
 	 * </p>
 	 *
 	 * @param annotationType         注解的class类
-	 * @param repeatableContainers   the repeatable containers that may be used by
-	 *                               the meta-annotations
-	 * @param annotationFilter       注解的过滤器
+	 * @param repeatableContainers   {@link RepeatableContainers#standardRepeatables()}
+	 * @param annotationFilter       默认使用的过滤器是{@link AnnotationFilter#PLAIN}
 	 * @param visitedAnnotationTypes the set of annotations that we have already
 	 *                               visited; used to avoid infinite recursion for recursive annotations which
 	 *                               some JVM languages support (such as Kotlin)
@@ -360,6 +368,9 @@ final class AnnotationTypeMappings {
 			 * 第一层缓存用的是{@link AnnotationFilter}。缓存的值为{@link Cache}
 			 * 作为缓存的{@link Cache}对象，由作为key的{@link AnnotationFilter}和{@link RepeatableContainers}中初始化
 			 * </p>
+			 * 这个地方用了两层缓存：
+			 * 第一层用了{@link AnnotationFilter}作为key,{@link Cache}为value的map
+			 * 第二层在{@link Cache}里面,用了参数中传入的annotationType为key，方法返回对象AnnotationTypeMappings为value的map
 			 */
 			return standardRepeatablesCache.computeIfAbsent(annotationFilter,
 					key -> new Cache(repeatableContainers, key)).get(annotationType, visitedAnnotationTypes);
@@ -383,7 +394,7 @@ final class AnnotationTypeMappings {
 	private static class Cache {
 
 		/**
-		 * 使用的缓存类型
+		 * {@link Repeatable}的查找容器
 		 */
 		private final RepeatableContainers repeatableContainers;
 

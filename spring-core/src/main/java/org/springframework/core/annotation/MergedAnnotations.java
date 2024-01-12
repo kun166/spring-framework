@@ -511,6 +511,8 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * all other {@linkplain AnnotatedElement annotated elements}.
 		 * <p>This strategy does not search implemented interfaces.
 		 * <p>
+		 * 该方式仅用于{@link Class}。
+		 * 查找当前类的注解，或者是父类的标注了{@link Inherited @Inherited}的注解
 		 * 当前类 + 父类 ( @Inherited注解修饰的注解 )
 		 * INHERITED:继承，遗传
 		 * </p>

@@ -88,7 +88,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	private final AnnotationFilter annotationFilter;
 
 	/**
-	 * 聚合
+	 * {@link Aggregate}注解聚合
+	 * 每一个{@link Aggregate},包含一个{@link Aggregate#source},它是注解所在的源class类。
+	 * 包含一个{@link Aggregate#annotations},这是{@link Aggregate#source}上自身标注的注解集合
+	 * <p>
+	 * 而这个List<Aggregate>，则是{@link TypeMappedAnnotations#source}及它的父类的{@link Aggregate}
+	 * 即一个class类封装成了一个{@link Aggregate}。从子类到父类，就形成了一个List
+	 * </p>
 	 */
 	@Nullable
 	private volatile List<Aggregate> aggregates;
@@ -302,8 +308,11 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	}
 
 	/**
+	 * <p>
 	 * {@link TypeMappedAnnotations#spliterator(java.lang.Object)}
 	 * 中调用
+	 * </p>
+	 * 获取
 	 *
 	 * @return
 	 */
@@ -311,6 +320,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		// 又是一个缓存
 		List<Aggregate> aggregates = this.aggregates;
 		if (aggregates == null) {
+			/**
+			 * 如果没收集过,就去收集
+			 * 收集器采用{@link AggregatesCollector}
+			 */
 			aggregates = scan(this, new AggregatesCollector());
 			if (aggregates == null || aggregates.isEmpty()) {
 				aggregates = Collections.emptyList();
@@ -341,6 +354,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		}
 		if (this.element != null && this.searchStrategy != null) {
 			/**
+			 * 根据传入的原始类对象element和搜集策略searchStrategy去收集
 			 * 这个方法里面要特别注意，其实就是
 			 * {@link AggregatesCollector#finish(java.util.List)}方法，返回对象和传入的对象无关
 			 */
@@ -584,14 +598,22 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	/**
 	 * {@link AnnotationsProcessor} that collects {@link Aggregate} instances.
+	 * 收集{@link Aggregate}的{@link AnnotationsProcessor}
 	 */
 	private class AggregatesCollector implements AnnotationsProcessor<Object, List<Aggregate>> {
 
+		/**
+		 * 记录收集的{@link Aggregate}
+		 */
 		private final List<Aggregate> aggregates = new ArrayList<>();
 
 		/**
+		 * <p>
 		 * {@link AnnotationsScanner#processElement(java.lang.Object, java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.AnnotationsProcessor)}
 		 * 中被调用
+		 * </p>
+		 * 特别的注意,{@link AggregatesCollector#doWithAnnotations(java.lang.Object, int, java.lang.Object, java.lang.annotation.Annotation[])}
+		 * 该实现,criteria参数无效了
 		 *
 		 * @param criteria       {@link TypeMappedAnnotations}
 		 * @param aggregateIndex the aggregate index of the provided annotations,传的是0
@@ -619,7 +641,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		 *
 		 * @param aggregateIndex 传入的0
 		 * @param source         最初的class
-		 * @param annotations    source上的注解数组，每个注解的方法，参数长度都是0，返回都不是void
+		 * @param annotations    source上的自身注解数组。不包括继承了父类的。每个注解的方法，参数长度都是0，返回都不是void
 		 * @return
 		 */
 		private Aggregate createAggregate(int aggregateIndex, @Nullable Object source, Annotation[] annotations) {
@@ -654,6 +676,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private void addAggregateAnnotations(List<Annotation> aggregateAnnotations, Annotation[] annotations) {
 			for (Annotation annotation : annotations) {
 				if (annotation != null && !annotationFilter.matches(annotation)) {
+					// 去掉为空或者符合过滤的注解
 					Annotation[] repeatedAnnotations = repeatableContainers.findRepeatedAnnotations(annotation);
 					if (repeatedAnnotations != null) {
 						addAggregateAnnotations(aggregateAnnotations, repeatedAnnotations);
@@ -665,6 +688,12 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			}
 		}
 
+		/**
+		 * 特别注意这个方法,和传入的参数没关系
+		 *
+		 * @param processResult
+		 * @return
+		 */
 		@Override
 		public List<Aggregate> finish(@Nullable List<Aggregate> processResult) {
 			return this.aggregates;
@@ -683,7 +712,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		private final Object source;
 
 		/**
-		 * 注解集合？
+		 * source上的自身注解集合,不包括继承了父类的注解
 		 */
 		private final List<Annotation> annotations;
 
@@ -693,9 +722,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		 * {@link AggregatesCollector#createAggregate(int, java.lang.Object, java.lang.annotation.Annotation[])}
 		 * 中调用
 		 *
-		 * @param aggregateIndex
+		 * @param aggregateIndex 在父子类中，记录当前类离最开始的子类的距离。
 		 * @param source         原始的{@link AnnotatedElement}对象
-		 * @param annotations    source上的注解
+		 * @param annotations    source上的自身注解,不包括继承了父类的
 		 */
 		Aggregate(int aggregateIndex, @Nullable Object source, List<Annotation> annotations) {
 			this.aggregateIndex = aggregateIndex;
@@ -703,6 +732,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			this.annotations = annotations;
 			this.mappings = new AnnotationTypeMappings[annotations.size()];
 			for (int i = 0; i < annotations.size(); i++) {
+				/**
+				 * {@link AnnotationTypeMappings}
+				 */
 				this.mappings[i] = AnnotationTypeMappings.forAnnotationType(annotations.get(i).annotationType());
 			}
 		}
@@ -759,12 +791,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		/**
 		 * {@link TypeMappedAnnotations#spliterator(java.lang.Object)}中调用
 		 *
-		 * @param requiredType 空
+		 * @param requiredType 空,查找的类型？
 		 * @param aggregates   List<Aggregate>
 		 */
 		AggregatesSpliterator(@Nullable Object requiredType, List<Aggregate> aggregates) {
 			this.requiredType = requiredType;
 			this.aggregates = aggregates;
+			// 从最底层的子类开始查找
 			this.aggregateCursor = 0;
 		}
 
@@ -777,12 +810,13 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Override
 		public boolean tryAdvance(Consumer<? super MergedAnnotation<A>> action) {
 			while (this.aggregateCursor < this.aggregates.size()) {
-				// 遍历每一个Aggregate
+				// aggregateCursor表示离最底层子类的距离。数越大，说明越是上层的父类
 				Aggregate aggregate = this.aggregates.get(this.aggregateCursor);
 				if (tryAdvance(aggregate, action)) {
 					return true;
 				}
 				this.aggregateCursor++;
+				// 每一次遍历aggregate，都置空
 				this.mappingCursors = null;
 			}
 			return false;

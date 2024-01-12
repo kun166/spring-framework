@@ -64,6 +64,8 @@ abstract class AnnotationsScanner {
 	/**
 	 * Scan the hierarchy of the specified element for relevant annotations and
 	 * call the processor as required.
+	 * 扫描给定的具有层次结构的element,以查找相关注解，并根据需要调用处理器。
+	 *
 	 *
 	 * <p>
 	 * {@link TypeMappedAnnotations#scan(java.lang.Object, org.springframework.core.annotation.AnnotationsProcessor)}
@@ -105,7 +107,7 @@ abstract class AnnotationsScanner {
 	@Nullable
 	private static <C, R> R process(C context, AnnotatedElement source,
 									SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
-
+		// 根据源数据source是Class，Method或者其它分别处理
 		if (source instanceof Class) {
 			return processClass(context, (Class<?>) source, searchStrategy, processor);
 		}
@@ -116,8 +118,11 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
+	 * <p>
 	 * {@link AnnotationsScanner#process(java.lang.Object, java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
 	 * 中调用
+	 * </p>
+	 * 如果源数据source是一个class,用该方法处理
 	 *
 	 * @param context        {@link TypeMappedAnnotations}
 	 * @param source         class原始对象
@@ -155,9 +160,13 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
+	 * <p>
 	 * {@link AnnotationsScanner#processClass(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
 	 * 中被调用
 	 * {@link SearchStrategy#INHERITED_ANNOTATIONS}
+	 * </p>
+	 * <p>
+	 * 搜索方式为 当前类 + 父类 上的注解的方式
 	 *
 	 * @param context        {@link TypeMappedAnnotations}
 	 * @param source         源class
@@ -173,7 +182,10 @@ abstract class AnnotationsScanner {
 
 		try {
 			if (isWithoutHierarchy(source, searchStrategy)) {
-				// 如果自身是Object.class或者父类是，且无实现接口
+				/**
+				 * 如果自身是Object.class或者父类是，且无实现接口。
+				 * 则走{@link SearchStrategy#DIRECT}的搜索方式
+				 */
 				return processElement(context, source, processor);
 			}
 			Annotation[] relevant = null;
@@ -186,10 +198,16 @@ abstract class AnnotationsScanner {
 				if (result != null) {
 					return result;
 				}
-				// 获取source上的注解
+				// 获取source上自身的注解
 				Annotation[] declaredAnnotations = getDeclaredAnnotations(source, true);
 				if (relevant == null && declaredAnnotations.length > 0) {
-					// 所有注解，包括父类上的
+					/**
+					 * 如果自身没有注解,下面的for循环也就不会走了。也就没必要初始化relevant了
+					 * <p>
+					 * 自身注解，外加继承的所有父类上的带{@link Inherited}注解修饰的注解
+					 * https://blog.csdn.net/Olivier0611/article/details/123163789
+					 * 特别注意,这个是root,而不是source。也就是说是最初的那个子类
+					 */
 					relevant = root.getAnnotations();
 					// 所有注解的数量
 					remaining = relevant.length;
@@ -202,7 +220,10 @@ abstract class AnnotationsScanner {
 							// 遍历所有注解
 							if (relevant[relevantIndex] != null &&
 									declaredAnnotations[i].annotationType() == relevant[relevantIndex].annotationType()) {
-								// 如果自身的注解,在所有注解上找到了，则所有注解数组上该元素置为空
+								/**
+								 * 如果自身的注解,在所有注解上找到了，则所有注解数组上该元素置为空
+								 * 这部分代码的逻辑就是,保证子类和父类重复的注解，只会记录一次
+								 */
 								isRelevant = true;
 								relevant[relevantIndex] = null;
 								remaining--;
@@ -210,7 +231,12 @@ abstract class AnnotationsScanner {
 							}
 						}
 						if (!isRelevant) {
-							// 否则自身注解该位置置空
+							/**
+							 * 否则自身注解该位置置空
+							 * 这种情况，存在两种：
+							 * 一，子类自身有该注解了，即子类和父类都有该注解。
+							 * 二，父类的注解，不是{@link Inherited}的
+							 */
 							declaredAnnotations[i] = null;
 						}
 					}
@@ -219,6 +245,7 @@ abstract class AnnotationsScanner {
 				if (result != null) {
 					return result;
 				}
+				// 递归查找父类
 				source = source.getSuperclass();
 				aggregateIndex++;
 			}
@@ -650,13 +677,13 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
-	 * 无等级的
 	 * <p>
 	 * {@link AnnotationsScanner#isKnownEmpty(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy)}
 	 * 中被调用
 	 * {@link AnnotationsScanner#processClassInheritedAnnotations(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
 	 * 中被调用
 	 * </p>
+	 * 无等级的。即该类要么是Object.class，要么是未实现任何接口且父类是Object.class
 	 *
 	 * @param source         源class
 	 * @param searchStrategy 选择策略
@@ -672,6 +699,11 @@ abstract class AnnotationsScanner {
 			// 父class是Object.class,且没有实现任何接口
 			boolean noSuperTypes = (sourceClass.getSuperclass() == Object.class &&
 					sourceClass.getInterfaces().length == 0);
+			/**
+			 * 关于{@link Class#getEnclosingClass()}
+			 * 可以参考：https://blog.csdn.net/qq_25073223/article/details/126914258
+			 * 即如果当前类是内部类，可以通过该方法获取声明它的外部类
+			 */
 			return (searchStrategy == SearchStrategy.TYPE_HIERARCHY_AND_ENCLOSING_CLASSES ? noSuperTypes &&
 					sourceClass.getEnclosingClass() == null : noSuperTypes);
 		}
