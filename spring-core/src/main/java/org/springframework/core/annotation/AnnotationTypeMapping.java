@@ -94,6 +94,7 @@ final class AnnotationTypeMapping {
 
 	/**
 	 * 注解{@link AnnotationTypeMapping#annotationType}上属性方法上，如果标注了{@link AliasFor}注解的对应关系
+	 * 注意key是转换后的方法,value是原方法
 	 */
 	private final Map<Method, List<Method>> aliasedBy;
 
@@ -135,7 +136,7 @@ final class AnnotationTypeMapping {
 		 */
 		this.annotationType = annotationType;
 		/**
-		 * 合并的注解，包括当前注解和所有父注解的注解。注意List是有序的
+		 * 合并的注解，包括当前注解和所有子注解的注解。注意List是有序的
 		 */
 		this.metaTypes = merge(
 				source != null ? source.getMetaTypes() : null,
@@ -155,6 +156,9 @@ final class AnnotationTypeMapping {
 		 */
 		this.annotationValueSource = new AnnotationTypeMapping[this.attributes.size()];
 		this.aliasedBy = resolveAliasedForTargets();
+		/**
+		 * 代码太复杂了， 有时间再看吧
+		 */
 		processAliases();
 		addConventionMappings();
 		addConventionAnnotationValues();
@@ -202,6 +206,7 @@ final class AnnotationTypeMapping {
 			AliasFor aliasFor = AnnotationsScanner.getDeclaredAnnotation(attribute, AliasFor.class);
 			if (aliasFor != null) {
 				Method target = resolveAliasTarget(attribute, aliasFor);
+				// 注意这个key是转换后的方法，value是原方法
 				aliasedBy.computeIfAbsent(target, key -> new ArrayList<>()).add(attribute);
 			}
 		}
@@ -343,9 +348,11 @@ final class AnnotationTypeMapping {
 		List<Method> aliases = new ArrayList<>();
 		for (int i = 0; i < this.attributes.size(); i++) {
 			/**
-			 * 遍历
+			 * 遍历该注解上的属性方法
+			 * 先清空aliases
 			 */
 			aliases.clear();
+			// 把当前方法放到aliases里
 			aliases.add(this.attributes.get(i));
 			collectAliases(aliases);
 			if (aliases.size() > 1) {
@@ -354,20 +361,40 @@ final class AnnotationTypeMapping {
 		}
 	}
 
+	/**
+	 * {@link AnnotationTypeMapping#processAliases()}中调用
+	 *
+	 * @param aliases
+	 */
 	private void collectAliases(List<Method> aliases) {
+		// mapping刚开始设置为自己
 		AnnotationTypeMapping mapping = this;
 		while (mapping != null) {
 			int size = aliases.size();
 			for (int j = 0; j < size; j++) {
+				/**
+				 * {@link AnnotationTypeMapping#aliasedBy}记录的key是标注了{@link AliasFor}转化之后的Method
+				 * 像{@link org.springframework.stereotype.Service},则下面的additional肯定就为空了
+				 * 但是像{@link AliasFor}自身标注的这样，则转换后的方法也是本身的方法，就有值了
+				 */
 				List<Method> additional = mapping.aliasedBy.get(aliases.get(j));
 				if (additional != null) {
 					aliases.addAll(additional);
 				}
 			}
+			/**
+			 * 从自身向子注解查找
+			 */
 			mapping = mapping.source;
 		}
 	}
 
+	/**
+	 * {@link AnnotationTypeMapping#processAliases()}中调用
+	 *
+	 * @param attributeIndex
+	 * @param aliases
+	 */
 	private void processAliases(int attributeIndex, List<Method> aliases) {
 		int rootAttributeIndex = getFirstRootAttributeIndex(aliases);
 		AnnotationTypeMapping mapping = this;
@@ -395,6 +422,13 @@ final class AnnotationTypeMapping {
 		}
 	}
 
+	/**
+	 * {@link AnnotationTypeMapping#processAliases(int, java.util.List)}中调用
+	 * 寻找根注解中第一个被标注了{@link AliasFor}映射后的Method,该Method未必自身标注了{@link AliasFor}
+	 *
+	 * @param aliases
+	 * @return
+	 */
 	private int getFirstRootAttributeIndex(Collection<Method> aliases) {
 		AttributeMethods rootAttributes = this.root.getAttributes();
 		for (int i = 0; i < rootAttributes.size(); i++) {
