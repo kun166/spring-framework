@@ -288,6 +288,10 @@ public abstract class AnnotationConfigUtils {
 	/**
 	 * {@link AnnotationConfigUtils#processCommonDefinitionAnnotations(org.springframework.beans.factory.annotation.AnnotatedBeanDefinition)}
 	 * 中被调用
+	 * <p>
+	 * 根据传入的abd,解析{@link Lazy},{@link Primary},{@link DependsOn},{@link Role},{@link Description}
+	 * 注解,并设置属性
+	 * </p>
 	 *
 	 * @param abd      {@link AnnotatedBeanDefinition}
 	 * @param metadata {@link AnnotatedBeanDefinition}的metadata
@@ -302,7 +306,7 @@ public abstract class AnnotationConfigUtils {
 				abd.setLazyInit(lazy.getBoolean("value"));
 			}
 		}
-
+		// https://blog.csdn.net/weixin_46228112/article/details/124442716
 		if (metadata.isAnnotated(Primary.class.getName())) {
 			abd.setPrimary(true);
 		}

@@ -235,6 +235,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		if (this.annotationFilter.matches(annotationType)) {
 			return MergedAnnotation.missing();
 		}
+		/**
+		 * 注意,这个返回对象是{@link MergedAnnotation}
+		 * 而不是{@link MergedAnnotations}
+		 */
 		MergedAnnotation<A> result = scan(annotationType,
 				new MergedAnnotationFinder<>(annotationType, predicate, selector));
 		return (result != null ? result : MergedAnnotation.missing());
@@ -392,9 +396,20 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return new TypeMappedAnnotations(source, annotations, repeatableContainers, annotationFilter);
 	}
 
+	/**
+	 * {@link MergedAnnotationFinder#process(java.lang.Object, int, java.lang.Object, java.lang.annotation.Annotation)}
+	 *
+	 * @param mapping
+	 * @param annotationFilter
+	 * @param requiredType
+	 * @return
+	 */
 	private static boolean isMappingForType(AnnotationTypeMapping mapping,
 											AnnotationFilter annotationFilter, @Nullable Object requiredType) {
 
+		/**
+		 * 注解的类
+		 */
 		Class<? extends Annotation> actualType = mapping.getAnnotationType();
 		return (!annotationFilter.matches(actualType) &&
 				(requiredType == null || actualType == requiredType || actualType.getName().equals(requiredType)));
@@ -541,6 +556,17 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return this.result;
 		}
 
+		/**
+		 * {@link AnnotationsScanner#processClassInheritedAnnotations(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
+		 * 中被调用
+		 *
+		 * @param type           要查找的注解
+		 * @param aggregateIndex 离子类的距离
+		 * @param source         注解所在的class类
+		 * @param annotations    该class上的注解
+		 *                       {@code null} elements)
+		 * @return
+		 */
 		@Override
 		@Nullable
 		public MergedAnnotation<A> doWithAnnotations(Object type, int aggregateIndex,
@@ -557,6 +583,16 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return null;
 		}
 
+		/**
+		 * {@link MergedAnnotationFinder#doWithAnnotations(java.lang.Object, int, java.lang.Object, java.lang.annotation.Annotation[])}
+		 * 中被调用
+		 *
+		 * @param type
+		 * @param aggregateIndex
+		 * @param source
+		 * @param annotation
+		 * @return
+		 */
 		@Nullable
 		private MergedAnnotation<A> process(
 				Object type, int aggregateIndex, @Nullable Object source, Annotation annotation) {

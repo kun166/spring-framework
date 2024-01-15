@@ -19,12 +19,8 @@ package org.springframework.core.type;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
-import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.core.annotation.*;
 import org.springframework.core.annotation.MergedAnnotation.Adapt;
-import org.springframework.core.annotation.MergedAnnotationCollectors;
-import org.springframework.core.annotation.MergedAnnotationPredicates;
-import org.springframework.core.annotation.MergedAnnotationSelectors;
-import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.lang.Nullable;
 import org.springframework.util.MultiValueMap;
 
@@ -116,7 +112,9 @@ public interface AnnotatedTypeMetadata {
 	@Nullable
 	default Map<String, Object> getAnnotationAttributes(String annotationName,
 														boolean classValuesAsString) {
-
+		/**
+		 * 最终实现{@link TypeMappedAnnotations.MergedAnnotationFinder#process(java.lang.Object, int, java.lang.Object, java.lang.annotation.Annotation)}
+		 */
 		MergedAnnotation<Annotation> annotation = getAnnotations().get(annotationName,
 				null, MergedAnnotationSelectors.firstDirectlyDeclared());
 		if (!annotation.isPresent()) {

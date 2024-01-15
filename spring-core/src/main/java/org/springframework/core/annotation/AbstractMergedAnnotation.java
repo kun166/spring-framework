@@ -28,10 +28,10 @@ import org.springframework.util.Assert;
 /**
  * Abstract base class for {@link MergedAnnotation} implementations.
  *
+ * @param <A> the annotation type
  * @author Phillip Webb
  * @author Juergen Hoeller
  * @since 5.2
- * @param <A> the annotation type
  */
 abstract class AbstractMergedAnnotation<A extends Annotation> implements MergedAnnotation<A> {
 
@@ -190,6 +190,9 @@ abstract class AbstractMergedAnnotation<A extends Annotation> implements MergedA
 
 	@Override
 	public AnnotationAttributes asAnnotationAttributes(Adapt... adaptations) {
+		/**
+		 * 提供一个{@link MergedAnnotation},返回一个{@link AnnotationAttributes}
+		 */
 		return asMap(mergedAnnotation -> new AnnotationAttributes(mergedAnnotation.getType()), adaptations);
 	}
 
@@ -224,13 +227,14 @@ abstract class AbstractMergedAnnotation<A extends Annotation> implements MergedA
 
 	/**
 	 * Get the underlying attribute value.
+	 *
 	 * @param attributeName the attribute name
-	 * @param type the type to return (see {@link MergedAnnotation} class
-	 * documentation for details)
+	 * @param type          the type to return (see {@link MergedAnnotation} class
+	 *                      documentation for details)
 	 * @return the attribute value or {@code null} if the value is not found and
 	 * is not required
 	 * @throws IllegalArgumentException if the source type is not compatible
-	 * @throws NoSuchElementException if the value is required but not found
+	 * @throws NoSuchElementException   if the value is required but not found
 	 */
 	@Nullable
 	protected abstract <T> T getAttributeValue(String attributeName, Class<T> type);
