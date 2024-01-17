@@ -22,11 +22,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionDefaults;
-import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
-import org.springframework.beans.factory.support.BeanNameGenerator;
+import org.springframework.beans.factory.support.*;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.EnvironmentCapable;
 import org.springframework.core.env.StandardEnvironment;
@@ -171,11 +167,14 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * <p>
 	 * {@link ClassPathBeanDefinitionScanner#ClassPathBeanDefinitionScanner(org.springframework.beans.factory.support.BeanDefinitionRegistry, boolean, org.springframework.core.env.Environment)}
 	 * 中调用
+	 * {@link ComponentScanBeanDefinitionParser#createScanner(org.springframework.beans.factory.xml.XmlReaderContext, boolean)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param registry          the {@code BeanFactory} to load bean definitions into, in the form
 	 *                          of a {@code BeanDefinitionRegistry}
 	 *                          {@link AnnotationConfigApplicationContext}
+	 *                          {@link DefaultListableBeanFactory}
 	 * @param useDefaultFilters whether to include the default filters for the
 	 *                          {@link org.springframework.stereotype.Component @Component},
 	 *                          {@link org.springframework.stereotype.Repository @Repository},
