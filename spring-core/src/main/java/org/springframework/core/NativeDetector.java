@@ -28,6 +28,7 @@ package org.springframework.core;
 public abstract class NativeDetector {
 
 	// See https://github.com/oracle/graal/blob/master/sdk/src/org.graalvm.nativeimage/src/org/graalvm/nativeimage/ImageInfo.java
+	// https://blog.csdn.net/m0_37723088/article/details/130823475 一个新款的jvm虚拟机
 	private static final boolean imageCode = (System.getProperty("org.graalvm.nativeimage.imagecode") != null);
 
 	/**

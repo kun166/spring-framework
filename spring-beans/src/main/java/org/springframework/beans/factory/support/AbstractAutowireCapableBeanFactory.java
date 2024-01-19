@@ -126,6 +126,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	/**
 	 * Strategy for creating bean instances.
+	 * 实例化策略
 	 * 在{@link AbstractAutowireCapableBeanFactory#AbstractAutowireCapableBeanFactory()}中被赋值
 	 * {@link CglibSubclassingInstantiationStrategy}
 	 */
@@ -210,8 +211,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		ignoreDependencyInterface(BeanFactoryAware.class);
 		ignoreDependencyInterface(BeanClassLoaderAware.class);
 		if (NativeDetector.inNativeImage()) {
+			// GraalVM 虚拟机
 			this.instantiationStrategy = new SimpleInstantiationStrategy();
 		} else {
+			// 常规java HotSpot 虚拟机
 			this.instantiationStrategy = new CglibSubclassingInstantiationStrategy();
 		}
 	}

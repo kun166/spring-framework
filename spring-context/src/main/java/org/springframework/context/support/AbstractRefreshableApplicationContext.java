@@ -141,6 +141,7 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 			customizeBeanFactory(beanFactory);
 			// 4,加载beanFactory
 			loadBeanDefinitions(beanFactory);
+			// 5,保存beanFactory
 			this.beanFactory = beanFactory;
 		} catch (IOException ex) {
 			throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
