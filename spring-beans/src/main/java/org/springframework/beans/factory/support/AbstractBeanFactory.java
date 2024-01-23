@@ -147,8 +147,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * {@link org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
 	 * 处调用
-	 *
-	 * @param resolver {@link org.springframework.context.expression.StandardBeanExpressionResolver}
+	 * <p>bean定义值中表达式的解析策略</p>
+	 * <p>SpingBoot默认使用的是StandardBeanExpressionResolver</p>
+	 * <p>
+	 * {@link org.springframework.context.expression.StandardBeanExpressionResolver}
 	 */
 	@Nullable
 	private BeanExpressionResolver beanExpressionResolver;
@@ -202,6 +204,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Map from scope identifier String to corresponding Scope.
+	 * <p>从作用域表示符String映射到相应的作用域</p>
 	 */
 	private final Map<String, Scope> scopes = new LinkedHashMap<>(8);
 
@@ -213,6 +216,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Map from bean name to merged RootBeanDefinition.
+	 * <p>
+	 * {@link AbstractBeanFactory#getMergedBeanDefinition(java.lang.String, org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中有添加数据
+	 * </p>
 	 */
 	private final Map<String, RootBeanDefinition> mergedBeanDefinitions = new ConcurrentHashMap<>(256);
 
@@ -1110,10 +1117,18 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return StringUtils.toStringArray(this.scopes.keySet());
 	}
 
+	/**
+	 * 获取给定作用域名称对应的作用域对象（如果有）
+	 *
+	 * @param scopeName the name of the scope 作用域名
+	 * @return scopeName对应的作用域对象
+	 */
 	@Override
 	@Nullable
 	public Scope getRegisteredScope(String scopeName) {
+		//如果传入的作用域名为null，抛出异常
 		Assert.notNull(scopeName, "Scope identifier must not be null");
+		//从映射的linkedHashMap中获取传入的作用域名对应的作用域对象并返回
 		return this.scopes.get(scopeName);
 	}
 
@@ -1315,6 +1330,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return the bean name, stripping out the factory dereference prefix if necessary,
 	 * and resolving aliases to canonical names.
+	 * <p>
+	 * {@link AbstractBeanFactory#getMergedBeanDefinition(java.lang.String, org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param name the user-specified name
 	 * @return the transformed bean name
@@ -1397,6 +1416,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return a merged RootBeanDefinition, traversing the parent bean definition
 	 * if the specified bean corresponds to a child bean definition.
+	 * <p>
+	 * {@link DefaultListableBeanFactory#doGetBeanNamesForType(org.springframework.core.ResolvableType, boolean, boolean)}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean to retrieve the merged definition for
 	 * @return a (potentially merged) RootBeanDefinition for the given bean
@@ -1415,6 +1438,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return a RootBeanDefinition for the given top-level bean, by merging with
 	 * the parent if the given bean's definition is a child bean definition.
+	 * <p>
+	 * {@link AbstractBeanFactory#getMergedLocalBeanDefinition(java.lang.String)}中被调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean definition
 	 * @param bd       the original bean definition (Root/ChildBeanDefinition)
@@ -1430,6 +1456,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return a RootBeanDefinition for the given bean, by merging with the
 	 * parent if the given bean's definition is a child bean definition.
+	 * <p>
+	 * {@link AbstractBeanFactory#getMergedBeanDefinition(java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中被调用
+	 * <p>
+	 * 网上搜了点资料:https://blog.csdn.net/qq_44587855/article/details/121684372
+	 * https://www.cnblogs.com/ssh-html/p/10740946.html
+	 * </p>
 	 *
 	 * @param beanName     the name of the bean definition
 	 * @param bd           the original bean definition (Root/ChildBeanDefinition)
@@ -1464,8 +1497,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					// Child bean definition: needs to be merged with parent.
 					BeanDefinition pbd;
 					try {
+						// 从别名表里查询到真正的那个bean名字
 						String parentBeanName = transformedBeanName(bd.getParentName());
 						if (!beanName.equals(parentBeanName)) {
+							// 如果传入参数是别名。再用真实的bean 名字查一次
 							pbd = getMergedBeanDefinition(parentBeanName);
 						} else {
 							BeanFactory parent = getParentBeanFactory();
@@ -1579,55 +1614,117 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * Resolve the bean class for the specified bean definition,
 	 * resolving a bean class name into a Class reference (if necessary)
 	 * and storing the resolved Class in the bean definition for further use.
+	 * <p>为指定的bean定义解析bean类，将bean类名解析为Class引用（如果需要）,并
+	 * 将解析后的Class存储在bean定义中以备将来使用。</p>
+	 * <p>
+	 * {@link AbstractBeanFactory#predictBeanType(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param mbd          the merged bean definition to determine the class for
+	 *                     合并的bean定义来确定其类
 	 * @param beanName     the name of the bean (for error handling purposes)
+	 *                     bean名称（用于错误处理）,用于发生异常时，描述异常信息
 	 * @param typesToMatch the types to match in case of internal type matching purposes
 	 *                     (also signals that the returned {@code Class} will never be exposed to application code)
-	 * @return the resolved bean class (or {@code null} if none)
-	 * @throws CannotLoadBeanClassException if we failed to load the class
+	 *                     要匹配的类型，用于当该工厂有临时类加载器且该类加载器属于DecoratingClassLoader实例时，
+	 *                     对这些要匹配的类型进行在临时类加载器中的排除，以交由父ClassLoader以常规方式处理
+	 *                     默认情况下父classLoader是线程上下文类加载器】。
+	 *                     （内部类型匹配时要匹配的类型（也表示返回的Class永远不会暴露给应用程序代码）
+	 * @return the resolved bean class (or {@code null} if none)解析的Bean类(如果没有，则为null)
+	 * @throws CannotLoadBeanClassException if we failed to load the class 如果我们无法加载类
 	 */
 	@Nullable
 	protected Class<?> resolveBeanClass(RootBeanDefinition mbd, String beanName, Class<?>... typesToMatch)
 			throws CannotLoadBeanClassException {
 
 		try {
+			//如果mbd指定了bean类
 			if (mbd.hasBeanClass()) {
+				//获取mbd的指定bean类
 				return mbd.getBeanClass();
 			}
+			//如果成功获取到系统的安全管理器
 			if (System.getSecurityManager() != null) {
-				return AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>>)
-						() -> doResolveBeanClass(mbd, typesToMatch), getAccessControlContext());
+				//AccessController.doPrivileged:允许在一个类实例中的代码通知这个AccessController：
+				// 	它的代码主体是享受"privileged(特权的)"，它单独负责对它的可得的资源的访问请求，
+				// 	而不管这个请求是由什么代码所引发的。
+				// 一个调用者在调用doPrivileged方法时，可被标识为 "特权"。在做访问控制决策时，
+				// 如果checkPermission方法遇到一个通过doPrivileged调用而被表示为 "特权"的调用者，
+				// 并且没有上下文自变量，checkPermission方法则将终止检查。如果那个调用者的域具有特定的许可，
+				// 则不做进一步检查，checkPermission安静地返回，表示那个访问请求是被允许的；
+				// 如果那个域没有特定的许可，则象通常一样，一个异常被抛出。
+				//参考博客：https://www.jianshu.com/p/3fe79e24f8a1
+				//参考博客：https://www.iteye.com/blog/huangyunbin-1942509
+				return AccessController.doPrivileged((PrivilegedExceptionAction<Class<?>>) () ->
+						doResolveBeanClass(mbd, typesToMatch), getAccessControlContext());
 			} else {
 				return doResolveBeanClass(mbd, typesToMatch);
 			}
-		} catch (PrivilegedActionException pae) {
+		} //捕捉 无法使用特权异常的
+		catch (PrivilegedActionException pae) {
+			//这里没有理解，pae获取的异常一定是ClassNotFoundException?
 			ClassNotFoundException ex = (ClassNotFoundException) pae.getException();
+			//包装异常信息，抛出CannotLoadBeanClassException
 			throw new CannotLoadBeanClassException(mbd.getResourceDescription(), beanName, mbd.getBeanClassName(), ex);
-		} catch (ClassNotFoundException ex) {
+		}
+		//捕捉 未找到类异常
+		catch (ClassNotFoundException ex) {
+			//包装异常信息，抛出CannotLoadBeanClassException
 			throw new CannotLoadBeanClassException(mbd.getResourceDescription(), beanName, mbd.getBeanClassName(), ex);
-		} catch (LinkageError err) {
+		}
+		//LinkageError:LinkageError的子类表明一个类对另一个类具有一定的依赖性。但是，后一类在前一类编译之后发生了
+		//不兼容的变化
+		catch (LinkageError err) {
+			//包装错误信息，抛出CannotLoadBeanClassException
 			throw new CannotLoadBeanClassException(mbd.getResourceDescription(), beanName, mbd.getBeanClassName(), err);
 		}
 	}
 
+	/**
+	 * {@link AbstractBeanFactory#resolveBeanClass(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.String, java.lang.Class[])}
+	 * 中调用
+	 *
+	 * <p>获取mbd配置的bean类名，将bean类名解析为Class对象,并将解析后的Class对象缓存在mdb中以备将来使用</p>
+	 *
+	 * @param mbd          合并的bean定义来确定其类
+	 * @param typesToMatch 要匹配的类型，用于当该工厂有临时类加载器且该类加载器属于DecoratingClassLoader实例时，
+	 *                     对这些要匹配的类型进行在临时类加载器中的排除，以交由父ClassLoader以常规方式处理
+	 *                     【默认情况下父classLoader是线程上下文类加载器】。
+	 * @return 解析的Bean类(如果没有 ， 则为null)
+	 * @throws ClassNotFoundException 如果我们无法加载类
+	 */
 	@Nullable
 	private Class<?> doResolveBeanClass(RootBeanDefinition mbd, Class<?>... typesToMatch)
 			throws ClassNotFoundException {
 
+		//获取该工厂的加载bean用的类加载器
 		ClassLoader beanClassLoader = getBeanClassLoader();
+		//初始化动态类加载器为该工厂的加载bean用的类加载器,如果该工厂有
+		// 临时类加载器器时，该动态类加载器就是该工厂的临时类加载器
 		ClassLoader dynamicLoader = beanClassLoader;
+		//表示mdb的配置的bean类名需要重新被dynameicLoader加载的标记，默认不需要
 		boolean freshResolve = false;
 
+		//如果有传入要匹配的类型
 		if (!ObjectUtils.isEmpty(typesToMatch)) {
 			// When just doing type checks (i.e. not creating an actual instance yet),
 			// use the specified temporary class loader (e.g. in a weaving scenario).
+			// 仅进行类型检查时（即尚未创建实际实例），请使用指定的临时类加载器
+			//获取该工厂的临时类加载器，该临时类加载器专门用于类型匹配
 			ClassLoader tempClassLoader = getTempClassLoader();
+			//如果成功获取到临时类加载器
 			if (tempClassLoader != null) {
+				//以该工厂的临时类加载器作为动态类加载器
 				dynamicLoader = tempClassLoader;
+				//标记mdb的配置的bean类名需要重新被dynameicLoader加载
 				freshResolve = true;
+				//DecoratingClassLoader:装饰ClassLoader的基类,提供对排除的包和类的通用处理
+				//如果临时类加载器是DecoratingClassLoader的基类
 				if (tempClassLoader instanceof DecoratingClassLoader) {
+					//将临时类加载器强转为DecoratingClassLoader实例
 					DecoratingClassLoader dcl = (DecoratingClassLoader) tempClassLoader;
+					//对要匹配的类型进行在装饰类加载器中的排除，以交由父ClassLoader以常规方式处理
 					for (Class<?> typeToMatch : typesToMatch) {
 						dcl.excludeClass(typeToMatch.getName());
 					}
@@ -1635,62 +1732,95 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 		}
 
+		//从mbd中获取配置的bean类名
 		String className = mbd.getBeanClassName();
+		//如果能成功获得配置的bean类名
 		if (className != null) {
+			//评估benaDefinition中包含的className,如果className是可解析表达式，会对其进行解析，否则直接返回className:
 			Object evaluated = evaluateBeanDefinitionString(className, mbd);
+			//如果className与解析后的值不一样
 			if (!className.equals(evaluated)) {
 				// A dynamically resolved expression, supported as of 4.2...
+				// 从4.2开始支持动态解析的表达式
+				// 如果evaluated属于Class实例
 				if (evaluated instanceof Class) {
+					//强转evaluatedw为Class对象并返回出去
 					return (Class<?>) evaluated;
-				} else if (evaluated instanceof String) {
+				}
+				// 如果evaluated属于String实例
+				else if (evaluated instanceof String) {
+					//将evaluated作为className的值
 					className = (String) evaluated;
+					//标记mdb的配置的bean类名需要重新被dynameicLoader加载
 					freshResolve = true;
 				} else {
+					//抛出非法状态异常：无效的类名表达式结果：evaluated
 					throw new IllegalStateException("Invalid class name expression result: " + evaluated);
 				}
 			}
+			//如果mdb的配置的bean类名需要重新被dynameicLoader加载
 			if (freshResolve) {
 				// When resolving against a temporary class loader, exit early in order
 				// to avoid storing the resolved Class in the bean definition.
+				// 当使用临时类加载器进行解析时，请尽早退出以避免将已解析的类存储在BeanDefinition中
+				// 如果动态类加载器不为null
 				if (dynamicLoader != null) {
 					try {
+						//使用dynamicLoader加载className对应的类型，并返回加载成功的Class对象
 						return dynamicLoader.loadClass(className);
-					} catch (ClassNotFoundException ex) {
+					}
+					//捕捉 未找到类异常，
+					catch (ClassNotFoundException ex) {
 						if (logger.isTraceEnabled()) {
+							//打印追踪日志：无法从dynamicLoader中加载类[className]:ex
 							logger.trace("Could not load class [" + className + "] from " + dynamicLoader + ": " + ex);
 						}
 					}
 				}
+				//使用classLoader加载name对应的Class对象,该方式是Spring用于代替Class.forName()的方法，支持返回原始的类实例(如'int')
+				// 和数组类名 (如'String[]')。此外，它还能够以Java source样式解析内部类名(如:'java.lang.Thread.State'
+				// 而不是'java.lang.Thread$State')
 				return ClassUtils.forName(className, dynamicLoader);
 			}
 		}
 
 		// Resolve regularly, caching the result in the BeanDefinition...
+		// 定期解析，将结果缓存在BeanDefinition中...
+		// 使用classLoader加载当前BeanDefinitiond对象所配置的Bean类名的Class对象（每次调用都会重新加载,可通过
+		// AbstractBeanDefinition#getBeanClass 获取缓存）：
 		return mbd.resolveBeanClass(beanClassLoader);
 	}
 
 	/**
 	 * Evaluate the given String as contained in a bean definition,
 	 * potentially resolving it as an expression.
+	 * <p>评估bean定义中包含的给定String，可能将其解析为表达式</p>
 	 *
-	 * @param value          the value to check
-	 * @param beanDefinition the bean definition that the value comes from
-	 * @return the resolved value
+	 * @param value          要检查的值
+	 * @param beanDefinition 值所来自的bean定义
+	 * @return 解析后的值
 	 * @see #setBeanExpressionResolver
 	 */
 	@Nullable
 	protected Object evaluateBeanDefinitionString(@Nullable String value, @Nullable BeanDefinition beanDefinition) {
+		//如果该工厂没有设置bean定义值中表达式的解析策略
 		if (this.beanExpressionResolver == null) {
+			//直接返回要检查的值
 			return value;
 		}
-
+		//值所来自的bean定义的当前目标作用域
 		Scope scope = null;
+		//如果有传入值所来自的bean定义
 		if (beanDefinition != null) {
+			//获取值所来自的bean定义的当前目标作用域名
 			String scopeName = beanDefinition.getScope();
+			//如果成功获得值所来自的bean定义的当前目标作用域名
 			if (scopeName != null) {
+				//获取scopeName对应的Scope对象
 				scope = getRegisteredScope(scopeName);
 			}
 		}
+		//评估value作为表达式（如果适用）；否则按原样返回值
 		return this.beanExpressionResolver.evaluate(value, new BeanExpressionContext(this, scope));
 	}
 
@@ -1704,8 +1834,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * handle factory methods and InstantiationAwareBeanPostProcessors.
 	 * It only predicts the bean type correctly for a standard bean.
 	 * To be overridden in subclasses, applying more sophisticated type detection.
+	 * <p>
+	 * {@link AbstractBeanFactory#isFactoryBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
 	 *
-	 * @param beanName     the name of the bean
+	 * @param beanName     bean 的名字
 	 * @param mbd          the merged bean definition to determine the type for
 	 * @param typesToMatch the types to match in case of internal type matching purposes
 	 *                     (also signals that the returned {@code Class} will never be exposed to application code)
@@ -1725,6 +1859,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Check whether the given bean is defined as a {@link FactoryBean}.
+	 * <p>
+	 * {@link DefaultListableBeanFactory#doGetBeanNamesForType(org.springframework.core.ResolvableType, boolean, boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean
 	 * @param mbd      the corresponding bean definition

@@ -185,6 +185,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Map of bean definition objects, keyed by bean name.
+	 * 记录{@link BeanDefinition}的map，key为bean的名字
+	 * <p>
+	 * 在{@link DefaultListableBeanFactory#registerBeanDefinition(java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中被填写数据
+	 * </p>
 	 */
 	private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
 
@@ -205,6 +210,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * List of bean definition names, in registration order.
+	 * 记录被装载到{@link DefaultListableBeanFactory#beanDefinitionMap}的BeanDefinition的名字
+	 * <p>
+	 * 在{@link DefaultListableBeanFactory#registerBeanDefinition(java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中被填写数据
+	 * </p>
 	 */
 	private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
 
@@ -598,6 +608,20 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return getBeanNamesForType(type, true, true);
 	}
 
+	/**
+	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, org.springframework.context.support.AbstractApplicationContext)}
+	 * 中被调用
+	 *
+	 * @param type                 the class or interface to match, or {@code null} for all bean names
+	 * @param includeNonSingletons whether to include prototype or scoped beans too
+	 *                             or just singletons (also applies to FactoryBeans)
+	 * @param allowEagerInit       whether to initialize <i>lazy-init singletons</i> and
+	 *                             <i>objects created by FactoryBeans</i> (or by factory methods with a
+	 *                             "factory-bean" reference) for the type check. Note that FactoryBeans need to be
+	 *                             eagerly initialized to determine their type: So be aware that passing in "true"
+	 *                             for this flag will initialize FactoryBeans and "factory-bean" references.
+	 * @return
+	 */
 	@Override
 	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
 		if (!isConfigurationFrozen() || type == null || !allowEagerInit) {
@@ -616,6 +640,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return resolvedBeanNames;
 	}
 
+	/**
+	 * {@link DefaultListableBeanFactory#getBeanNamesForType(java.lang.Class, boolean, boolean)}中被调用
+	 *
+	 * @param type
+	 * @param includeNonSingletons
+	 * @param allowEagerInit
+	 * @return
+	 */
 	private String[] doGetBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit) {
 		List<String> result = new ArrayList<>();
 
@@ -1077,7 +1109,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		BeanDefinition existingDefinition = this.beanDefinitionMap.get(beanName);
 		if (existingDefinition != null) {
+			// 说明已经存在了
 			if (!isAllowBeanDefinitionOverriding()) {
+				// 如果不允许被覆盖，则抛异常
 				throw new BeanDefinitionOverrideException(beanName, beanDefinition, existingDefinition);
 			} else if (existingDefinition.getRole() < beanDefinition.getRole()) {
 				// e.g. was ROLE_APPLICATION, now overriding with ROLE_SUPPORT or ROLE_INFRASTRUCTURE
@@ -1102,6 +1136,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			this.beanDefinitionMap.put(beanName, beanDefinition);
 		} else {
 			if (hasBeanCreationStarted()) {
+				// 如果已经有bean生成了,加锁
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
 				synchronized (this.beanDefinitionMap) {
 					this.beanDefinitionMap.put(beanName, beanDefinition);
@@ -1113,6 +1148,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				}
 			} else {
 				// Still in startup registration phase
+				// 还处在单线程启动注册bean阶段
 				this.beanDefinitionMap.put(beanName, beanDefinition);
 				this.beanDefinitionNames.add(beanName);
 				removeManualSingletonName(beanName);
@@ -1162,6 +1198,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * triggering {@link #clearMergedBeanDefinition}, {@link #destroySingleton}
 	 * and {@link MergedBeanDefinitionPostProcessor#resetBeanDefinition} on the
 	 * given bean and on all bean definitions that have the given bean as parent.
+	 * <p>
+	 * 在{@link DefaultListableBeanFactory#registerBeanDefinition(java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean to reset
 	 * @see #registerBeanDefinition

@@ -202,8 +202,8 @@ final class PostProcessorRegistrationDelegate {
 	 * 中被调用
 	 * </p>
 	 *
-	 * @param beanFactory
-	 * @param applicationContext
+	 * @param beanFactory        {@link DefaultListableBeanFactory}
+	 * @param applicationContext {@link FileSystemXmlApplicationContext}
 	 */
 	public static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, AbstractApplicationContext applicationContext) {
