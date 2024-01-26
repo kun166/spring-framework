@@ -64,6 +64,7 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/**
 	 * Determines if the definition needs to be re-merged.
+	 * {@link AbstractBeanFactory#clearMergedBeanDefinition(java.lang.String)}中被调用
 	 */
 	volatile boolean stale;
 

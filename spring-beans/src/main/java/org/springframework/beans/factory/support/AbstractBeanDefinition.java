@@ -163,6 +163,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
 
+	/**
+	 * {@link BeanDefinitionParserDelegate#parseBeanDefinitionAttributes(org.w3c.dom.Element, java.lang.String, org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.support.AbstractBeanDefinition)}
+	 * 中调用
+	 */
 	@Nullable
 	private String[] dependsOn;
 
@@ -195,6 +199,11 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private MutablePropertyValues propertyValues;
 
+	/**
+	 * {@link BeanDefinitionParserDelegate#parseLookupOverrideSubElements(org.w3c.dom.Element, org.springframework.beans.factory.support.MethodOverrides)}
+	 * 中有添加
+	 * {@link BeanDefinitionParserDelegate#parseReplacedMethodSubElements(org.w3c.dom.Element, org.springframework.beans.factory.support.MethodOverrides)}
+	 */
 	private MethodOverrides methodOverrides = new MethodOverrides();
 
 	@Nullable
@@ -677,6 +686,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * <p>Note that dependencies are normally expressed through bean properties or
 	 * constructor arguments. This property should just be necessary for other kinds
 	 * of dependencies like statics (*ugh*) or database preparation on startup.
+	 * <p>
+	 * {@link BeanDefinitionParserDelegate#parseBeanDefinitionAttributes(org.w3c.dom.Element, java.lang.String, org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.support.AbstractBeanDefinition)}
+	 * 中调用
+	 * </p>
 	 */
 	@Override
 	public void setDependsOn(@Nullable String... dependsOn) {

@@ -32,6 +32,7 @@ import org.springframework.beans.factory.BeanCurrentlyInCreationException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.config.SingletonBeanRegistry;
+import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.core.SimpleAliasRegistry;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -131,11 +132,23 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Map between dependent bean names: bean name to Set of dependent bean names.
+	 * 在{@link DefaultSingletonBeanRegistry#registerDependentBean(java.lang.String, java.lang.String)}
+	 * 中被添加值
+	 * 注意这个Map的key是被依赖的bean的名字，例如A依赖于B，则这个key是B的名字
+	 * <p>
+	 * 特别特别的注意：这里的依赖并不是传统意义上的依赖，而是{@link AbstractBeanDefinition#dependsOn}
+	 * 可以参考 https://blog.csdn.net/u010285974/article/details/107428468
+	 * A依赖于B，并不是说A持有B，这里的依赖指的是创建顺序上。A创建前，B必须先创建。
+	 * <p>
+	 * 传统意义上的依赖,即ref，可以参考代码{@link BeanDefinitionParserDelegate#parsePropertyElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
 	 */
 	private final Map<String, Set<String>> dependentBeanMap = new ConcurrentHashMap<>(64);
 
 	/**
 	 * Map between depending bean names: bean name to Set of bean names for the bean's dependencies.
+	 * 在{@link DefaultSingletonBeanRegistry#registerDependentBean(java.lang.String, java.lang.String)}
+	 * 中被添加值
+	 * 注意这个Map的key是依赖的bean的名字，例如A依赖于B，则这个key是A的名字
 	 */
 	private final Map<String, Set<String>> dependenciesForBeanMap = new ConcurrentHashMap<>(64);
 
@@ -190,6 +203,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 	}
 
+	/**
+	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+	 * 中调用
+	 *
+	 * @param beanName the name of the bean to look for
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public Object getSingleton(String beanName) {
@@ -441,9 +461,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	/**
 	 * Register a dependent bean for the given bean,
 	 * to be destroyed before the given bean is destroyed.
+	 * <p>
+	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
 	 *
-	 * @param beanName          the name of the bean
-	 * @param dependentBeanName the name of the dependent bean
+	 * @param beanName          被依赖bean的名字。例如A依赖于B，则这个名字是B的名字
+	 * @param dependentBeanName 依赖bean的名字。这个是A的名字
 	 */
 	public void registerDependentBean(String beanName, String dependentBeanName) {
 		String canonicalName = canonicalName(beanName);
@@ -466,9 +490,15 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	/**
 	 * Determine whether the specified dependent bean has been registered as
 	 * dependent on the given bean or on any of its transitive dependencies.
+	 * 判断dependentBeanName是否也直接或者间接依赖于beanName
+	 * 这里的依赖不是传统意义上的依赖，是bean初始化顺序的依赖。即A依赖于B，则B必须在A之前完全初始化
+	 * <p>
+	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
 	 *
-	 * @param beanName          the name of the bean to check
-	 * @param dependentBeanName the name of the dependent bean
+	 * @param beanName          需要检测的bean的名字
+	 * @param dependentBeanName 被依赖的bean的名字
 	 * @since 4.0
 	 */
 	protected boolean isDependent(String beanName, String dependentBeanName) {
@@ -477,16 +507,40 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 	}
 
+	/**
+	 * 判断dependentBeanName是否直接或者间接依赖于beanName
+	 * {@link DefaultSingletonBeanRegistry#isDependent(java.lang.String, java.lang.String)}中调用
+	 *
+	 * @param beanName          bean的名字
+	 * @param dependentBeanName 依赖的bean的名字
+	 * @param alreadySeen
+	 * @return
+	 */
 	private boolean isDependent(String beanName, String dependentBeanName, @Nullable Set<String> alreadySeen) {
 		if (alreadySeen != null && alreadySeen.contains(beanName)) {
 			return false;
 		}
+		// 如果当前bean的名字是别名,获取主名字
 		String canonicalName = canonicalName(beanName);
+		/**
+		 * 获取canonicalName依赖的bean
+		 * 这个{@link DefaultSingletonBeanRegistry#dependentBeanMap}是在
+		 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+		 * 方法的后续调用方法
+		 * {@link DefaultSingletonBeanRegistry#registerDependentBean(java.lang.String, java.lang.String)}
+		 * 里添加值的。
+		 * 因此这里如果A和B互联依赖，但是A先初始化，这个地方直接是dependentBeans == null
+		 * <p>
+		 * 这个{@link DefaultSingletonBeanRegistry#dependentBeanMap}的key，是被依赖的bean的名字。即如果A依赖于B，
+		 * 则key是B的名字
+		 * </p>
+		 */
 		Set<String> dependentBeans = this.dependentBeanMap.get(canonicalName);
 		if (dependentBeans == null || dependentBeans.isEmpty()) {
 			return false;
 		}
 		if (dependentBeans.contains(dependentBeanName)) {
+			// 说明dependentBeanName 依赖 beanName
 			return true;
 		}
 		if (alreadySeen == null) {

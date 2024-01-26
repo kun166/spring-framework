@@ -623,7 +623,7 @@ public class BeanDefinitionParserDelegate {
 		bd.setLazyInit(TRUE_VALUE.equals(lazyInit));
 
 		// autowire
-		// 可以参考下https://blog.csdn.net/java_wxid/article/details/131276909
+		// 可以参考下 https://blog.csdn.net/java_wxid/article/details/131276909
 		String autowire = ele.getAttribute(AUTOWIRE_ATTRIBUTE);
 		bd.setAutowireMode(getAutowireMode(autowire));
 

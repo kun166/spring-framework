@@ -230,6 +230,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * Flag that indicates whether this context is currently active.
+	 * 在{@link AbstractApplicationContext#prepareRefresh()}中设置的true
 	 */
 	private final AtomicBoolean active = new AtomicBoolean();
 
@@ -663,6 +664,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 				StartupStep beanPostProcess = this.applicationStartup.start("spring.context.beans.post-process");
 				// Invoke factory processors registered as beans in the context.
+				/**
+				 * 这个接口很重要,可以通过{@link FileSystemXmlApplicationContext#FileSystemXmlApplicationContext()}
+				 * 无参构造器创建之后，调用{@link AbstractApplicationContext#addBeanFactoryPostProcessor(org.springframework.beans.factory.config.BeanFactoryPostProcessor)}
+				 * 添加{@link BeanFactoryPostProcessor}
+				 * 有啥用？可以参考下自定义Scope: https://www.cnblogs.com/sxrtb/p/14477254.html
+				 * https://blog.csdn.net/kkkloveyou/article/details/87267135
+				 */
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
@@ -717,6 +725,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Prepare this context for refreshing, setting its startup date and
 	 * active flag as well as performing any initialization of property sources.
+	 * <p>
+	 * {@link AbstractApplicationContext#refresh()}中调用
+	 * </p>
 	 */
 	protected void prepareRefresh() {
 		// Switch to active.

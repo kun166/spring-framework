@@ -233,6 +233,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Names of beans that have already been created at least once.
+	 * {@link AbstractBeanFactory#markBeanAsCreated(java.lang.String)}中添加数据
 	 */
 	private final Set<String> alreadyCreated = Collections.newSetFromMap(new ConcurrentHashMap<>(256));
 
@@ -268,6 +269,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	// Implementation of BeanFactory interface
 	//---------------------------------------------------------------------
 
+	/**
+	 * {@link org.springframework.context.support.AbstractApplicationContext#getBean(java.lang.String)}中调用
+	 *
+	 * @param name the name of the bean to retrieve
+	 * @return
+	 * @throws BeansException
+	 */
 	@Override
 	public Object getBean(String name) throws BeansException {
 		return doGetBean(name, null, null, false);
@@ -301,6 +309,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Return an instance, which may be shared or independent, of the specified bean.
+	 * {@link AbstractBeanFactory#getBean(java.lang.String)}中调用
 	 *
 	 * @param name          the name of the bean to retrieve
 	 * @param requiredType  the required type of the bean to retrieve
@@ -320,8 +329,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object beanInstance;
 
 		// Eagerly check singleton cache for manually registered singletons.
+		// 第一次进来，这个方法返回的应该是null
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
+			// 第二次进来
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
 					logger.trace("Returning eagerly cached instance of singleton bean '" + beanName +
@@ -358,6 +369,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (!typeCheckOnly) {
+				// 需要需要类型检测
 				markBeanAsCreated(beanName);
 			}
 
@@ -371,6 +383,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
+				// 处理 dependsOn，注意不是ref
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
@@ -378,8 +391,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
+						/**
+						 * 注意参数位置，首参是dep
+						 */
 						registerDependentBean(dep, beanName);
 						try {
+							// 去初始化bean dep
 							getBean(dep);
 						} catch (NoSuchBeanDefinitionException ex) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
@@ -1599,6 +1616,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Check the given merged bean definition,
 	 * potentially throwing validation exceptions.
+	 * <p>
+	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param mbd      the merged bean definition to check
 	 * @param beanName the name of the bean
@@ -1616,6 +1637,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Remove the merged bean definition for the specified bean,
 	 * recreating it on next access.
+	 * <p>
+	 * {@link AbstractBeanFactory#markBeanAsCreated(java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param beanName the bean name to clear the merged definition for
 	 */
@@ -2010,6 +2034,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * Mark the specified bean as already created (or about to be created).
 	 * <p>This allows the bean factory to optimize its caching for repeated
 	 * creation of the specified bean.
+	 * <p>
+	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean
 	 */
