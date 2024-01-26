@@ -673,6 +673,7 @@ public class BeanDefinitionParserDelegate {
 
 		// factory-method
 		// https://blog.csdn.net/bingguang1993/article/details/81436720
+		// https://zhuanlan.zhihu.com/p/315853360?utm_id=0
 		if (ele.hasAttribute(FACTORY_METHOD_ATTRIBUTE)) {
 			bd.setFactoryMethodName(ele.getAttribute(FACTORY_METHOD_ATTRIBUTE));
 		}

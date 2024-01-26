@@ -231,26 +231,47 @@ final class PostProcessorRegistrationDelegate {
 
 		// Separate between BeanPostProcessors that implement PriorityOrdered,
 		// Ordered, and the rest.
+		// 有优先权的
 		List<BeanPostProcessor> priorityOrderedPostProcessors = new ArrayList<>();
+		// 内部的
 		List<BeanPostProcessor> internalPostProcessors = new ArrayList<>();
+		// 有序的
 		List<String> orderedPostProcessorNames = new ArrayList<>();
+		// 无序的
 		List<String> nonOrderedPostProcessorNames = new ArrayList<>();
 		for (String ppName : postProcessorNames) {
+			/**
+			 * 遍历所有实现了{@link BeanPostProcessor}接口的bean
+			 */
 			if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
+				/**
+				 * 如果bean实现了{@link PriorityOrdered}
+				 */
 				BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
 				priorityOrderedPostProcessors.add(pp);
 				if (pp instanceof MergedBeanDefinitionPostProcessor) {
+					/**
+					 * 如果实现了{@link MergedBeanDefinitionPostProcessor}接口
+					 */
 					internalPostProcessors.add(pp);
 				}
 			} else if (beanFactory.isTypeMatch(ppName, Ordered.class)) {
+				/**
+				 * 如果实现了{@link Ordered}接口
+				 */
 				orderedPostProcessorNames.add(ppName);
 			} else {
+				/**
+				 * 无序的,未实现{@link Ordered}接口
+				 */
 				nonOrderedPostProcessorNames.add(ppName);
 			}
 		}
 
 		// First, register the BeanPostProcessors that implement PriorityOrdered.
+		// 排序
 		sortPostProcessors(priorityOrderedPostProcessors, beanFactory);
+
 		registerBeanPostProcessors(beanFactory, priorityOrderedPostProcessors);
 
 		// Next, register the BeanPostProcessors that implement Ordered.
@@ -330,6 +351,8 @@ final class PostProcessorRegistrationDelegate {
 
 	/**
 	 * Register the given BeanPostProcessor beans.
+	 * {@link PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, org.springframework.context.support.AbstractApplicationContext)}
+	 * 中调用
 	 */
 	private static void registerBeanPostProcessors(
 			ConfigurableListableBeanFactory beanFactory, List<BeanPostProcessor> postProcessors) {

@@ -69,6 +69,7 @@ import org.springframework.beans.factory.config.DestructionAwareBeanPostProcesso
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
 import org.springframework.beans.factory.config.Scope;
 import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
+import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.beans.support.ResourceEditorRegistrar;
 import org.springframework.core.AttributeAccessor;
 import org.springframework.core.DecoratingClassLoader;
@@ -188,10 +189,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * BeanPostProcessors to apply.
+	 * 注意，这是有顺序的……
 	 * {@link org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
+	 * 中调用
+	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, org.springframework.context.support.AbstractApplicationContext)}
+	 * 中调用
+	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, java.util.List)}
 	 * 中调用
 	 * <p>
 	 * {@link org.springframework.context.support.ApplicationContextAwareProcessor}
+	 * {@link org.springframework.context.support.ApplicationListenerDetector}
+	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate.BeanPostProcessorChecker#BeanPostProcessorChecker(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, int)}
 	 * {@link org.springframework.context.support.ApplicationListenerDetector}
 	 */
 	private final List<BeanPostProcessor> beanPostProcessors = new BeanPostProcessorCacheAwareList();
@@ -572,6 +580,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws NoSuchBeanDefinitionException {
 
 		String beanName = transformedBeanName(name);
+		// 该name是否以"&"开头
 		boolean isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name);
 
 		// Check manually registered singletons.
@@ -616,6 +625,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		// No singleton instance found -> check bean definition.
+		// 如果有父BeanFactory，用父BeanFactory校验
 		BeanFactory parentBeanFactory = getParentBeanFactory();
 		if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 			// No bean definition found in this factory -> delegate to parent.
@@ -627,10 +637,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 
 		// Set up the types that we want to match against
+		// 拿到要比较的typeToMatch的本体类
 		Class<?> classToMatch = typeToMatch.resolve();
 		if (classToMatch == null) {
+			// 如果为空，则赋值为FactoryBean.class;
 			classToMatch = FactoryBean.class;
 		}
+		// 初始化typesToMatch
 		Class<?>[] typesToMatch = (FactoryBean.class == classToMatch ?
 				new Class<?>[]{classToMatch} : new Class<?>[]{FactoryBean.class, classToMatch});
 
@@ -641,6 +654,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// We're looking for a regular reference but we're a factory bean that has
 		// a decorated bean definition. The target bean should be the same type
 		// as FactoryBean would ultimately return.
+		// 这段代码没看懂……
 		if (!isFactoryDereference && dbd != null && isFactoryBean(beanName, mbd)) {
 			// We should only attempt if the user explicitly set lazy-init to true
 			// and we know the merged bean definition is for a factory bean.
@@ -991,6 +1005,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * {@link org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
 	 * 中调用
+	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, org.springframework.context.support.AbstractApplicationContext)}
+	 * 中调用
 	 *
 	 * @param beanPostProcessor the post-processor to register {@link org.springframework.context.support.ApplicationContextAwareProcessor}
 	 */
@@ -1210,6 +1226,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return getMergedLocalBeanDefinition(beanName);
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultListableBeanFactory#preInstantiateSingletons()}中调用
+	 * </p>
+	 *
+	 * @param name the name of the bean to check
+	 * @return
+	 * @throws NoSuchBeanDefinitionException
+	 */
 	@Override
 	public boolean isFactoryBean(String name) throws NoSuchBeanDefinitionException {
 		String beanName = transformedBeanName(name);
@@ -1330,6 +1355,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return the bean name, stripping out the factory dereference prefix if necessary,
 	 * and resolving aliases to canonical names.
+	 * 返回bean名称，必要时去掉工厂引用前缀，并将别名解析为规范名称。
 	 * <p>
 	 * {@link AbstractBeanFactory#getMergedBeanDefinition(java.lang.String, org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.config.BeanDefinition)}
 	 * 中被调用
@@ -1476,6 +1502,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws BeanDefinitionStoreException {
 
 		synchronized (this.mergedBeanDefinitions) {
+			// MergedBeanDefinition,返回对象
 			RootBeanDefinition mbd = null;
 			RootBeanDefinition previous = null;
 
@@ -1484,10 +1511,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				mbd = this.mergedBeanDefinitions.get(beanName);
 			}
 
+			/**
+			 * 关于bd,可以参考
+			 * {@link BeanDefinitionParserDelegate#parseBeanDefinitionElement(org.w3c.dom.Element, java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+			 */
 			if (mbd == null || mbd.stale) {
+				// 上一个bd?
 				previous = mbd;
 				if (bd.getParentName() == null) {
 					// Use copy of given root bean definition.
+					// 绝大部分走这个分支了
 					if (bd instanceof RootBeanDefinition) {
 						mbd = ((RootBeanDefinition) bd).cloneBeanDefinition();
 					} else {
@@ -1837,6 +1870,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * <p>
 	 * {@link AbstractBeanFactory#isFactoryBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
 	 * 中调用
+	 * {@link AbstractBeanFactory#isTypeMatch(java.lang.String, org.springframework.core.ResolvableType, boolean)}中调用
 	 * </p>
 	 *
 	 * @param beanName     bean 的名字
@@ -1859,9 +1893,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Check whether the given bean is defined as a {@link FactoryBean}.
+	 * 检测给定的bean是否是{@link FactoryBean}
 	 * <p>
 	 * {@link DefaultListableBeanFactory#doGetBeanNamesForType(org.springframework.core.ResolvableType, boolean, boolean)}
 	 * 中调用
+	 * {@link AbstractBeanFactory#isFactoryBean(java.lang.String)}中被调用
 	 * </p>
 	 *
 	 * @param beanName the name of the bean

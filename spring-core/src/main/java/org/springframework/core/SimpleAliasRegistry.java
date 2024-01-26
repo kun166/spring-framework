@@ -50,10 +50,19 @@ public class SimpleAliasRegistry implements AliasRegistry {
 
 	/**
 	 * Map from alias to canonical name.
+	 * 可以参考{@link SimpleAliasRegistry#registerAlias(java.lang.String, java.lang.String)}
+	 * 这个key是别名，value是正式名字
 	 */
 	private final Map<String, String> aliasMap = new ConcurrentHashMap<>(16);
 
 
+	/**
+	 * {@link org.springframework.beans.factory.support.BeanDefinitionReaderUtils#registerBeanDefinition(org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.support.BeanDefinitionRegistry)}
+	 * 中被调用
+	 *
+	 * @param name  the canonical name
+	 * @param alias the alias to be registered
+	 */
 	@Override
 	public void registerAlias(String name, String alias) {
 		Assert.hasText(name, "'name' must not be empty");
