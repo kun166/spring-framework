@@ -77,6 +77,8 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/**
 	 * Package-visible field for caching the determined Class of a given bean definition.
+	 * {@link AbstractAutowireCapableBeanFactory#doCreateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 被赋值
 	 */
 	@Nullable
 	volatile Class<?> resolvedTargetType;

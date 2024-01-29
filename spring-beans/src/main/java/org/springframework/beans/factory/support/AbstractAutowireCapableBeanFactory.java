@@ -546,6 +546,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	/**
 	 * Central method of this class: creates a bean instance,
 	 * populates the bean instance, applies post-processors, etc.
+	 * <p>
+	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @see #doCreateBean
 	 */
@@ -563,6 +567,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// which cannot be stored in the shared merged bean definition.
 		Class<?> resolvedClass = resolveBeanClass(mbd, beanName);
 		if (resolvedClass != null && !mbd.hasBeanClass() && mbd.getBeanClassName() != null) {
+			// 初始化beanClass
+			// 不影响原来的mbd,重新复制了一个
 			mbdToUse = new RootBeanDefinition(mbd);
 			mbdToUse.setBeanClass(resolvedClass);
 		}
@@ -607,8 +613,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * at this point, e.g. checking {@code postProcessBeforeInstantiation} callbacks.
 	 * <p>Differentiates between default bean instantiation, use of a
 	 * factory method, and autowiring a constructor.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
-	 * @param beanName the name of the bean
+	 * @param beanName bean的名字
 	 * @param mbd      the merged bean definition for the bean
 	 * @param args     explicit arguments to use for constructor or factory method invocation
 	 * @return a new instance of the bean
@@ -731,6 +741,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	/**
 	 * Determine the target type for the given bean definition.
+	 * 根据mbd信息，返回最终的bean的class类型
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#resolveBeforeInstantiation(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName     the name of the bean (for error handling purposes)
 	 * @param mbd          the merged bean definition for the bean
@@ -1144,6 +1159,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	/**
 	 * Apply MergedBeanDefinitionPostProcessors to the specified bean definition,
 	 * invoking their {@code postProcessMergedBeanDefinition} methods.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#doCreateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中被调用
+	 * </p>
 	 *
 	 * @param mbd      the merged bean definition for the bean
 	 * @param beanType the actual type of the managed bean instance
@@ -1159,6 +1178,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	/**
 	 * Apply before-instantiation post-processors, resolving whether there is a
 	 * before-instantiation shortcut for the specified bean.
+	 * 如果{@link AbstractBeanFactory#beanPostProcessors}有{@link InstantiationAwareBeanPostProcessor}的BeanPostProcessor，
+	 * 则通过他们生成bean,否则返回null
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean
 	 * @param mbd      the bean definition for the bean
@@ -1168,7 +1193,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
 		Object bean = null;
 		if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
+			/**
+			 * 第一次进来{@link RootBeanDefinition#beforeInstantiationResolved}为null,则进入该分支
+			 */
 			// Make sure bean class is actually resolved at this point.
+			/**
+			 * https://blog.csdn.net/Gefangenes/article/details/130773271
+			 * 合成的？
+			 */
 			if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 				Class<?> targetType = determineTargetType(beanName, mbd);
 				if (targetType != null) {
@@ -1189,6 +1221,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * <p>Any returned object will be used as the bean instead of actually instantiating
 	 * the target bean. A {@code null} return value from the post-processor will
 	 * result in the target bean being instantiated.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#resolveBeforeInstantiation(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanClass the class of the bean to be instantiated
 	 * @param beanName  the name of the bean
@@ -1209,6 +1245,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	/**
 	 * Create a new instance for the specified bean, using an appropriate instantiation strategy:
 	 * factory method, constructor autowiring, or simple instantiation.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#doCreateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean
 	 * @param mbd      the bean definition for the bean
@@ -1222,7 +1262,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
 		// Make sure bean class is actually resolved at this point.
 		Class<?> beanClass = resolveBeanClass(mbd, beanName);
-
+		/**
+		 * 默认{@link AbstractBeanDefinition#nonPublicAccessAllowed}是true，也就是beanClass哪怕是private也没事
+		 */
 		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
 			throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());
@@ -1352,6 +1394,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 	/**
 	 * Instantiate the given bean using its default constructor.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#createBeanInstance(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean
 	 * @param mbd      the bean definition for the bean
@@ -1380,6 +1426,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * Instantiate the bean using a named factory method. The method may be static, if the
 	 * mbd parameter specifies a class, rather than a factoryBean, or an instance variable
 	 * on a factory object itself configured using Dependency Injection.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#createBeanInstance(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName     the name of the bean
 	 * @param mbd          the bean definition for the bean
@@ -1401,6 +1451,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * <p>This corresponds to constructor injection: In this mode, a Spring
 	 * bean factory is able to host components that expect constructor-based
 	 * dependency resolution.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#createBeanInstance(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName     the name of the bean
 	 * @param mbd          the bean definition for the bean

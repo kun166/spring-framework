@@ -427,6 +427,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Specify the class for this bean.
 	 * {@link BeanDefinitionReaderUtils#createBeanDefinition(java.lang.String, java.lang.String, java.lang.ClassLoader)}
 	 * 中被调用
+	 * {@link AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
 	 *
 	 * @see #setBeanClassName(String)
 	 */
@@ -1181,6 +1183,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * Validate and prepare the method overrides defined for this bean.
 	 * Checks for existence of a method with the specified name.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @throws BeanDefinitionValidationException in case of validation failure
 	 */
@@ -1195,6 +1201,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Validate and prepare the given method override.
 	 * Checks for existence of a method with the specified name,
 	 * marking it as not overloaded if none found.
+	 * <p>
+	 * {@link AbstractBeanDefinition#prepareMethodOverrides()}中调用
+	 * </p>
 	 *
 	 * @param mo the MethodOverride object to validate
 	 * @throws BeanDefinitionValidationException in case of validation failure

@@ -206,6 +206,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Cache of pre-filtered post-processors.
+	 * {@link AbstractBeanFactory#getBeanPostProcessorCache()}方法中初始化
 	 */
 	@Nullable
 	private BeanPostProcessorCache beanPostProcessorCache;
@@ -407,8 +408,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// Create bean instance.
 				if (mbd.isSingleton()) {
+					// 如果scope是singleton或者是默认的空
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							/**
+							 * 调用的是{@link AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+							 */
 							return createBean(beanName, mbd, args);
 						} catch (BeansException ex) {
 							// Explicitly remove instance from singleton cache: It might have been put there
@@ -1070,6 +1075,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return the internal cache of pre-filtered post-processors,
 	 * freshly (re-)building it if necessary.
+	 * 根据{@link AbstractBeanFactory#beanPostProcessors}上的{@link BeanPostProcessor}不同的子接口进行分类
+	 * <p>
+	 * {@link AbstractBeanFactory#hasInstantiationAwareBeanPostProcessors()}中调用
+	 * </p>
 	 *
 	 * @since 5.3
 	 */
@@ -1107,6 +1116,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Return whether this factory holds a InstantiationAwareBeanPostProcessor
 	 * that will get applied to singleton beans on creation.
+	 * 获取{@link AbstractBeanFactory#beanPostProcessors}记录的所有{@link BeanPostProcessor}列表中所有
+	 * 实现了子类{@link InstantiationAwareBeanPostProcessor}的beanPostProcessors
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#resolveBeforeInstantiation(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @see #addBeanPostProcessor
 	 * @see org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor
@@ -1287,6 +1302,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * Callback before prototype creation.
 	 * <p>The default implementation register the prototype as currently in creation.
+	 * <p>
+	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName the name of the prototype about to be created
 	 * @see #isPrototypeCurrentlyInCreation
@@ -1405,6 +1424,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * and populate bean instances.
 	 * <p>The default implementation delegates to {@link #registerCustomEditors}.
 	 * Can be overridden in subclasses.
+	 * <p>
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param bw the BeanWrapper to initialize
 	 */
