@@ -114,17 +114,23 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/**
 	 * Package-visible field for caching the resolved constructor or factory method.
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 里缓存
 	 */
 	@Nullable
 	Executable resolvedConstructorOrFactoryMethod;
 
 	/**
 	 * Package-visible field that marks the constructor arguments as resolved.
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 里缓存
 	 */
 	boolean constructorArgumentsResolved = false;
 
 	/**
 	 * Package-visible field for caching fully resolved constructor arguments.
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 里缓存
 	 */
 	@Nullable
 	Object[] resolvedConstructorArguments;
@@ -142,6 +148,8 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/**
 	 * Package-visible field that indicates MergedBeanDefinitionPostProcessor having been applied.
+	 * {@link AbstractAutowireCapableBeanFactory#doCreateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中赋值
 	 */
 	boolean postProcessed = false;
 

@@ -1181,6 +1181,11 @@ public abstract class ClassUtils {
 
 	/**
 	 * Determine whether the given class has a public method with the given signature.
+	 * 判断该class是否有该方法
+	 * <p>
+	 * {@link org.springframework.beans.factory.support.AutowireUtils#isExcludedFromDependencyCheck(java.beans.PropertyDescriptor)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param clazz  the clazz to analyze
 	 * @param method the method to look for
@@ -1493,6 +1498,15 @@ public abstract class ClassUtils {
 	}
 
 
+	/**
+	 * {@link ClassUtils#hasMethod(java.lang.Class, java.lang.reflect.Method)}
+	 * 中调用
+	 *
+	 * @param clazz
+	 * @param methodName
+	 * @param paramTypes
+	 * @return
+	 */
 	@Nullable
 	private static Method getMethodOrNull(Class<?> clazz, String methodName, Class<?>[] paramTypes) {
 		try {

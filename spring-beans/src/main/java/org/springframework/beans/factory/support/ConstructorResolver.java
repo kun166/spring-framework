@@ -358,6 +358,10 @@ class ConstructorResolver {
 	 * Retrieve all candidate methods for the given class, considering
 	 * the {@link RootBeanDefinition#isNonPublicAccessAllowed()} flag.
 	 * Called as the starting point for factory method determination.
+	 * <p>
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 */
 	private Method[] getCandidateMethods(Class<?> factoryClass, RootBeanDefinition mbd) {
 		if (System.getSecurityManager() != null) {
@@ -400,50 +404,70 @@ class ConstructorResolver {
 		Object factoryBean;
 		Class<?> factoryClass;
 		boolean isStatic;
-		// FactoryBean的name
+		/**
+		 * {@link AbstractBeanDefinition#getFactoryMethodName()}不为null，走到这个方法
+		 */
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
+			// 如果factoryBeanName和beanName相同,抛异常
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"factory-bean reference points back to the same bean definition");
 			}
+			// 先通过factoryBeanName，获取FactoryBean
 			factoryBean = this.beanFactory.getBean(factoryBeanName);
 			if (mbd.isSingleton() && this.beanFactory.containsSingleton(beanName)) {
+				// 如果该bean是单例模式，且已经创建了，则抛异常
 				throw new ImplicitlyAppearedSingletonException();
 			}
+			// 建立factoryBean和当前bean的依赖关系。
 			this.beanFactory.registerDependentBean(factoryBeanName, beanName);
+			// 获取factoryBean的class
 			factoryClass = factoryBean.getClass();
 			isStatic = false;
 		} else {
 			// It's a static factory method on the bean class.
+			/**
+			 * 不是通过{@link FactoryBean}，而是通过自身静态方法创建bean
+			 */
 			if (!mbd.hasBeanClass()) {
+				// 如果没有配置bean的class，则抛异常
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"bean definition declares neither a bean class nor a factory-bean reference");
 			}
 			factoryBean = null;
+			// factoryClass是其自身
 			factoryClass = mbd.getBeanClass();
+			// 通过静态方法为true
 			isStatic = true;
 		}
 
+		// 创建bean的method
 		Method factoryMethodToUse = null;
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
 
 		if (explicitArgs != null) {
+			// 如果传了参数
 			argsToUse = explicitArgs;
 		} else {
+			// 否则，就得就得自己构造参数
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
+				// 先取缓存中的 method
 				factoryMethodToUse = (Method) mbd.resolvedConstructorOrFactoryMethod;
 				if (factoryMethodToUse != null && mbd.constructorArgumentsResolved) {
 					// Found a cached factory method...
+					// 再取缓存中的 已经处理过的参数
 					argsToUse = mbd.resolvedConstructorArguments;
 					if (argsToUse == null) {
+						// 否则取缓存中 准备使用的参数？
 						argsToResolve = mbd.preparedConstructorArguments;
 					}
 				}
 			}
 			if (argsToResolve != null) {
+				// 转换参数值
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, factoryMethodToUse, argsToResolve);
 			}
 		}
@@ -451,10 +475,13 @@ class ConstructorResolver {
 		if (factoryMethodToUse == null || argsToUse == null) {
 			// Need to determine the factory method...
 			// Try all methods with this name to see if they match the given arguments.
+			// 第一次进来，缓存中未有缓存数据
 			factoryClass = ClassUtils.getUserClass(factoryClass);
 
+			// 候选人
 			List<Method> candidates = null;
 			if (mbd.isFactoryMethodUnique) {
+				// FactoryMethod唯一？
 				if (factoryMethodToUse == null) {
 					factoryMethodToUse = mbd.getResolvedFactoryMethod();
 				}
@@ -463,6 +490,7 @@ class ConstructorResolver {
 				}
 			}
 			if (candidates == null) {
+				// 说明不唯一？
 				candidates = new ArrayList<>();
 				Method[] rawCandidates = getCandidateMethods(factoryClass, mbd);
 				for (Method candidate : rawCandidates) {
@@ -798,6 +826,10 @@ class ConstructorResolver {
 
 	/**
 	 * Resolve the prepared arguments stored in the given bean definition.
+	 * <p>
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 */
 	private Object[] resolvePreparedArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 											  Executable executable, Object[] argsToResolve) {
@@ -806,6 +838,7 @@ class ConstructorResolver {
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
 		BeanDefinitionValueResolver valueResolver =
 				new BeanDefinitionValueResolver(this.beanFactory, beanName, mbd, converter);
+		// 获取方法的参数类型
 		Class<?>[] paramTypes = executable.getParameterTypes();
 
 		Object[] resolvedArgs = new Object[argsToResolve.length];
