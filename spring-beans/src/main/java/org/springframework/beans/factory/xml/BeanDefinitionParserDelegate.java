@@ -389,6 +389,10 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Return the default settings for bean definitions as indicated within
 	 * the attributes of the top-level {@code <beans/>} element.
+	 * <p>
+	 * {@link org.springframework.context.annotation.ComponentScanBeanDefinitionParser#configureScanner(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * </p>
 	 */
 	public BeanDefinitionDefaults getBeanDefinitionDefaults() {
 		BeanDefinitionDefaults bdd = new BeanDefinitionDefaults();
@@ -402,6 +406,10 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Return any patterns provided in the 'default-autowire-candidates'
 	 * attribute of the top-level {@code <beans/>} element.
+	 * <p>
+	 * {@link org.springframework.context.annotation.ComponentScanBeanDefinitionParser#configureScanner(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * </p>
 	 */
 	@Nullable
 	public String[] getAutowireCandidatePatterns() {

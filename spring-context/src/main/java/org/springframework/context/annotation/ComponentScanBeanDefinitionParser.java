@@ -81,7 +81,11 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	@Nullable
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
 		String basePackage = element.getAttribute(BASE_PACKAGE_ATTRIBUTE);
+		// 替换通配符
 		basePackage = parserContext.getReaderContext().getEnvironment().resolvePlaceholders(basePackage);
+		/**
+		 * 从这里可以看到,扫描路径是可以配置多个的，中间以{@link ConfigurableApplicationContext#CONFIG_LOCATION_DELIMITERS}隔开
+		 */
 		String[] basePackages = StringUtils.tokenizeToStringArray(basePackage,
 				ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 
@@ -93,7 +97,16 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		return null;
 	}
 
+	/**
+	 * {@link ComponentScanBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 *
+	 * @param parserContext
+	 * @param element
+	 * @return
+	 */
 	protected ClassPathBeanDefinitionScanner configureScanner(ParserContext parserContext, Element element) {
+		// 默认true
 		boolean useDefaultFilters = true;
 		// use-default-filters
 		if (element.hasAttribute(USE_DEFAULT_FILTERS_ATTRIBUTE)) {
@@ -106,6 +119,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		scanner.setAutowireCandidatePatterns(parserContext.getDelegate().getAutowireCandidatePatterns());
 
 		if (element.hasAttribute(RESOURCE_PATTERN_ATTRIBUTE)) {
+			// resource-pattern
 			scanner.setResourcePattern(element.getAttribute(RESOURCE_PATTERN_ATTRIBUTE));
 		}
 
@@ -166,6 +180,13 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		readerContext.fireComponentRegistered(compositeDef);
 	}
 
+	/**
+	 * {@link ComponentScanBeanDefinitionParser#configureScanner(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 *
+	 * @param element
+	 * @param scanner
+	 */
 	protected void parseBeanNameGenerator(Element element, ClassPathBeanDefinitionScanner scanner) {
 		if (element.hasAttribute(NAME_GENERATOR_ATTRIBUTE)) {
 			BeanNameGenerator beanNameGenerator = (BeanNameGenerator) instantiateUserDefinedStrategy(
@@ -175,6 +196,13 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		}
 	}
 
+	/**
+	 * {@link ComponentScanBeanDefinitionParser#configureScanner(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 *
+	 * @param element
+	 * @param scanner
+	 */
 	protected void parseScope(Element element, ClassPathBeanDefinitionScanner scanner) {
 		// Register ScopeMetadataResolver if class name provided.
 		if (element.hasAttribute(SCOPE_RESOLVER_ATTRIBUTE)) {
@@ -202,6 +230,14 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		}
 	}
 
+	/**
+	 * {@link ComponentScanBeanDefinitionParser#configureScanner(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中被调用
+	 *
+	 * @param element
+	 * @param scanner
+	 * @param parserContext
+	 */
 	protected void parseTypeFilters(Element element, ClassPathBeanDefinitionScanner scanner, ParserContext parserContext) {
 		// Parse exclude and include filter elements.
 		ClassLoader classLoader = scanner.getResourceLoader().getClassLoader();
@@ -256,6 +292,15 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		}
 	}
 
+	/**
+	 * {@link ComponentScanBeanDefinitionParser#parseBeanNameGenerator(org.w3c.dom.Element, org.springframework.context.annotation.ClassPathBeanDefinitionScanner)}
+	 * 中调用
+	 *
+	 * @param className
+	 * @param strategyType
+	 * @param classLoader
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	private Object instantiateUserDefinedStrategy(
 			String className, Class<?> strategyType, @Nullable ClassLoader classLoader) {

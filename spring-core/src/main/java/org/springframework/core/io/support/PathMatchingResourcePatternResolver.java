@@ -760,9 +760,13 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Find all resources in the file system that match the given location pattern
 	 * via the Ant-style PathMatcher.
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#findPathMatchingResources(java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
-	 * @param rootDirResource the root directory as Resource
-	 * @param subPattern      the sub pattern to match (below the root directory)
+	 * @param rootDirResource the root directory as Resource 根路径
+	 * @param subPattern      the sub pattern to match (below the root directory) 子路径
 	 * @return a mutable Set of matching Resource instances
 	 * @throws IOException in case of I/O errors
 	 * @see #retrieveMatchingFiles
@@ -792,6 +796,10 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Find all resources in the file system that match the given location pattern
 	 * via the Ant-style PathMatcher.
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#doFindPathMatchingFileResources(org.springframework.core.io.Resource, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param rootDir    the root directory in the file system
 	 * @param subPattern the sub pattern to match (below the root directory)
@@ -815,6 +823,10 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Retrieve files that match the given path pattern,
 	 * checking the given directory and its subdirectories.
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#doFindMatchingFileSystemResources(java.io.File, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param rootDir the directory to start from
 	 * @param pattern the pattern to match against,
@@ -857,10 +869,15 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Recursively retrieve files that match the given pattern,
 	 * adding them to the given result list.
+	 * <p>
+	 * {@link PathMatchingResourcePatternResolver#retrieveMatchingFiles(java.io.File, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param fullPattern the pattern to match against,
 	 *                    with prepended root directory path
-	 * @param dir         the current directory
+	 *                    带占位符的全路径
+	 * @param dir         the current directory 当前路径
 	 * @param result      the Set of matching File instances to add to
 	 * @throws IOException if directory contents could not be retrieved
 	 */
@@ -869,7 +886,10 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 			logger.trace("Searching directory [" + dir.getAbsolutePath() +
 					"] for files matching pattern [" + fullPattern + "]");
 		}
+		// 拿到当前目录下的所有子文件
 		for (File content : listDirectory(dir)) {
+			// 循环遍历目录下的所有子文件
+			// 子文件的路径
 			String currPath = StringUtils.replace(content.getAbsolutePath(), File.separator, "/");
 			if (content.isDirectory() && getPathMatcher().matchStart(fullPattern, currPath + "/")) {
 				if (!content.canRead()) {

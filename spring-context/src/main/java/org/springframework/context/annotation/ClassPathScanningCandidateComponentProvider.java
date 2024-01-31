@@ -346,6 +346,9 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 
 	/**
 	 * Scan the class path for candidate components.
+	 * <p>
+	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}中调用
+	 * </p>
 	 *
 	 * @param basePackage the package to check for annotated classes
 	 * @return a corresponding Set of autodetected bean definitions
@@ -454,6 +457,13 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 		return candidates;
 	}
 
+	/**
+	 * {@link ClassPathScanningCandidateComponentProvider#findCandidateComponents(java.lang.String)}
+	 * 中调用
+	 *
+	 * @param basePackage
+	 * @return
+	 */
 	private Set<BeanDefinition> scanCandidateComponents(String basePackage) {
 		Set<BeanDefinition> candidates = new LinkedHashSet<>();
 		try {
@@ -507,6 +517,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * the package search path.
 	 * <p>The default implementation resolves placeholders against system properties,
 	 * and converts a "."-based package path to a "/"-based resource path.
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#scanCandidateComponents(java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param basePackage the base package as specified by the user
 	 * @return the pattern specification to be used for package searching
