@@ -44,6 +44,8 @@ public class CachingMetadataReaderFactory extends SimpleMetadataReaderFactory {
 
 	/**
 	 * MetadataReader cache: either local or shared at the ResourceLoader level.
+	 * {@link CachingMetadataReaderFactory#setCacheLimit(int)}中设置
+	 * {@link LocalResourceCache}
 	 */
 	@Nullable
 	private Map<Resource, MetadataReader> metadataReaderCache;
@@ -52,6 +54,8 @@ public class CachingMetadataReaderFactory extends SimpleMetadataReaderFactory {
 	/**
 	 * Create a new CachingMetadataReaderFactory for the default class loader,
 	 * using a local resource cache.
+	 * {@link org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider#getMetadataReaderFactory()}
+	 * 中调用
 	 */
 	public CachingMetadataReaderFactory() {
 		super();
@@ -121,6 +125,14 @@ public class CachingMetadataReaderFactory extends SimpleMetadataReaderFactory {
 	}
 
 
+	/**
+	 * {@link org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider#scanCandidateComponents(java.lang.String)}
+	 * 中调用
+	 *
+	 * @param resource
+	 * @return
+	 * @throws IOException
+	 */
 	@Override
 	public MetadataReader getMetadataReader(Resource resource) throws IOException {
 		if (this.metadataReaderCache instanceof ConcurrentMap) {

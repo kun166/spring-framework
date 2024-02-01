@@ -342,6 +342,10 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	/**
 	 * Apply further settings to the given bean definition,
 	 * beyond the contents retrieved from scanning the component class.
+	 * <p>
+	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanDefinition the scanned bean definition
 	 * @param beanName       the generated bean name for the given bean

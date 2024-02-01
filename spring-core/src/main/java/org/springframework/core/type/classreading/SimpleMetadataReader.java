@@ -38,11 +38,26 @@ final class SimpleMetadataReader implements MetadataReader {
 	private static final int PARSING_OPTIONS = ClassReader.SKIP_DEBUG
 			| ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES;
 
+	/**
+	 * {@link SimpleMetadataReader#SimpleMetadataReader(org.springframework.core.io.Resource, java.lang.ClassLoader)}
+	 * 构造器中赋值
+	 */
 	private final Resource resource;
 
+	/**
+	 * {@link SimpleMetadataReader#SimpleMetadataReader(org.springframework.core.io.Resource, java.lang.ClassLoader)}
+	 * 构造器中初始化
+	 */
 	private final AnnotationMetadata annotationMetadata;
 
 
+	/**
+	 * {@link SimpleMetadataReaderFactory#getMetadataReader(org.springframework.core.io.Resource)}中调用
+	 *
+	 * @param resource
+	 * @param classLoader
+	 * @throws IOException
+	 */
 	SimpleMetadataReader(Resource resource, @Nullable ClassLoader classLoader) throws IOException {
 		SimpleAnnotationMetadataReadingVisitor visitor = new SimpleAnnotationMetadataReadingVisitor(classLoader);
 		getClassReader(resource).accept(visitor, PARSING_OPTIONS);
@@ -50,13 +65,20 @@ final class SimpleMetadataReader implements MetadataReader {
 		this.annotationMetadata = visitor.getMetadata();
 	}
 
+	/**
+	 * {@link SimpleMetadataReader#SimpleMetadataReader(org.springframework.core.io.Resource, java.lang.ClassLoader)}
+	 * 中调用
+	 *
+	 * @param resource
+	 * @return
+	 * @throws IOException
+	 */
 	@SuppressWarnings("deprecation")
 	private static ClassReader getClassReader(Resource resource) throws IOException {
 		try (InputStream is = resource.getInputStream()) {
 			try {
 				return new ClassReader(is);
-			}
-			catch (IllegalArgumentException ex) {
+			} catch (IllegalArgumentException ex) {
 				throw new org.springframework.core.NestedIOException("ASM ClassReader failed to parse class file - " +
 						"probably due to a new Java class file version that isn't supported yet: " + resource, ex);
 			}

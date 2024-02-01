@@ -154,6 +154,14 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 				readerContext.getEnvironment(), readerContext.getResourceLoader());
 	}
 
+	/**
+	 * {@link ComponentScanBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 *
+	 * @param readerContext
+	 * @param beanDefinitions
+	 * @param element
+	 */
 	protected void registerComponents(
 			XmlReaderContext readerContext, Set<BeanDefinitionHolder> beanDefinitions, Element element) {
 

@@ -16,6 +16,7 @@
 
 package org.springframework.context.annotation;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -49,6 +50,7 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
+import org.springframework.core.type.classreading.SimpleMetadataReader;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.core.type.filter.TypeFilter;
@@ -335,6 +337,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 
 	/**
 	 * Return the MetadataReaderFactory used by this component provider.
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#scanCandidateComponents(java.lang.String)}
+	 * 中调用
+	 * </p>
 	 */
 	public final MetadataReaderFactory getMetadataReaderFactory() {
 		if (this.metadataReaderFactory == null) {
@@ -469,6 +475,14 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 		try {
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
 					resolveBasePackage(basePackage) + '/' + this.resourcePattern;
+			/**
+			 * 拿到路径下的所有文件
+			 * 逻辑是:
+			 * 1,先拿到最开始的没有通配符的路径,作为根目录File
+			 * 2,通过{@link File#list()}获取子文件列表
+			 * 3,如果子文件是目录，继续按2
+			 * 4,如果是子文件是文件,则和配置的路径匹配，如果匹配，则加入结果集
+			 */
 			Resource[] resources = getResourcePatternResolver().getResources(packageSearchPath);
 			boolean traceEnabled = logger.isTraceEnabled();
 			boolean debugEnabled = logger.isDebugEnabled();
@@ -477,6 +491,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 					logger.trace("Scanning " + resource);
 				}
 				try {
+					/**
+					 * 返回一个{@link SimpleMetadataReader}
+					 * 下面的逻辑太复杂了，看不懂
+					 */
 					MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
 					if (isCandidateComponent(metadataReader)) {
 						ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
