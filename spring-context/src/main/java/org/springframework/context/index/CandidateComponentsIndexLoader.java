@@ -92,6 +92,12 @@ public final class CandidateComponentsIndexLoader {
 		if (classLoaderToUse == null) {
 			classLoaderToUse = CandidateComponentsIndexLoader.class.getClassLoader();
 		}
+		/**
+		 * 经过打断点,
+		 * <context:component-scan base-package="com"/>
+		 * 走了如下分支
+		 *
+		 */
 		return cache.computeIfAbsent(classLoaderToUse, CandidateComponentsIndexLoader::doLoadIndex);
 	}
 
@@ -102,6 +108,10 @@ public final class CandidateComponentsIndexLoader {
 		}
 
 		try {
+			/**
+			 * 关于{@link CandidateComponentsIndexLoader#COMPONENTS_RESOURCE_LOCATION}
+			 * 可以参考https://blog.csdn.net/szhlcy/article/details/102811156
+			 */
 			Enumeration<URL> urls = classLoader.getResources(COMPONENTS_RESOURCE_LOCATION);
 			if (!urls.hasMoreElements()) {
 				return null;

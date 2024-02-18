@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.*;
+import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.EnvironmentCapable;
 import org.springframework.core.env.StandardEnvironment;
@@ -60,9 +61,16 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 
 	/**
 	 * {@link AnnotationConfigApplicationContext}
+	 * 如果是<context:component-scan base-package="com"/>，则传入的是
+	 * {@link DefaultListableBeanFactory}
 	 */
 	private final BeanDefinitionRegistry registry;
 
+	/**
+	 * {@link ComponentScanBeanDefinitionParser#configureScanner(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * 赋值为{@link BeanDefinitionParserDelegate#getBeanDefinitionDefaults()}
+	 */
 	private BeanDefinitionDefaults beanDefinitionDefaults = new BeanDefinitionDefaults();
 
 	@Nullable
@@ -198,6 +206,9 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 			registerDefaultFilters();
 		}
 		setEnvironment(environment);
+		/**
+		 * 可以参考{@link AbstractBeanDefinitionReader#resourceLoader}
+		 */
 		setResourceLoader(resourceLoader);
 	}
 
@@ -212,6 +223,11 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 
 	/**
 	 * Set the defaults to use for detected beans.
+	 * <p>
+	 * {@link ComponentScanBeanDefinitionParser#configureScanner(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * 赋值为{@link BeanDefinitionParserDelegate#getBeanDefinitionDefaults()}
+	 * </p>
 	 *
 	 * @see BeanDefinitionDefaults
 	 */

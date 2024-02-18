@@ -20,6 +20,8 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.springframework.beans.factory.xml.*;
+import org.springframework.context.config.ContextNamespaceHandler;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -30,9 +32,6 @@ import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.parsing.BeanComponentDefinition;
 import org.springframework.beans.factory.parsing.CompositeComponentDefinition;
 import org.springframework.beans.factory.support.BeanNameGenerator;
-import org.springframework.beans.factory.xml.BeanDefinitionParser;
-import org.springframework.beans.factory.xml.ParserContext;
-import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AspectJTypeFilter;
@@ -77,11 +76,23 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	private static final String FILTER_EXPRESSION_ATTRIBUTE = "expression";
 
 
+	/**
+	 * 关于该方法的入口，可以参考{@link ContextNamespaceHandler}
+	 * {@link NamespaceHandlerSupport#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * <p>
+	 * 更根本的地方在{@link BeanDefinitionParserDelegate#parseCustomElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
+	 * </p>
+	 *
+	 * @param element       the element that is to be parsed into one or more {@link BeanDefinition BeanDefinitions}
+	 * @param parserContext the object encapsulating the current state of the parsing process;
+	 *                      provides access to a {@link org.springframework.beans.factory.support.BeanDefinitionRegistry}
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
 		String basePackage = element.getAttribute(BASE_PACKAGE_ATTRIBUTE);
-		// 替换通配符
+		// 替换通配符 Environment /ɪnˈvaɪrənmənt/ 环境
 		basePackage = parserContext.getReaderContext().getEnvironment().resolvePlaceholders(basePackage);
 		/**
 		 * 从这里可以看到,扫描路径是可以配置多个的，中间以{@link ConfigurableApplicationContext#CONFIG_LOCATION_DELIMITERS}隔开
@@ -100,6 +111,8 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	/**
 	 * {@link ComponentScanBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
 	 * 中调用
+	 * <p>
+	 * 创建并配置{@link ClassPathBeanDefinitionScanner}
 	 *
 	 * @param parserContext
 	 * @param element
@@ -114,8 +127,15 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		}
 
 		// Delegate bean definition registration to scanner class.
+		/**
+		 * 参考{@link BeanDefinitionParserDelegate#parseCustomElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
+		 *
+		 */
 		ClassPathBeanDefinitionScanner scanner = createScanner(parserContext.getReaderContext(), useDefaultFilters);
 		scanner.setBeanDefinitionDefaults(parserContext.getDelegate().getBeanDefinitionDefaults());
+		/**
+		 * {@link BeanDefinitionParserDelegate#DEFAULT_AUTOWIRE_CANDIDATES_ATTRIBUTE}
+		 */
 		scanner.setAutowireCandidatePatterns(parserContext.getDelegate().getAutowireCandidatePatterns());
 
 		if (element.hasAttribute(RESOURCE_PATTERN_ATTRIBUTE)) {
@@ -241,6 +261,8 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	/**
 	 * {@link ComponentScanBeanDefinitionParser#configureScanner(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
 	 * 中被调用
+	 * <p>
+	 * 设置{@link ComponentScanBeanDefinitionParser#INCLUDE_FILTER_ELEMENT}和{@link ComponentScanBeanDefinitionParser#EXCLUDE_FILTER_ELEMENT}
 	 *
 	 * @param element
 	 * @param scanner

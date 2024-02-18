@@ -33,6 +33,7 @@ import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.AbstractBeanDefinitionReader;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.index.CandidateComponentsIndex;
@@ -105,6 +106,9 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * {@link Component}
 	 * {@link ManagedBean}
 	 * {@link Named}
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#registerDefaultFilters()}中赋值
+	 * </p>
 	 */
 	private final List<TypeFilter> includeFilters = new ArrayList<>();
 
@@ -116,6 +120,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	@Nullable
 	private Environment environment;
 
+	/**
+	 * {@link ClassPathScanningCandidateComponentProvider#setEnvironment(org.springframework.core.env.Environment)}
+	 * 中设置为null
+	 */
 	@Nullable
 	private ConditionEvaluator conditionEvaluator;
 
@@ -131,6 +139,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	@Nullable
 	private MetadataReaderFactory metadataReaderFactory;
 
+	/**
+	 * 在{@link ClassPathScanningCandidateComponentProvider#setResourceLoader(org.springframework.core.io.ResourceLoader)}
+	 * 中赋值
+	 */
 	@Nullable
 	private CandidateComponentsIndex componentsIndex;
 
@@ -304,6 +316,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	public void setResourceLoader(@Nullable ResourceLoader resourceLoader) {
 		/**
 		 * {@link org.springframework.context.annotation.AnnotationConfigApplicationContext}
+		 * 自定义标签进来:{@link AbstractBeanDefinitionReader#resourceLoader}
 		 */
 		this.resourcePatternResolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
 		this.metadataReaderFactory = new CachingMetadataReaderFactory(resourceLoader);
@@ -361,14 +374,24 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 */
 	public Set<BeanDefinition> findCandidateComponents(String basePackage) {
 		if (this.componentsIndex != null && indexSupportsIncludeFilters()) {
+			// <context:component-scan base-package="com"/>走这个分支
 			return addCandidateComponentsFromIndex(this.componentsIndex, basePackage);
 		} else {
+			/**
+			 * 可以参考{@link CandidateComponentsIndexLoader#doLoadIndex(java.lang.ClassLoader)}
+			 * 因为没有配置{@link CandidateComponentsIndexLoader#COMPONENTS_RESOURCE_LOCATION}
+			 * 走这个分支
+			 */
 			return scanCandidateComponents(basePackage);
 		}
 	}
 
 	/**
-	 * Determine if the index can be used by this instance.
+	 * Determine if the index can be used by this instance.、
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#findCandidateComponents(java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @return {@code true} if the index is available and the configuration of this
 	 * instance is supported by it, {@code false} otherwise
@@ -385,6 +408,9 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 
 	/**
 	 * Determine if the specified include {@link TypeFilter} is supported by the index.
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#indexSupportsIncludeFilters()}中调用
+	 * </p>
 	 *
 	 * @param filter the filter to check
 	 * @return whether the index supports this include filter
@@ -392,7 +418,15 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * @since 5.0
 	 */
 	private boolean indexSupportsIncludeFilter(TypeFilter filter) {
+		/**
+		 * 参考{@link ClassPathScanningCandidateComponentProvider#includeFilters}及
+		 * {@link ClassPathScanningCandidateComponentProvider#registerDefaultFilters()}
+		 */
 		if (filter instanceof AnnotationTypeFilter) {
+			/**
+			 * {@link Component}中有注解{@link Indexed}
+			 * 因此返回true
+			 */
 			Class<? extends Annotation> annotation = ((AnnotationTypeFilter) filter).getAnnotationType();
 			return (AnnotationUtils.isAnnotationDeclaredLocally(Indexed.class, annotation) ||
 					annotation.getName().startsWith("javax."));
@@ -406,6 +440,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 
 	/**
 	 * Extract the stereotype to use for the specified compatible filter.
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#addCandidateComponentsFromIndex(org.springframework.context.index.CandidateComponentsIndex, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 * 返回传入的参数filter中包含的注解的名称
 	 *
 	 * @param filter the filter to handle
 	 * @return the stereotype in the index matching this filter
@@ -423,6 +462,14 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 		return null;
 	}
 
+	/**
+	 * {@link ClassPathScanningCandidateComponentProvider#findCandidateComponents(java.lang.String)}
+	 * 中调用
+	 *
+	 * @param index
+	 * @param basePackage
+	 * @return
+	 */
 	private Set<BeanDefinition> addCandidateComponentsFromIndex(CandidateComponentsIndex index, String basePackage) {
 		Set<BeanDefinition> candidates = new LinkedHashSet<>();
 		try {
@@ -432,6 +479,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				if (stereotype == null) {
 					throw new IllegalArgumentException("Failed to extract stereotype from " + filter);
 				}
+				/**
+				 * index参考
+				 *{@link ClassPathScanningCandidateComponentProvider#componentsIndex}
+				 */
 				types.addAll(index.getCandidateTypes(basePackage, stereotype));
 			}
 			boolean traceEnabled = logger.isTraceEnabled();
@@ -550,18 +601,23 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	/**
 	 * Determine whether the given class does not match any exclude filter
 	 * and does match at least one include filter.
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#scanCandidateComponents(java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param metadataReader the ASM ClassReader for the class
 	 * @return whether the class qualifies as a candidate component
 	 */
 	protected boolean isCandidateComponent(MetadataReader metadataReader) throws IOException {
 		for (TypeFilter tf : this.excludeFilters) {
+			// 先去检测是否需要排除
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
 				return false;
 			}
 		}
 		for (TypeFilter tf : this.includeFilters) {
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
+				// 只要命中一个就返回
 				return isConditionMatch(metadataReader);
 			}
 		}

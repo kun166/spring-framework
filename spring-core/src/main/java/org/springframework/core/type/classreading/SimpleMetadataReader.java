@@ -62,6 +62,11 @@ final class SimpleMetadataReader implements MetadataReader {
 		SimpleAnnotationMetadataReadingVisitor visitor = new SimpleAnnotationMetadataReadingVisitor(classLoader);
 		getClassReader(resource).accept(visitor, PARSING_OPTIONS);
 		this.resource = resource;
+		/**
+		 * 上面的{@link ClassReader#accept(org.springframework.asm.ClassVisitor, int)}方法中，最后调用了
+		 * {@link SimpleAnnotationMetadataReadingVisitor#visitEnd()}
+		 * 在这里面生成的{@link SimpleAnnotationMetadata}
+		 */
 		this.annotationMetadata = visitor.getMetadata();
 	}
 

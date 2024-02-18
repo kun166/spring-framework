@@ -16,6 +16,7 @@
 
 package org.springframework.context.config;
 
+import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
 import org.springframework.context.annotation.AnnotationConfigBeanDefinitionParser;
 import org.springframework.context.annotation.ComponentScanBeanDefinitionParser;
@@ -32,6 +33,10 @@ public class ContextNamespaceHandler extends NamespaceHandlerSupport {
 
 	@Override
 	public void init() {
+		/**
+		 * 关于自定义标签的地方
+		 * {@link BeanDefinitionParserDelegate#parseCustomElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
+		 */
 		registerBeanDefinitionParser("property-placeholder", new PropertyPlaceholderBeanDefinitionParser());
 		registerBeanDefinitionParser("property-override", new PropertyOverrideBeanDefinitionParser());
 		registerBeanDefinitionParser("annotation-config", new AnnotationConfigBeanDefinitionParser());

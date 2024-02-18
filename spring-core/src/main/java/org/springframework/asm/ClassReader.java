@@ -123,6 +123,10 @@ public class ClassReader {
 	 * <p>NOTE: the ClassFile structure can start at any offset within this array, i.e. it does not
 	 * necessarily start at offset 0. Use {@link #getItem} and {@link #header} to get correct
 	 * ClassFile element offsets within this byte array.
+	 * <p>
+	 * {@link ClassReader#ClassReader(byte[], int, boolean)}中赋值
+	 * 即该{@link ClassReader#ClassReader(java.io.InputStream)}构造器中读出来的字节码
+	 * </p>
 	 */
 	final byte[] classFileBuffer;
 
@@ -131,6 +135,9 @@ public class ClassReader {
 	 * constant_pool array, <i>plus one</i>. In other words, the offset of constant pool entry i is
 	 * given by cpInfoOffsets[i] - 1, i.e. its cp_info's tag field is given by b[cpInfoOffsets[i] -
 	 * 1].
+	 * ClassFile的每个cp_info项的偏移量（以字节为单位），单位为{@link #classFileBuffer}
+	 * constant_pool数组，<i>加一个</i>。换句话说，常量池条目i的偏移量为
+	 * 由cpInfoOffsets[i]-1给定，即其cp_info的标记字段由b[cpInfoOffsets[i]给定-1.
 	 */
 	private final int[] cpInfoOffsets;
 
@@ -201,7 +208,9 @@ public class ClassReader {
 	 *
 	 * @param classFileBuffer   a byte array containing the JVMS ClassFile structure to be read.
 	 * @param classFileOffset   the offset in byteBuffer of the first byte of the ClassFile to be read.
+	 *                          传递的是0
 	 * @param checkClassVersion whether to check the class version or not.
+	 *                          是否检测class版本号
 	 */
 	ClassReader(
 			final byte[] classFileBuffer, final int classFileOffset, final boolean checkClassVersion) {
@@ -209,12 +218,15 @@ public class ClassReader {
 		this.b = classFileBuffer;
 		// Check the class' major_version. This field is after the magic and minor_version fields, which
 		// use 4 and 2 bytes respectively.
+		// 关于java class文件的字节码:https://blog.csdn.net/qq_35805528/article/details/133187945
 		if (checkClassVersion && readShort(classFileOffset + 6) > Opcodes.V21) {
+			// 判断jdk版本，不能超过21
 			throw new IllegalArgumentException(
 					"Unsupported class file major version " + readShort(classFileOffset + 6));
 		}
 		// Create the constant pool arrays. The constant_pool_count field is after the magic,
 		// minor_version and major_version fields, which use 4, 2 and 2 bytes respectively.
+		// 常量池，占两个字节，从这里可以看出，一个Java文件最多有65535个常量
 		int constantPoolCount = readUnsignedShort(classFileOffset + 8);
 		cpInfoOffsets = new int[constantPoolCount];
 		constantUtf8Values = new String[constantPoolCount];
@@ -222,25 +234,43 @@ public class ClassReader {
 		// maximum length of the constant pool strings. The first constant pool entry is after the
 		// magic, minor_version, major_version and constant_pool_count fields, which use 4, 2, 2 and 2
 		// bytes respectively.
+		// 计算每个常量池条目的偏移量，以及对
+		// 常量池字符串的最大长度。第一个常量池条目位于
+		// magic、minor_version、major_version和constant_pool_count字段，使用4、2、2和2
+		// 字节。
 		int currentCpInfoIndex = 1;
+		// 10,也就是说常量从第11个字节开始
 		int currentCpInfoOffset = classFileOffset + 10;
 		int currentMaxStringLength = 0;
 		boolean hasBootstrapMethods = false;
 		boolean hasConstantDynamic = false;
 		// The offset of the other entries depend on the total size of all the previous entries.
+		// 其他条目的偏移量取决于之前所有条目的总大小。
+		// https://cloud.tencent.com/developer/article/1785970
 		while (currentCpInfoIndex < constantPoolCount) {
 			cpInfoOffsets[currentCpInfoIndex++] = currentCpInfoOffset + 1;
+			// 求偏移量
 			int cpInfoSize;
 			switch (classFileBuffer[currentCpInfoOffset]) {
+
 				case Symbol.CONSTANT_FIELDREF_TAG:
 				case Symbol.CONSTANT_METHODREF_TAG:
 				case Symbol.CONSTANT_INTERFACE_METHODREF_TAG:
 				case Symbol.CONSTANT_INTEGER_TAG:
 				case Symbol.CONSTANT_FLOAT_TAG:
 				case Symbol.CONSTANT_NAME_AND_TYPE_TAG:
+					/**
+					 * 根据《Java虚拟机规范》规定，CONSTANT_NameAndType_info结构用于存储字段的名称和字段的类型描述符，
+					 * 或者是用于存储方法的名称和方法的描述符。CONSTANT_NameAndType_info结构除tag字段外，
+					 * 还有一个U2类型的字段name_index和一个U2类型的字段descriptor_index，
+					 * 分别对应名称指向常量池中某个常量的索引和描述符指向常量池中某个常量的索引，
+					 * 这两个字段指向的常量都必须是CONSTANT_Utf8_info结构的常量。
+					 * 创建CONSTANT_NameAndType_info类并继承CpInfo抽象类，实现ConstantInfoHandler接口定义的解析方法
+					 */
 					cpInfoSize = 5;
 					break;
 				case Symbol.CONSTANT_DYNAMIC_TAG:
+					// jdk 11中加入
 					cpInfoSize = 5;
 					hasBootstrapMethods = true;
 					hasConstantDynamic = true;
@@ -255,6 +285,7 @@ public class ClassReader {
 					currentCpInfoIndex++;
 					break;
 				case Symbol.CONSTANT_UTF8_TAG:
+					// 字符串
 					cpInfoSize = 3 + readUnsignedShort(currentCpInfoOffset + 1);
 					if (cpInfoSize > currentMaxStringLength) {
 						// The size in bytes of this CONSTANT_Utf8 structure provides a conservative estimate
@@ -3628,24 +3659,31 @@ public class ClassReader {
 	/**
 	 * Reads an unsigned short value in this {@link ClassReader}. <i>This method is intended for
 	 * {@link Attribute} sub classes, and is normally not needed by class generators or adapters.</i>
+	 * <p>
+	 * {@link ClassReader#ClassReader(byte[], int, boolean)}中调用
+	 * </p>
 	 *
-	 * @param offset the start index of the value to be read in this {@link ClassReader}.
+	 * @param offset the start index of the value to be read in this {@link ClassReader}. 传递的是8
 	 * @return the read value.
 	 */
 	public int readUnsignedShort(final int offset) {
 		byte[] classBuffer = classFileBuffer;
+		// 读取读9位和第10位的数字
 		return ((classBuffer[offset] & 0xFF) << 8) | (classBuffer[offset + 1] & 0xFF);
 	}
 
 	/**
 	 * Reads a signed short value in this {@link ClassReader}. <i>This method is intended for {@link
 	 * Attribute} sub classes, and is normally not needed by class generators or adapters.</i>
+	 * 读取主版本号
+	 * Java文件的前四个字节是cafe babe，紧跟着的四个字节是主次版本号
 	 *
-	 * @param offset the start offset of the value to be read in this {@link ClassReader}.
+	 * @param offset the start offset of the value to be read in this {@link ClassReader}.传递的6
 	 * @return the read value.
 	 */
 	public short readShort(final int offset) {
 		byte[] classBuffer = classFileBuffer;
+		// offset传递的是6，即读取7和8两位上的主版本号
 		return (short) (((classBuffer[offset] & 0xFF) << 8) | (classBuffer[offset + 1] & 0xFF));
 	}
 

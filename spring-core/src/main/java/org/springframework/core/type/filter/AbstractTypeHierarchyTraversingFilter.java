@@ -53,6 +53,16 @@ public abstract class AbstractTypeHierarchyTraversingFilter implements TypeFilte
 	}
 
 
+	/**
+	 * {@link org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider#isCandidateComponent(org.springframework.core.type.classreading.MetadataReader)}
+	 * 中被调用
+	 *
+	 * @param metadataReader        the metadata reader for the target class
+	 * @param metadataReaderFactory a factory for obtaining metadata readers
+	 *                              for other classes (such as superclasses and interfaces)
+	 * @return
+	 * @throws IOException
+	 */
 	@Override
 	public boolean match(MetadataReader metadataReader, MetadataReaderFactory metadataReaderFactory)
 			throws IOException {
@@ -76,15 +86,13 @@ public abstract class AbstractTypeHierarchyTraversingFilter implements TypeFilte
 					if (superClassMatch.booleanValue()) {
 						return true;
 					}
-				}
-				else {
+				} else {
 					// Need to read superclass to determine a match...
 					try {
 						if (match(metadata.getSuperClassName(), metadataReaderFactory)) {
 							return true;
 						}
-					}
-					catch (IOException ex) {
+					} catch (IOException ex) {
 						if (logger.isDebugEnabled()) {
 							logger.debug("Could not read superclass [" + metadata.getSuperClassName() +
 									"] of type-filtered class [" + metadata.getClassName() + "]");
@@ -102,15 +110,13 @@ public abstract class AbstractTypeHierarchyTraversingFilter implements TypeFilte
 					if (interfaceMatch.booleanValue()) {
 						return true;
 					}
-				}
-				else {
+				} else {
 					// Need to read interface to determine a match...
 					try {
 						if (match(ifc, metadataReaderFactory)) {
 							return true;
 						}
-					}
-					catch (IOException ex) {
+					} catch (IOException ex) {
 						if (logger.isDebugEnabled()) {
 							logger.debug("Could not read interface [" + ifc + "] for type-filtered class [" +
 									metadata.getClassName() + "]");
