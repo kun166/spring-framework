@@ -44,8 +44,15 @@ import org.springframework.util.ClassUtils;
  */
 public class AnnotationTypeFilter extends AbstractTypeHierarchyTraversingFilter {
 
+	/**
+	 * 注解的类型
+	 */
 	private final Class<? extends Annotation> annotationType;
 
+	/**
+	 * {@link AnnotationTypeFilter#AnnotationTypeFilter(java.lang.Class, boolean, boolean)}中
+	 * 赋值为true
+	 */
 	private final boolean considerMetaAnnotations;
 
 
@@ -80,9 +87,13 @@ public class AnnotationTypeFilter extends AbstractTypeHierarchyTraversingFilter 
 	/**
 	 * Create a new {@code AnnotationTypeFilter} for the given annotation type.
 	 *
-	 * @param annotationType          the annotation type to match
-	 * @param considerMetaAnnotations whether to also match on meta-annotations
+	 * @param annotationType          the annotation type to match 注解的类型
+	 * @param considerMetaAnnotations whether to also match on meta-annotations 是否也匹配元注释
+	 *                                元注解:https://blog.csdn.net/weixin_45737330/article/details/125185257
+	 *                                传入的是true
 	 * @param considerInterfaces      whether to also match interfaces
+	 *                                是否也匹配接口
+	 *                                传入的是false
 	 */
 	public AnnotationTypeFilter(
 			Class<? extends Annotation> annotationType, boolean considerMetaAnnotations, boolean considerInterfaces) {

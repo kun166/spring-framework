@@ -33,6 +33,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.MethodMetadata;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.lang.Nullable;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -66,6 +67,7 @@ public class AnnotationMetadataReadingVisitor extends ClassMetadataReadingVisito
 	/**
 	 * Declared as a {@link LinkedMultiValueMap} instead of a {@link MultiValueMap}
 	 * to ensure that the hierarchical ordering of the entries is preserved.
+	 *
 	 * @see AnnotationReadingVisitorUtils#getMergedAnnotationAttributes
 	 */
 	protected final LinkedMultiValueMap<String, AnnotationAttributes> attributesMap = new LinkedMultiValueMap<>(3);
@@ -121,9 +123,16 @@ public class AnnotationMetadataReadingVisitor extends ClassMetadataReadingVisito
 		return (metaAnnotationTypes != null ? metaAnnotationTypes : Collections.emptySet());
 	}
 
+	/**
+	 * {@link AnnotationTypeFilter#matchSelf(org.springframework.core.type.classreading.MetadataReader)}中调用
+	 *
+	 * @param metaAnnotationType
+	 * @return
+	 */
 	@Override
 	public boolean hasMetaAnnotation(String metaAnnotationType) {
 		if (AnnotationUtils.isInJavaLangAnnotationPackage(metaAnnotationType)) {
+			// 包java.lang.annotation下面的注解返回false
 			return false;
 		}
 		Collection<Set<String>> allMetaTypes = this.metaAnnotationMap.values();
@@ -141,6 +150,15 @@ public class AnnotationMetadataReadingVisitor extends ClassMetadataReadingVisito
 				this.attributesMap.containsKey(annotationName));
 	}
 
+	/**
+	 * {@link AnnotationTypeFilter#matchSelf(org.springframework.core.type.classreading.MetadataReader)}
+	 * 中调用
+	 * 检测注解中是否包含传入的注解名称
+	 *
+	 * @param annotationName the fully qualified class name of the annotation
+	 *                       type to look for
+	 * @return
+	 */
 	@Override
 	public boolean hasAnnotation(String annotationName) {
 		return getAnnotationTypes().contains(annotationName);

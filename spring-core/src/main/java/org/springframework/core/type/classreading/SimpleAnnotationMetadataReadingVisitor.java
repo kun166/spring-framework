@@ -21,11 +21,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.asm.AnnotationVisitor;
-import org.springframework.asm.ClassVisitor;
-import org.springframework.asm.MethodVisitor;
-import org.springframework.asm.Opcodes;
-import org.springframework.asm.SpringAsmInfo;
+import org.springframework.asm.*;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.core.type.MethodMetadata;
@@ -80,7 +76,7 @@ final class SimpleAnnotationMetadataReadingVisitor extends ClassVisitor {
 
 	@Override
 	public void visit(int version, int access, String name, String signature,
-			@Nullable String supername, String[] interfaces) {
+					  @Nullable String supername, String[] interfaces) {
 
 		this.className = toClassName(name);
 		this.access = access;
@@ -106,13 +102,20 @@ final class SimpleAnnotationMetadataReadingVisitor extends ClassVisitor {
 			if (this.className.equals(className)) {
 				this.enclosingClassName = outerClassName;
 				this.independentInnerClass = ((access & Opcodes.ACC_STATIC) != 0);
-			}
-			else if (this.className.equals(outerClassName)) {
+			} else if (this.className.equals(outerClassName)) {
 				this.memberClassNames.add(className);
 			}
 		}
 	}
 
+	/**
+	 * {@link ClassReader#accept(org.springframework.asm.ClassVisitor, org.springframework.asm.Attribute[], int)}
+	 * 中调用
+	 *
+	 * @param descriptor the class descriptor of the annotation class.
+	 * @param visible    {@literal true} if the annotation is visible at runtime.
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -135,10 +138,17 @@ final class SimpleAnnotationMetadataReadingVisitor extends ClassVisitor {
 				access, name, descriptor, this.annotatedMethods::add);
 	}
 
+	/**
+	 * {@link ClassReader#accept(org.springframework.asm.ClassVisitor, org.springframework.asm.Attribute[], int)}
+	 * 中被调用
+	 */
 	@Override
 	public void visitEnd() {
 		String[] memberClassNames = StringUtils.toStringArray(this.memberClassNames);
 		MethodMetadata[] annotatedMethods = this.annotatedMethods.toArray(new MethodMetadata[0]);
+		/**
+		 * 这里很重要，一定要看一下
+		 */
 		MergedAnnotations annotations = MergedAnnotations.of(this.annotations);
 		this.metadata = new SimpleAnnotationMetadata(this.className, this.access,
 				this.enclosingClassName, this.superClassName, this.independentInnerClass,

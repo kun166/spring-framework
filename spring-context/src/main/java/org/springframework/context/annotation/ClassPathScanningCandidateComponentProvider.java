@@ -604,6 +604,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * <p>
 	 * {@link ClassPathScanningCandidateComponentProvider#scanCandidateComponents(java.lang.String)}中调用
 	 * </p>
+	 * 是否是候选人组件
 	 *
 	 * @param metadataReader the ASM ClassReader for the class
 	 * @return whether the class qualifies as a candidate component

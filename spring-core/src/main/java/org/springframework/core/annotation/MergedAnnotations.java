@@ -25,6 +25,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.springframework.core.type.StandardAnnotationMetadata;
+import org.springframework.core.type.classreading.SimpleAnnotationMetadataReadingVisitor;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -473,6 +474,9 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * <p>The resulting {@code MergedAnnotations} instance will contain both the
 	 * specified annotations and any meta-annotations that can be read using
 	 * reflection.
+	 * <p>
+	 * {@link SimpleAnnotationMetadataReadingVisitor#visitEnd()}中调用
+	 * </p>
 	 *
 	 * @param annotations the annotations to include
 	 * @return a {@code MergedAnnotations} instance containing the annotations

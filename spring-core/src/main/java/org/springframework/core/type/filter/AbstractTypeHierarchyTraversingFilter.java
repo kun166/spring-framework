@@ -17,6 +17,7 @@
 package org.springframework.core.type.filter;
 
 import java.io.IOException;
+import java.lang.annotation.Inherited;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,11 +43,21 @@ public abstract class AbstractTypeHierarchyTraversingFilter implements TypeFilte
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	/**
+	 * 注解上是否有{@link Inherited}注解
+	 */
 	private final boolean considerInherited;
 
+	/**
+	 * 是否也匹配接口。默认是false
+	 */
 	private final boolean considerInterfaces;
 
 
+	/**
+	 * @param considerInherited  注解上是否有{@link Inherited}注解
+	 * @param considerInterfaces
+	 */
 	protected AbstractTypeHierarchyTraversingFilter(boolean considerInherited, boolean considerInterfaces) {
 		this.considerInherited = considerInherited;
 		this.considerInterfaces = considerInterfaces;
@@ -69,6 +80,9 @@ public abstract class AbstractTypeHierarchyTraversingFilter implements TypeFilte
 
 		// This method optimizes avoiding unnecessary creation of ClassReaders
 		// as well as visiting over those readers.
+		/**
+		 * 这个方法主要就是看{@link org.springframework.stereotype.Component}吧
+		 */
 		if (matchSelf(metadataReader)) {
 			return true;
 		}
@@ -78,6 +92,7 @@ public abstract class AbstractTypeHierarchyTraversingFilter implements TypeFilte
 		}
 
 		if (this.considerInherited) {
+			// 父类类名
 			String superClassName = metadata.getSuperClassName();
 			if (superClassName != null) {
 				// Optimization to avoid creating ClassReader for superclass.
@@ -137,6 +152,9 @@ public abstract class AbstractTypeHierarchyTraversingFilter implements TypeFilte
 	 * Override this to match self characteristics alone. Typically,
 	 * the implementation will use a visitor to extract information
 	 * to perform matching.
+	 * <p>
+	 * 子类有实现 {@link AnnotationTypeFilter#matchSelf(org.springframework.core.type.classreading.MetadataReader)}
+	 * </p>
 	 */
 	protected boolean matchSelf(MetadataReader metadataReader) {
 		return false;

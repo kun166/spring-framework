@@ -27,6 +27,8 @@
 // THE POSSIBILITY OF SUCH DAMAGE.
 package org.springframework.asm;
 
+import org.springframework.core.type.classreading.SimpleAnnotationMetadata;
+import org.springframework.core.type.classreading.SimpleAnnotationMetadataReadingVisitor;
 import org.springframework.core.type.classreading.SimpleMetadataReader;
 
 import java.io.ByteArrayOutputStream;
@@ -112,6 +114,7 @@ public class ClassReader {
 
 	/**
 	 * The offset in bytes of the ClassFile's access_flags field.
+	 * Classfile的access_flags字段正好位于最后一个常量池条目之后。
 	 */
 	public final int header;
 
@@ -165,6 +168,7 @@ public class ClassReader {
 	/**
 	 * A conservative estimate of the maximum length of the strings contained in the constant pool of
 	 * the class.
+	 * 记录常量中，最大的字符串的长度
 	 */
 	private final int maxStringLength;
 
@@ -252,7 +256,11 @@ public class ClassReader {
 			// 求偏移量
 			int cpInfoSize;
 			switch (classFileBuffer[currentCpInfoOffset]) {
-
+				/**
+				 * 特别注意switch特性
+				 * switch会先找到匹配的那个case,
+				 * 如果该case没有break,则会一直往下依次执行下面的case,直到碰到break,或者结束
+				 */
 				case Symbol.CONSTANT_FIELDREF_TAG:
 				case Symbol.CONSTANT_METHODREF_TAG:
 				case Symbol.CONSTANT_INTERFACE_METHODREF_TAG:
@@ -266,6 +274,9 @@ public class ClassReader {
 					 * 分别对应名称指向常量池中某个常量的索引和描述符指向常量池中某个常量的索引，
 					 * 这两个字段指向的常量都必须是CONSTANT_Utf8_info结构的常量。
 					 * 创建CONSTANT_NameAndType_info类并继承CpInfo抽象类，实现ConstantInfoHandler接口定义的解析方法
+					 * <p>
+					 * <p>
+					 * 从switch特性来说:9,10,11,3,4,12等,是等价的。cpInfoSize = 5且break
 					 */
 					cpInfoSize = 5;
 					break;
@@ -281,11 +292,17 @@ public class ClassReader {
 					break;
 				case Symbol.CONSTANT_LONG_TAG:
 				case Symbol.CONSTANT_DOUBLE_TAG:
+					/**
+					 * 从switch特性来说:5,6是等价的
+					 */
 					cpInfoSize = 9;
 					currentCpInfoIndex++;
 					break;
 				case Symbol.CONSTANT_UTF8_TAG:
-					// 字符串
+					/**
+					 * 字符串
+					 * 从所有的case来看，只有字符串cpInfoSize不是固定长度的
+					 */
 					cpInfoSize = 3 + readUnsignedShort(currentCpInfoOffset + 1);
 					if (cpInfoSize > currentMaxStringLength) {
 						// The size in bytes of this CONSTANT_Utf8 structure provides a conservative estimate
@@ -302,6 +319,9 @@ public class ClassReader {
 				case Symbol.CONSTANT_METHOD_TYPE_TAG:
 				case Symbol.CONSTANT_PACKAGE_TAG:
 				case Symbol.CONSTANT_MODULE_TAG:
+					/**
+					 * 从switch特性来说:7,8,16,20,19是等价的
+					 */
 					cpInfoSize = 3;
 					break;
 				default:
@@ -309,8 +329,10 @@ public class ClassReader {
 			}
 			currentCpInfoOffset += cpInfoSize;
 		}
+		// 记录常量中，最大的字符串的长度
 		maxStringLength = currentMaxStringLength;
 		// The Classfile's access_flags field is just after the last constant pool entry.
+		// Classfile的access_flags字段正好位于最后一个常量池条目之后。
 		header = currentCpInfoOffset;
 
 		// Allocate the cache of ConstantDynamic values, if there is at least one.
@@ -327,6 +349,7 @@ public class ClassReader {
 	 * {@link SimpleMetadataReader#getClassReader(org.springframework.core.io.Resource)}
 	 * 中调用
 	 * </p>
+	 * 将构造函数中的{@link InputStream}inputStream中的字节流读取出来，并根据读取的数据流，分析类的字节码，构造{@link ClassReader}
 	 *
 	 * @param inputStream an input stream of the JVMS ClassFile structure to be read. This input
 	 *                    stream must contain nothing more than the ClassFile structure itself. It is read from its
@@ -356,6 +379,7 @@ public class ClassReader {
 	 * {@link ClassReader#ClassReader(java.io.InputStream)}
 	 * 中调用
 	 * </p>
+	 * 将方法参数{@link InputStream}inputStream中的字节码读取出来，并返回
 	 *
 	 * @param inputStream an input stream.
 	 * @param close       true to close the input stream after reading.
@@ -483,8 +507,11 @@ public class ClassReader {
 	 * {@link SimpleMetadataReader#SimpleMetadataReader(org.springframework.core.io.Resource, java.lang.ClassLoader)}
 	 * 中调用
 	 * </p>
+	 * 通过{@link ClassReader}来初始化{@link ClassVisitor},
+	 * 然后通过该{@link ClassVisitor}的实际实现子类{@link SimpleAnnotationMetadataReadingVisitor#getMetadata()}
+	 * 来获取{@link SimpleAnnotationMetadata}
 	 *
-	 * @param classVisitor   the visitor that must visit this class.
+	 * @param classVisitor   the visitor that must visit this class.{@link SimpleAnnotationMetadataReadingVisitor}
 	 * @param parsingOptions the options to use to parse this class. One or more of {@link
 	 *                       #SKIP_CODE}, {@link #SKIP_DEBUG}, {@link #SKIP_FRAMES} or {@link #EXPAND_FRAMES}.
 	 */
@@ -514,6 +541,8 @@ public class ClassReader {
 			final ClassVisitor classVisitor,
 			final Attribute[] attributePrototypes,
 			final int parsingOptions) {
+		// 这个方法还是需要看一下
+		// 初始化上下文
 		Context context = new Context();
 		context.attributePrototypes = attributePrototypes;
 		context.parsingOptions = parsingOptions;
@@ -521,10 +550,15 @@ public class ClassReader {
 
 		// Read the access_flags, this_class, super_class, interface_count and interfaces fields.
 		char[] charBuffer = context.charBuffer;
+		// Classfile的access_flags字段正好位于最后一个常量池条目之后。
 		int currentOffset = header;
+		// 读取accessFlags，占两个字节
 		int accessFlags = readUnsignedShort(currentOffset);
+		// 形如 com/example/demo/DemoApplication
 		String thisClass = readClass(currentOffset + 2, charBuffer);
+		// 形如 java/lang/Object
 		String superClass = readClass(currentOffset + 4, charBuffer);
+		// 接口
 		String[] interfaces = new String[readUnsignedShort(currentOffset + 6)];
 		currentOffset += 8;
 		for (int i = 0; i < interfaces.length; ++i) {
@@ -678,6 +712,9 @@ public class ClassReader {
 				// Parse num_element_value_pairs and element_value_pairs and visit these values.
 				currentAnnotationOffset =
 						readElementValues(
+								/**
+								 * 涉及注解的地方,需要看下
+								 */
 								classVisitor.visitAnnotation(annotationDescriptor, /* visible = */ true),
 								currentAnnotationOffset,
 								/* named = */ true,
@@ -696,6 +733,9 @@ public class ClassReader {
 				// Parse num_element_value_pairs and element_value_pairs and visit these values.
 				currentAnnotationOffset =
 						readElementValues(
+								/**
+								 * 涉及注解的地方,需要看下
+								 */
 								classVisitor.visitAnnotation(annotationDescriptor, /* visible = */ false),
 								currentAnnotationOffset,
 								/* named = */ true,
@@ -3791,6 +3831,9 @@ public class ClassReader {
 	 * CONSTANT_Package constant pool entry in {@link #classFileBuffer}. <i>This method is intended
 	 * for {@link Attribute} sub classes, and is normally not needed by class generators or
 	 * adapters.</i>
+	 * <p>
+	 * {@link ClassReader#readClass(int, char[])}中调用
+	 * </p>
 	 *
 	 * @param offset     the start offset of an unsigned short value in {@link #classFileBuffer}, whose
 	 *                   value is the index of a CONSTANT_Class, CONSTANT_String, CONSTANT_MethodType,
@@ -3802,6 +3845,9 @@ public class ClassReader {
 	private String readStringish(final int offset, final char[] charBuffer) {
 		// Get the start offset of the cp_info structure (plus one), and read the CONSTANT_Utf8 entry
 		// designated by the first two bytes of this cp_info.
+		/**
+		 * 读取offset开始两个字节的int值，该int值标识，该字符串的在{@link ClassReader#cpInfoOffsets}中的偏移量
+		 */
 		return readUTF8(cpInfoOffsets[readUnsignedShort(offset)], charBuffer);
 	}
 
@@ -3809,6 +3855,10 @@ public class ClassReader {
 	 * Reads a CONSTANT_Class constant pool entry in this {@link ClassReader}. <i>This method is
 	 * intended for {@link Attribute} sub classes, and is normally not needed by class generators or
 	 * adapters.</i>
+	 * <p>
+	 * {@link ClassReader#accept(org.springframework.asm.ClassVisitor, org.springframework.asm.Attribute[], int)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param offset     the start offset of an unsigned short value in this {@link ClassReader}, whose
 	 *                   value is the index of a CONSTANT_Class entry in class's constant pool table.
