@@ -22,8 +22,10 @@ import java.util.function.Supplier;
 import org.springframework.beans.factory.config.BeanDefinitionCustomizer;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.metrics.DefaultApplicationStartup;
 import org.springframework.core.metrics.StartupStep;
 import org.springframework.lang.Nullable;
@@ -57,12 +59,14 @@ import org.springframework.util.Assert;
 public class AnnotationConfigApplicationContext extends GenericApplicationContext implements AnnotationConfigRegistry {
 
 	/**
-	 * {@link AnnotatedBeanDefinitionReader}
+	 * 在默认构造器中初始化
+	 * {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext()}
 	 */
 	private final AnnotatedBeanDefinitionReader reader;
 
 	/**
-	 * {@link ClassPathBeanDefinitionScanner}
+	 * 在默认构造器中初始化
+	 * {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext()}
 	 */
 	private final ClassPathBeanDefinitionScanner scanner;
 
@@ -74,6 +78,9 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext(java.lang.Class[])}
 	 * 中被调用
 	 * </p>
+	 * 默认构造器，做了两件事：
+	 * 1,用自身初始化{@link AnnotationConfigApplicationContext#reader}
+	 * 2,用自身初始化{@link AnnotationConfigApplicationContext#scanner}
 	 */
 	public AnnotationConfigApplicationContext() {
 		/**
@@ -81,6 +88,11 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		 * {@link DefaultApplicationStartup.DefaultStartupStep}
 		 */
 		StartupStep createAnnotatedBeanDefReader = getApplicationStartup().start("spring.context.annotated-bean-reader.create");
+		/**
+		 * 调用到这个地方的时候，父类无参构造器
+		 * {@link GenericApplicationContext#GenericApplicationContext()}
+		 * 已经执行,这个时候{@link GenericApplicationContext#beanFactory}已经有值
+		 */
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		createAnnotatedBeanDefReader.end();
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
@@ -108,6 +120,14 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 *                         {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+		/**
+		 * 特别注意:根据Java的特性,初始化子类构造器的时候,会先调用父类的无参构造器,哪怕代码中没有声明式调用
+		 * 因此该方法调用时,以依次先调用下面的三个无参构造器
+		 * 1,{@link DefaultResourceLoader#DefaultResourceLoader()}
+		 * 2,{@link AbstractApplicationContext#AbstractApplicationContext()}
+		 * 3,{@link GenericApplicationContext#GenericApplicationContext()}
+		 * 其中2和3都有逻辑生成
+		 */
 		this();
 		register(componentClasses);
 		refresh();

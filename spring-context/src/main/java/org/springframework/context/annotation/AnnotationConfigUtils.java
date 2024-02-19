@@ -25,9 +25,11 @@ import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.beans.factory.support.SimpleAutowireCandidateResolver;
 import org.springframework.context.event.DefaultEventListenerFactory;
 import org.springframework.context.event.EventListenerMethodProcessor;
 import org.springframework.context.support.GenericApplicationContext;
@@ -149,6 +151,10 @@ public abstract class AnnotationConfigUtils {
 
 	/**
 	 * Register all relevant annotation post processors in the given registry.
+	 * 这个方法非常重要:
+	 * 1,设置{@link DefaultListableBeanFactory#dependencyComparator}为{@link AnnotationAwareOrderComparator#INSTANCE}
+	 * 2,设置{@link DefaultListableBeanFactory#autowireCandidateResolver}为{@link ContextAnnotationAutowireCandidateResolver}
+	 * 3,给registry注册所有annotation相关的{@link BeanFactoryPostProcessor}
 	 * <p>
 	 * {@link AnnotationConfigUtils#registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
 	 * 中调用
@@ -162,19 +168,29 @@ public abstract class AnnotationConfigUtils {
 	 */
 	public static Set<BeanDefinitionHolder> registerAnnotationConfigProcessors(
 			BeanDefinitionRegistry registry, @Nullable Object source) {
-
+		// 获取registry 持有的DefaultListableBeanFactory
 		DefaultListableBeanFactory beanFactory = unwrapDefaultListableBeanFactory(registry);
 		if (beanFactory != null) {
 			if (!(beanFactory.getDependencyComparator() instanceof AnnotationAwareOrderComparator)) {
+				/**
+				 * {@link DefaultListableBeanFactory#getDependencyComparator()}默认是null,会走这个分支
+				 */
 				beanFactory.setDependencyComparator(AnnotationAwareOrderComparator.INSTANCE);
 			}
 			if (!(beanFactory.getAutowireCandidateResolver() instanceof ContextAnnotationAutowireCandidateResolver)) {
+				/**
+				 * {@link DefaultListableBeanFactory#getAutowireCandidateResolver()}默认是{@link SimpleAutowireCandidateResolver#INSTANCE}
+				 * 因此第一次进来，这个地方会走到
+				 */
 				beanFactory.setAutowireCandidateResolver(new ContextAnnotationAutowireCandidateResolver());
 			}
 		}
 
 		Set<BeanDefinitionHolder> beanDefs = new LinkedHashSet<>(8);
 
+		/**
+		 * 下面代码依次
+		 */
 		if (!registry.containsBeanDefinition(CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME)) {
 			RootBeanDefinition def = new RootBeanDefinition(ConfigurationClassPostProcessor.class);
 			def.setSource(source);
@@ -257,8 +273,11 @@ public abstract class AnnotationConfigUtils {
 	}
 
 	/**
+	 * <p>
 	 * {@link AnnotationConfigUtils#registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)}
 	 * 中调用
+	 * </p>
+	 * 根据传入的registry，获取其持有的{@link DefaultListableBeanFactory}
 	 *
 	 * @param registry {@link AnnotationConfigApplicationContext}
 	 * @return

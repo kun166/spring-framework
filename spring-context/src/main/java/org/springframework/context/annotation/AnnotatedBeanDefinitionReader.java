@@ -50,6 +50,8 @@ public class AnnotatedBeanDefinitionReader {
 
 	/**
 	 * {@link AnnotationConfigApplicationContext}
+	 * 在{@link AnnotatedBeanDefinitionReader#AnnotatedBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment)}
+	 * 构造器中赋值
 	 */
 	private final BeanDefinitionRegistry registry;
 
@@ -71,9 +73,15 @@ public class AnnotatedBeanDefinitionReader {
 	 * the {@link Environment} will be inherited, otherwise a new
 	 * {@link StandardEnvironment} will be created and used.
 	 * <p>
+	 * 通过给定的registry创建一个新的{@link AnnotatedBeanDefinitionReader}.
+	 * 如果该registry实现了{@link EnvironmentCapable}接口，比如是一个{@code ApplicationContext},
+	 * 则{@link Environment}会被传递到过来，否则创建一个{@link StandardEnvironment}来使用
+	 * </p>
+	 * <p>
 	 * {@link AnnotationConfigApplicationContext#AnnotationConfigApplicationContext()}
 	 * 中被调用
 	 * </p>
+	 * 通过{@link AnnotationConfigApplicationContext}初始化{@link AnnotatedBeanDefinitionReader}
 	 *
 	 * @param registry the {@code BeanFactory} to load bean definitions into,
 	 *                 in the form of a {@code BeanDefinitionRegistry}
