@@ -246,6 +246,13 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 */
 	@SuppressWarnings("unchecked")
 	protected void registerDefaultFilters() {
+		/**
+		 * 虽然只添加了{@link Component}一个注解,点开下面这些注解:
+		 * {@link Repository @Repository}
+		 * {@link Service @Service}
+		 * {@link Controller @Controller}
+		 * 你会发现这些注解上都标注了{@link Component}注解
+		 */
 		this.includeFilters.add(new AnnotationTypeFilter(Component.class));
 		ClassLoader cl = ClassPathScanningCandidateComponentProvider.class.getClassLoader();
 		try {
@@ -515,8 +522,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	}
 
 	/**
+	 * <p>
 	 * {@link ClassPathScanningCandidateComponentProvider#findCandidateComponents(java.lang.String)}
 	 * 中调用
+	 * </p>
+	 * 扫描指定的basePackage路径下的所有类，是否标注了{@link Component}注解。且是一个基础类(不是接口，不是抽象类)
 	 *
 	 * @param basePackage
 	 * @return
@@ -544,10 +554,15 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				try {
 					/**
 					 * 返回一个{@link SimpleMetadataReader}
-					 * 下面的逻辑太复杂了，看不懂
+					 * 这个逻辑，直接通过解析Java class 字节码，来分析构造方法，方法，注解，方法上的注解等等
+					 * 看似很复杂，其实深入了解，有章可循
 					 */
 					MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
 					if (isCandidateComponent(metadataReader)) {
+						/**
+						 * 生成的是{@link ScannedGenericBeanDefinition}
+						 * 关于{@link BeanDefinition}，可以参考:https://blog.csdn.net/u012702547/article/details/132752668
+						 */
 						ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 						sbd.setSource(resource);
 						if (isCandidateComponent(sbd)) {
@@ -617,6 +632,16 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 			}
 		}
 		for (TypeFilter tf : this.includeFilters) {
+			/**
+			 * 如果未在自定义标签上定义{@link ComponentScanBeanDefinitionParser#INCLUDE_FILTER_ELEMENT}
+			 * 则只需要关注{@link Component}即可
+			 * 这个注解可以说是整个spring注解的灵魂
+			 * {@link Repository @Repository}
+			 * {@link Service @Service}
+			 * {@link Controller @Controller}
+			 * 等等，注解上都标注了{@link Component}注解
+			 *
+			 */
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
 				// 只要命中一个就返回
 				return isConditionMatch(metadataReader);
@@ -645,6 +670,14 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 * <p>The default implementation checks whether the class is not an interface
 	 * and not dependent on an enclosing class.
 	 * <p>Can be overridden in subclasses.
+	 * 确定给定的bean定义是否符合候选条件。
+	 * 默认实现检查类是否不是接口
+	 * 并且不依赖于封闭类。
+	 * <p>可以在子类中重写。
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#scanCandidateComponents(java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanDefinition the bean definition to check
 	 * @return whether the bean definition qualifies as a candidate component

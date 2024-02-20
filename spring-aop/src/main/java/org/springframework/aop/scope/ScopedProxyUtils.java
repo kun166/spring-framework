@@ -46,18 +46,25 @@ public abstract class ScopedProxyUtils {
 	/**
 	 * Generate a scoped proxy for the supplied target bean, registering the target
 	 * bean with an internal name and setting 'targetBeanName' on the scoped proxy.
-	 * @param definition the original bean definition
-	 * @param registry the bean definition registry
+	 * <p>
+	 * {@link org.springframework.context.annotation.ScopedProxyCreator#createScopedProxy(org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.support.BeanDefinitionRegistry, boolean)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param definition       the original bean definition
+	 * @param registry         the bean definition registry
 	 * @param proxyTargetClass whether to create a target class proxy
 	 * @return the scoped proxy definition
 	 * @see #getTargetBeanName(String)
 	 * @see #getOriginalBeanName(String)
 	 */
 	public static BeanDefinitionHolder createScopedProxy(BeanDefinitionHolder definition,
-			BeanDefinitionRegistry registry, boolean proxyTargetClass) {
-
+														 BeanDefinitionRegistry registry, boolean proxyTargetClass) {
+		// 原始的beanName
 		String originalBeanName = definition.getBeanName();
+		// 目标BeanDefinition
 		BeanDefinition targetDefinition = definition.getBeanDefinition();
+		// 目标beanName
 		String targetBeanName = getTargetBeanName(originalBeanName);
 
 		// Create a scoped proxy definition for the original bean name,
@@ -72,8 +79,7 @@ public abstract class ScopedProxyUtils {
 		if (proxyTargetClass) {
 			targetDefinition.setAttribute(AutoProxyUtils.PRESERVE_TARGET_CLASS_ATTRIBUTE, Boolean.TRUE);
 			// ScopedProxyFactoryBean's "proxyTargetClass" default is TRUE, so we don't need to set it explicitly here.
-		}
-		else {
+		} else {
 			proxyDefinition.getPropertyValues().add("proxyTargetClass", Boolean.FALSE);
 		}
 
@@ -89,6 +95,9 @@ public abstract class ScopedProxyUtils {
 		targetDefinition.setPrimary(false);
 
 		// Register the target bean as separate bean in the factory.
+		/**
+		 * 原来的BeanDefinition,以原来的beanName前面加"scopedTarget."为新的beanName,注册到了registry里
+		 */
 		registry.registerBeanDefinition(targetBeanName, targetDefinition);
 
 		// Return the scoped proxy definition as primary bean definition
@@ -98,6 +107,12 @@ public abstract class ScopedProxyUtils {
 
 	/**
 	 * Generate the bean name that is used within the scoped proxy to reference the target bean.
+	 * 在传入的字符串前面加 "scopedTarget."
+	 * <p>
+	 * {@link ScopedProxyUtils#createScopedProxy(org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.support.BeanDefinitionRegistry, boolean)}
+	 * 中调用
+	 * </p>
+	 *
 	 * @param originalBeanName the original name of bean
 	 * @return the generated bean to be used to reference the target bean
 	 * @see #getOriginalBeanName(String)
@@ -109,13 +124,14 @@ public abstract class ScopedProxyUtils {
 	/**
 	 * Get the original bean name for the provided {@linkplain #getTargetBeanName
 	 * target bean name}.
+	 *
 	 * @param targetBeanName the target bean name for the scoped proxy
 	 * @return the original bean name
 	 * @throws IllegalArgumentException if the supplied bean name does not refer
-	 * to the target of a scoped proxy
-	 * @since 5.1.10
+	 *                                  to the target of a scoped proxy
 	 * @see #getTargetBeanName(String)
 	 * @see #isScopedTarget(String)
+	 * @since 5.1.10
 	 */
 	public static String getOriginalBeanName(@Nullable String targetBeanName) {
 		Assert.isTrue(isScopedTarget(targetBeanName), () -> "bean name '" +
@@ -126,6 +142,7 @@ public abstract class ScopedProxyUtils {
 	/**
 	 * Determine if the {@code beanName} is the name of a bean that references
 	 * the target bean within a scoped proxy.
+	 *
 	 * @since 4.1.4
 	 */
 	public static boolean isScopedTarget(@Nullable String beanName) {

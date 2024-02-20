@@ -80,19 +80,32 @@ public class AnnotationScopeMetadataResolver implements ScopeMetadataResolver {
 	/**
 	 * {@link AnnotatedBeanDefinitionReader#doRegisterBean(java.lang.Class, java.lang.String, java.lang.Class[], java.util.function.Supplier, org.springframework.beans.factory.config.BeanDefinitionCustomizer[])}
 	 * 中调用
+	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}中调用
 	 *
 	 * @param definition the target bean definition
 	 * @return
 	 */
 	@Override
 	public ScopeMetadata resolveScopeMetadata(BeanDefinition definition) {
+		/**
+		 * 生成一个默认的{@link ScopeMetadata}
+		 * 默认的{@link ScopeMetadata#scopeName}为"singleton"
+		 * 默认的{@link ScopeMetadata#scopedProxyMode}为{@link ScopedProxyMode#NO}
+		 */
 		ScopeMetadata metadata = new ScopeMetadata();
 		if (definition instanceof AnnotatedBeanDefinition) {
+			/**
+			 * 如果扫描的bean中未标注{@link Scope},则使用默认的
+			 */
 			AnnotatedBeanDefinition annDef = (AnnotatedBeanDefinition) definition;
 			AnnotationAttributes attributes = AnnotationConfigUtils.attributesFor(
 					annDef.getMetadata(), this.scopeAnnotationType);
 			if (attributes != null) {
 				metadata.setScopeName(attributes.getString("value"));
+				/**
+				 * 关于ScopedProxyMode
+				 * 可以参考:https://blog.csdn.net/m0_43448868/article/details/111643397
+				 */
 				ScopedProxyMode proxyMode = attributes.getEnum("proxyMode");
 				if (proxyMode == ScopedProxyMode.DEFAULT) {
 					proxyMode = this.defaultProxyMode;

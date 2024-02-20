@@ -19,6 +19,7 @@ package org.springframework.context.annotation;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.core.io.Resource;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.MethodMetadata;
 import org.springframework.core.type.classreading.MetadataReader;
@@ -39,11 +40,11 @@ import org.springframework.util.Assert;
  *
  * @author Juergen Hoeller
  * @author Chris Beams
- * @since 2.5
  * @see #getMetadata()
  * @see #getBeanClassName()
  * @see org.springframework.core.type.classreading.MetadataReaderFactory
  * @see AnnotatedGenericBeanDefinition
+ * @since 2.5
  */
 @SuppressWarnings("serial")
 public class ScannedGenericBeanDefinition extends GenericBeanDefinition implements AnnotatedBeanDefinition {
@@ -54,6 +55,11 @@ public class ScannedGenericBeanDefinition extends GenericBeanDefinition implemen
 	/**
 	 * Create a new ScannedGenericBeanDefinition for the class that the
 	 * given MetadataReader describes.
+	 * <p>
+	 * {@link ClassPathScanningCandidateComponentProvider#scanCandidateComponents(java.lang.String)}中调用
+	 * </p>
+	 * 从传递的参数metadataReader中,获取{@link AnnotationMetadata}和{@link Resource}并初始化{@link ScannedGenericBeanDefinition}
+	 *
 	 * @param metadataReader the MetadataReader for the scanned target class
 	 */
 	public ScannedGenericBeanDefinition(MetadataReader metadataReader) {

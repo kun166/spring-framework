@@ -203,6 +203,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		this.registry = registry;
 
 		if (useDefaultFilters) {
+			// 这个方法很重要
 			registerDefaultFilters();
 		}
 		setEnvironment(environment);
@@ -330,21 +331,41 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 */
 	protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
+		// 声明一个存放解析到的BeanDefinition的容器
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
 		for (String basePackage : basePackages) {
+			/**
+			 * 返回的是{@link ScannedGenericBeanDefinition}
+			 */
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			for (BeanDefinition candidate : candidates) {
+				/**
+				 * 获取{@link ScopeMetadata}
+				 * 注意，这个地方有两个作用:
+				 * 第一个是获取{@link Scope#scopeName()}
+				 * 第二个是获取{@link Scope#proxyMode()}
+				 */
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
+				// 设置scope
 				candidate.setScope(scopeMetadata.getScopeName());
+				// 获取beanName
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
 				if (candidate instanceof AbstractBeanDefinition) {
+					// 走这个分支
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
 				if (candidate instanceof AnnotatedBeanDefinition) {
+					// 走这个分支
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
 				if (checkCandidate(beanName, candidate)) {
+					/**
+					 * beanName可用，且需要注册
+					 * 注意，每一个{@link BeanDefinition}都需要包装成{@link BeanDefinitionHolder}才能注册
+					 * 且beanName封装到了{@link BeanDefinitionHolder}中
+					 */
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
+					// 下面这个代码挺重要的，等有时间看下吧
 					definitionHolder =
 							AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 					beanDefinitions.add(definitionHolder);
@@ -362,6 +383,9 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}
 	 * 中调用
 	 * </p>
+	 * 调用{@link AbstractBeanDefinition#applyDefaults(org.springframework.beans.factory.support.BeanDefinitionDefaults)}
+	 * 传递参数{@link ClassPathBeanDefinitionScanner#beanDefinitionDefaults}
+	 * 和{@link AbstractBeanDefinition#setAutowireCandidate(boolean)}
 	 *
 	 * @param beanDefinition the scanned bean definition
 	 * @param beanName       the generated bean name for the given bean
@@ -377,6 +401,9 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * Register the specified bean with the given registry.
 	 * <p>Can be overridden in subclasses, e.g. to adapt the registration
 	 * process or to register further bean definitions for each scanned bean.
+	 * <p>
+	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}中调用
+	 * </p>
 	 *
 	 * @param definitionHolder the bean definition plus bean name for the bean
 	 * @param registry         the BeanDefinitionRegistry to register the bean with
@@ -389,6 +416,14 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	/**
 	 * Check the given candidate's bean name, determining whether the corresponding
 	 * bean definition needs to be registered or conflicts with an existing definition.
+	 * 检查给定候选者的bean名称，确定对应的bean definition需要注册或与现有的definition冲突。
+	 * 即检测给定的beanName是否可用
+	 * <p>
+	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}中调用
+	 * </p>
+	 * <p>
+	 * candidate /ˈkændɪdət/ 候选人
+	 * </p>
 	 *
 	 * @param beanName       the suggested name for the bean
 	 * @param beanDefinition the corresponding bean definition
@@ -400,16 +435,21 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 */
 	protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
 		if (!this.registry.containsBeanDefinition(beanName)) {
+			// 如果给定的beanName未被使用，直接返回true
 			return true;
 		}
+		// 根据传入的beanName获取已经存在的BeanDefinition
 		BeanDefinition existingDef = this.registry.getBeanDefinition(beanName);
 		BeanDefinition originatingDef = existingDef.getOriginatingBeanDefinition();
 		if (originatingDef != null) {
+			// 拿到原始的BeanDefinition
 			existingDef = originatingDef;
 		}
 		if (isCompatible(beanDefinition, existingDef)) {
+			// 如果两个BeanDefinition兼容,返回false
 			return false;
 		}
+		// 两个BeanDefinition不兼容,直接抛异常了
 		throw new ConflictingBeanDefinitionException("Annotation-specified bean name '" + beanName +
 				"' for bean class [" + beanDefinition.getBeanClassName() + "] conflicts with existing, " +
 				"non-compatible bean definition of same name and class [" + existingDef.getBeanClassName() + "]");
@@ -420,6 +460,12 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * the given existing bean definition.
 	 * <p>The default implementation considers them as compatible when the existing
 	 * bean definition comes from the same source or from a non-scanning source.
+	 * 确定给定的新bean definition是否与已经存在的 bean definition兼容。
+	 * 如果这两个bean definition来自同一个source或者来自一个non-scanning source则认为是兼容的
+	 * <p>
+	 * {@link ClassPathBeanDefinitionScanner#checkCandidate(java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 调用
+	 * </p>
 	 *
 	 * @param newDef      the new bean definition, originated from scanning
 	 * @param existingDef the existing bean definition, potentially an
@@ -428,6 +474,11 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * new definition to be skipped in favor of the existing definition
 	 */
 	protected boolean isCompatible(BeanDefinition newDef, BeanDefinition existingDef) {
+		/**
+		 * 1,如果已经存在的BeanDefinition不是一个ScannedGenericBeanDefinition,则返回true,兼容
+		 * 2,两个BeanDefinition的Source不为空，且equals,则返回true,兼容
+		 * 3,两个BeanDefinition equals,则返回true,兼容
+		 */
 		return (!(existingDef instanceof ScannedGenericBeanDefinition) ||  // explicitly registered overriding bean
 				(newDef.getSource() != null && newDef.getSource().equals(existingDef.getSource())) ||  // scanned same file twice
 				newDef.equals(existingDef));  // scanned equivalent class twice

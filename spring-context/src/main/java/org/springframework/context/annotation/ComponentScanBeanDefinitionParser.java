@@ -22,6 +22,10 @@ import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.xml.*;
 import org.springframework.context.config.ContextNamespaceHandler;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -45,6 +49,22 @@ import org.springframework.util.StringUtils;
 
 /**
  * Parser for the {@code <context:component-scan/>} element.
+ * <p>
+ * 多说一句，为啥类名取为ComponentScanBeanDefinitionParser？
+ * 因为在方法{@link ComponentScanBeanDefinitionParser#createScanner(org.springframework.beans.factory.xml.XmlReaderContext, boolean)}
+ * 中，生成{@link ClassPathBeanDefinitionScanner#ClassPathBeanDefinitionScanner(org.springframework.beans.factory.support.BeanDefinitionRegistry, boolean, org.springframework.core.env.Environment, org.springframework.core.io.ResourceLoader)}
+ * 的构造器里面，调用了{@link ClassPathScanningCandidateComponentProvider#registerDefaultFilters()}方法。
+ * 在方法里面，把{@link Component}封装成{@link AnnotationTypeFilter}添加到了{@link ClassPathScanningCandidateComponentProvider#includeFilters}里
+ * <p>
+ * 为什么仅仅只添加了{@link Component}
+ * 而在该方法的注释上却说:
+ * {@link Component @Component}
+ * {@link Repository @Repository}
+ * {@link Service @Service}
+ * {@link Controller @Controller}
+ * 点进去上面的这些注解，你会发现这些注解上都标有{@link Component}注解……
+ * 惊不惊喜？意不意外？
+ * </p>
  *
  * @author Mark Fisher
  * @author Ramnivas Laddad
@@ -158,6 +178,11 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 			parserContext.getReaderContext().error(ex.getMessage(), parserContext.extractSource(element), ex.getCause());
 		}
 
+		/**
+		 * 下面这个方法也很重要
+		 * 影响到{@link ClassPathScanningCandidateComponentProvider#includeFilters}
+		 * 和{@link ClassPathScanningCandidateComponentProvider#excludeFilters}
+		 */
 		parseTypeFilters(element, scanner, parserContext);
 
 		return scanner;

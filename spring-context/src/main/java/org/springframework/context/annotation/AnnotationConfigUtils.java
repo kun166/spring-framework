@@ -295,8 +295,15 @@ public abstract class AnnotationConfigUtils {
 	}
 
 	/**
+	 * <p>
 	 * {@link AnnotatedBeanDefinitionReader#doRegisterBean(java.lang.Class, java.lang.String, java.lang.Class[], java.util.function.Supplier, org.springframework.beans.factory.config.BeanDefinitionCustomizer[])}
 	 * 中被调用
+	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}中调用
+	 * </p>
+	 * <p>
+	 * 根据传入的abd,解析{@link Lazy},{@link Primary},{@link DependsOn},{@link Role},{@link Description}
+	 * 注解,并设置属性
+	 * </p>
 	 *
 	 * @param abd
 	 */
@@ -344,11 +351,22 @@ public abstract class AnnotationConfigUtils {
 		}
 	}
 
+	/**
+	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}中调用
+	 *
+	 * @param metadata
+	 * @param definition
+	 * @param registry
+	 * @return
+	 */
 	static BeanDefinitionHolder applyScopedProxyMode(
 			ScopeMetadata metadata, BeanDefinitionHolder definition, BeanDefinitionRegistry registry) {
 
 		ScopedProxyMode scopedProxyMode = metadata.getScopedProxyMode();
 		if (scopedProxyMode.equals(ScopedProxyMode.NO)) {
+			/**
+			 * 如果是默认的{@link ScopedProxyMode#NO},则直接返回了
+			 */
 			return definition;
 		}
 		boolean proxyTargetClass = scopedProxyMode.equals(ScopedProxyMode.TARGET_CLASS);

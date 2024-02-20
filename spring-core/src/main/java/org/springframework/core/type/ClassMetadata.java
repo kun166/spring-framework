@@ -23,10 +23,10 @@ import org.springframework.lang.Nullable;
  * in a form that does not require that class to be loaded yet.
  *
  * @author Juergen Hoeller
- * @since 2.5
  * @see StandardClassMetadata
  * @see org.springframework.core.type.classreading.MetadataReader#getClassMetadata()
  * @see AnnotationMetadata
+ * @since 2.5
  */
 public interface ClassMetadata {
 
@@ -42,6 +42,7 @@ public interface ClassMetadata {
 
 	/**
 	 * Return whether the underlying class represents an annotation.
+	 *
 	 * @since 4.1
 	 */
 	boolean isAnnotation();
@@ -54,6 +55,7 @@ public interface ClassMetadata {
 	/**
 	 * Return whether the underlying class represents a concrete class,
 	 * i.e. neither an interface nor an abstract class.
+	 * 返回底层类是否表示具体类，即既不是接口也不是抽象类。
 	 */
 	default boolean isConcrete() {
 		return !(isInterface() || isAbstract());
@@ -68,6 +70,7 @@ public interface ClassMetadata {
 	 * Determine whether the underlying class is independent, i.e. whether
 	 * it is a top-level class or a nested class (static inner class) that
 	 * can be constructed independently of an enclosing class.
+	 * 确定基础类是否独立，即是否它是一个顶级类或嵌套类（静态内部类）可以独立于封闭类来构造。
 	 */
 	boolean isIndependent();
 
@@ -115,6 +118,7 @@ public interface ClassMetadata {
 	 * access, and private classes and interfaces declared by the class, but excludes
 	 * inherited classes and interfaces. An empty array is returned if no member classes
 	 * or interfaces exist.
+	 *
 	 * @since 3.1
 	 */
 	String[] getMemberClassNames();

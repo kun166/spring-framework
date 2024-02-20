@@ -76,6 +76,8 @@ class ConditionEvaluator {
 	 * <p>
 	 * {@link AnnotatedBeanDefinitionReader#doRegisterBean(java.lang.Class, java.lang.String, java.lang.Class[], java.util.function.Supplier, org.springframework.beans.factory.config.BeanDefinitionCustomizer[])}
 	 * 中被调用
+	 * {@link ClassPathScanningCandidateComponentProvider#isConditionMatch(org.springframework.core.type.classreading.MetadataReader)}
+	 * 中有调用
 	 * </p>
 	 *
 	 * @param metadata the meta data {@link StandardAnnotationMetadata}

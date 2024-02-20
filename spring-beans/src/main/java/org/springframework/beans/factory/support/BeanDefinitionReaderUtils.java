@@ -161,6 +161,8 @@ public abstract class BeanDefinitionReaderUtils {
 	 * Register the given bean definition with the given bean factory.
 	 * {@link DefaultBeanDefinitionDocumentReader#processBeanDefinition(org.w3c.dom.Element, org.springframework.beans.factory.xml.BeanDefinitionParserDelegate)}
 	 * 中被调用
+	 * {@link org.springframework.context.annotation.ClassPathBeanDefinitionScanner#registerBeanDefinition(org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.support.BeanDefinitionRegistry)}
+	 * 中调用
 	 *
 	 * @param definitionHolder the bean definition including name and aliases
 	 * @param registry         the bean factory to register with
