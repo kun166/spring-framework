@@ -1770,6 +1770,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * <p>
 	 * {@link AbstractBeanFactory#predictBeanType(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class[])}
 	 * 中调用
+	 * {@link AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param mbd          the merged bean definition to determine the class for
