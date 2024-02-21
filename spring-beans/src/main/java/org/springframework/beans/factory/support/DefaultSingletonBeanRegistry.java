@@ -79,6 +79,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Cache of singleton objects: bean name to bean instance.
+	 * 单例对象集合，也常被成为单例池；
 	 * 在{@link DefaultSingletonBeanRegistry#addSingleton(java.lang.String, java.lang.Object)}
 	 * 方法中添加元素
 	 */
@@ -86,6 +87,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Cache of singleton factories: bean name to ObjectFactory.
+	 * 单例对象工厂集合，可以通过工厂对象的 getObject 方法获取工厂所对应的 Bean 单例对象；
 	 * {@link DefaultSingletonBeanRegistry#addSingletonFactory(java.lang.String, org.springframework.beans.factory.ObjectFactory)}
 	 * 方法中添加值
 	 */
@@ -93,6 +95,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Cache of early singleton objects: bean name to bean instance.
+	 * 早期单例对象集合，即已经完成实例化但还未完成初始化（即未完成属性注入，属于 Bean 的中间状态），主要用来解决 Bean 的循环依赖问题；
 	 * {@link DefaultSingletonBeanRegistry#addSingletonFactory(java.lang.String, org.springframework.beans.factory.ObjectFactory)}
 	 * 中删除值
 	 */
@@ -100,6 +103,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Set of registered singletons, containing the bean names in registration order.
+	 * 已经注册的单例 Bean 对象的 BeanName 集合；
 	 * {@link DefaultSingletonBeanRegistry#addSingletonFactory(java.lang.String, org.springframework.beans.factory.ObjectFactory)}
 	 * 中添加值
 	 */
@@ -107,6 +111,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Names of beans that are currently in creation.
+	 * 正在进行创建的 Bean 的 BeanName 集合（此时 Bean 处于中间状态），主要用于解决 Bean 循环依赖的问题；
 	 * 在{@link DefaultSingletonBeanRegistry#beforeSingletonCreation(java.lang.String)}中添加值
 	 * 在{@link DefaultSingletonBeanRegistry#afterSingletonCreation(java.lang.String)}中删除值
 	 */
@@ -115,6 +120,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Names of beans currently excluded from in creation checks.
+	 * 当前在创建检查中排除的 Bean 的 BeanName 集合；
 	 */
 	private final Set<String> inCreationCheckExclusions =
 			Collections.newSetFromMap(new ConcurrentHashMap<>(16));
@@ -133,6 +139,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	/**
 	 * Disposable bean instances: bean name to disposable instance.
+	 * 需要被销毁的 Bean 实例列表；
 	 */
 	private final Map<String, DisposableBean> disposableBeans = new LinkedHashMap<>();
 
