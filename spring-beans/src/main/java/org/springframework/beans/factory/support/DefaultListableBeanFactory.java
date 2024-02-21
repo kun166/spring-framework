@@ -611,6 +611,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate#registerBeanPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, org.springframework.context.support.AbstractApplicationContext)}
 	 * 中被调用
+	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, java.util.List)}
+	 * 中被调用
 	 *
 	 * @param type                 the class or interface to match, or {@code null} for all bean names
 	 * @param includeNonSingletons whether to include prototype or scoped beans too

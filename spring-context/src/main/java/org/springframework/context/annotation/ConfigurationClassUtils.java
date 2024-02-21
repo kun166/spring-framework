@@ -55,6 +55,9 @@ abstract class ConfigurationClassUtils {
 
 	public static final String CONFIGURATION_CLASS_LITE = "lite";
 
+	/**
+	 * org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass
+	 */
 	public static final String CONFIGURATION_CLASS_ATTRIBUTE =
 			Conventions.getQualifiedAttributeName(ConfigurationClassPostProcessor.class, "configurationClass");
 
@@ -78,6 +81,8 @@ abstract class ConfigurationClassUtils {
 	 * Check whether the given bean definition is a candidate for a configuration class
 	 * (or a nested component class declared within a configuration/component class,
 	 * to be auto-registered as well), and mark it accordingly.
+	 * {@link ConfigurationClassPostProcessor#processConfigBeanDefinitions(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
+	 * 中调用
 	 *
 	 * @param beanDef               the bean definition to check
 	 * @param metadataReaderFactory the current factory in use by the caller

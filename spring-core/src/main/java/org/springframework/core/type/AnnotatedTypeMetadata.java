@@ -79,6 +79,8 @@ public interface AnnotatedTypeMetadata {
 	 * <p>
 	 * {@link org.springframework.context.annotation.AnnotationConfigUtils#attributesFor(org.springframework.core.type.AnnotatedTypeMetadata, java.lang.String)}
 	 * 中被调用
+	 * {@link org.springframework.context.annotation.ConfigurationClassUtils#checkConfigurationClassCandidate(org.springframework.beans.factory.config.BeanDefinition, org.springframework.core.type.classreading.MetadataReaderFactory)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param annotationName 查询的注解的全类名

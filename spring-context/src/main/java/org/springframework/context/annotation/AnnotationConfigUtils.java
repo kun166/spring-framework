@@ -158,6 +158,8 @@ public abstract class AnnotationConfigUtils {
 	 * <p>
 	 * {@link AnnotationConfigUtils#registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
 	 * 中调用
+	 * {@link ComponentScanBeanDefinitionParser#registerComponents(org.springframework.beans.factory.xml.XmlReaderContext, java.util.Set, org.w3c.dom.Element)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param registry {@link AnnotationConfigApplicationContext}

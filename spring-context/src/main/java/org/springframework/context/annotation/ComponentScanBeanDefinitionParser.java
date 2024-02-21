@@ -212,7 +212,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	 */
 	protected void registerComponents(
 			XmlReaderContext readerContext, Set<BeanDefinitionHolder> beanDefinitions, Element element) {
-
+		//  null
 		Object source = readerContext.extractSource(element);
 		// Composite /ˈkɒmpəzɪt/ 合成的
 		CompositeComponentDefinition compositeDef = new CompositeComponentDefinition(element.getTagName(), source);
@@ -227,10 +227,10 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 			annotationConfig = Boolean.parseBoolean(element.getAttribute(ANNOTATION_CONFIG_ATTRIBUTE));
 		}
 		if (annotationConfig) {
+			/**
+			 * 这个代码很重要
+			 */
 			Set<BeanDefinitionHolder> processorDefinitions =
-					/**
-					 * 这个代码很重要
-					 */
 					AnnotationConfigUtils.registerAnnotationConfigProcessors(readerContext.getRegistry(), source);
 			for (BeanDefinitionHolder processorDefinition : processorDefinitions) {
 				compositeDef.addNestedComponent(new BeanComponentDefinition(processorDefinition));
