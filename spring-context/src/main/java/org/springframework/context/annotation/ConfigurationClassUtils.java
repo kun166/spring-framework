@@ -114,6 +114,9 @@ abstract class ConfigurationClassUtils {
 			metadata = AnnotationMetadata.introspect(beanClass);
 		} else {
 			try {
+				/**
+				 * 这一步来看，xml配置的bean会非常的耗费性能
+				 */
 				MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(className);
 				metadata = metadataReader.getAnnotationMetadata();
 			} catch (IOException ex) {
@@ -129,6 +132,13 @@ abstract class ConfigurationClassUtils {
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		} else if (config != null || isConfigurationCandidate(metadata)) {
+			/**
+			 * 注意，这个判断是||，也就是说没有{@link Configuration}注解也可能命中……
+			 * {@link Component}
+			 * {@link ComponentScan}
+			 * {@link Import}
+			 * {@link ImportResource}
+			 */
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		} else {
 			return false;
@@ -145,10 +155,16 @@ abstract class ConfigurationClassUtils {
 
 	/**
 	 * 检测给的metadata是否是configuration class候选者
+	 * 符合候选者的条件
+	 * 1,不是接口
+	 * 2,有{@link Component},{@link ComponentScan},{@link Import},{@link ImportResource}注解之中的一个
+	 * 3,或者方法上有{@link Bean}注解
 	 * Check the given metadata for a configuration class candidate
 	 * (or nested component class declared within a configuration/component class).
 	 * <p>
 	 * {@link ConditionEvaluator#shouldSkip(org.springframework.core.type.AnnotatedTypeMetadata, org.springframework.context.annotation.ConfigurationCondition.ConfigurationPhase)}
+	 * 中调用
+	 * {@link ConfigurationClassUtils#checkConfigurationClassCandidate(org.springframework.beans.factory.config.BeanDefinition, org.springframework.core.type.classreading.MetadataReaderFactory)}
 	 * 中调用
 	 * </p>
 	 *

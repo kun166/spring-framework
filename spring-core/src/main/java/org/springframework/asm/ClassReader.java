@@ -27,6 +27,7 @@
 // THE POSSIBILITY OF SUCH DAMAGE.
 package org.springframework.asm;
 
+import org.springframework.core.type.classreading.MergedAnnotationReadingVisitor;
 import org.springframework.core.type.classreading.SimpleAnnotationMetadata;
 import org.springframework.core.type.classreading.SimpleAnnotationMetadataReadingVisitor;
 import org.springframework.core.type.classreading.SimpleMetadataReader;
@@ -714,6 +715,7 @@ public class ClassReader {
 						readElementValues(
 								/**
 								 * 涉及注解的地方,需要看下
+								 * 返回一个{@link MergedAnnotationReadingVisitor}
 								 */
 								classVisitor.visitAnnotation(annotationDescriptor, /* visible = */ true),
 								currentAnnotationOffset,
@@ -3080,6 +3082,7 @@ public class ClassReader {
 	 * annotation's 'element_value'.
 	 *
 	 * @param annotationVisitor the visitor that must visit the values.
+	 *                          {@link MergedAnnotationReadingVisitor}
 	 * @param annotationOffset  the start offset of an 'annotation' structure (excluding its type_index
 	 *                          field) or of an 'array_value' structure.
 	 * @param named             if the annotation values are named or not. This should be true to parse the values

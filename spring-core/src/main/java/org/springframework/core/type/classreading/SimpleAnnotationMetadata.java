@@ -60,9 +60,22 @@ final class SimpleAnnotationMetadata implements AnnotationMetadata {
 	private Set<String> annotationTypes;
 
 
+	/**
+	 * {@link SimpleAnnotationMetadataReadingVisitor#visitEnd()}中调用
+	 *
+	 * @param className
+	 * @param access
+	 * @param enclosingClassName
+	 * @param superClassName
+	 * @param independentInnerClass
+	 * @param interfaceNames
+	 * @param memberClassNames
+	 * @param annotatedMethods
+	 * @param annotations
+	 */
 	SimpleAnnotationMetadata(String className, int access, @Nullable String enclosingClassName,
-			@Nullable String superClassName, boolean independentInnerClass, String[] interfaceNames,
-			String[] memberClassNames, MethodMetadata[] annotatedMethods, MergedAnnotations annotations) {
+							 @Nullable String superClassName, boolean independentInnerClass, String[] interfaceNames,
+							 String[] memberClassNames, MethodMetadata[] annotatedMethods, MergedAnnotations annotations) {
 
 		this.className = className;
 		this.access = access;

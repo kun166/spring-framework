@@ -78,6 +78,8 @@ class ConditionEvaluator {
 	 * 中被调用
 	 * {@link ClassPathScanningCandidateComponentProvider#isConditionMatch(org.springframework.core.type.classreading.MetadataReader)}
 	 * 中有调用
+	 * 还有{@link ConfigurationClassBeanDefinitionReader}和{@link ConfigurationClassParser},{@link ConfigurationClassPostProcessor}
+	 * 会调用，等用到的时候补上
 	 * </p>
 	 *
 	 * @param metadata the meta data {@link StandardAnnotationMetadata}
@@ -92,6 +94,7 @@ class ConditionEvaluator {
 	 * <p>
 	 * {@link ConditionEvaluator#shouldSkip(org.springframework.core.type.AnnotatedTypeMetadata)}
 	 * 中被调用
+	 * {@link ConfigurationClassParser#processConfigurationClass(org.springframework.context.annotation.ConfigurationClass, java.util.function.Predicate)}
 	 * </p>
 	 *
 	 * @param metadata the meta data {@link StandardAnnotationMetadata}
@@ -111,15 +114,20 @@ class ConditionEvaluator {
 			if (metadata instanceof AnnotationMetadata &&
 					ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) {
 				/**
-				 * 有{@link Configuration}注解,或者方法有{@link Bean}注解
+				 * 符合候选者的条件
+				 * 1,不是接口
+				 * 2,有{@link Component},{@link ComponentScan},{@link Import},{@link ImportResource}注解之中的一个
+				 * 3,或者方法上有{@link Bean}注解
 				 */
 				return shouldSkip(metadata, ConfigurationPhase.PARSE_CONFIGURATION);
 			}
+			// 说明不是注解方式的bean definition。也就不需要关注Conditional注解？
 			return shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);
 		}
 
 		List<Condition> conditions = new ArrayList<>();
 		for (String[] conditionClasses : getConditionClasses(metadata)) {
+
 			for (String conditionClass : conditionClasses) {
 				Condition condition = getCondition(conditionClass, this.context.getClassLoader());
 				conditions.add(condition);
@@ -144,12 +152,17 @@ class ConditionEvaluator {
 	/**
 	 * {@link ConditionEvaluator#shouldSkip(org.springframework.core.type.AnnotatedTypeMetadata, org.springframework.context.annotation.ConfigurationCondition.ConfigurationPhase)}
 	 * 中调用
+	 * <p>
+	 * 返回注解上的{@link Condition}数组集合集合
 	 *
 	 * @param metadata
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
 	private List<String[]> getConditionClasses(AnnotatedTypeMetadata metadata) {
+		/**
+		 * 关于{@link Conditional},可以参考:https://www.jb51.net/program/30615648i.htm
+		 */
 		MultiValueMap<String, Object> attributes = metadata.getAllAnnotationAttributes(Conditional.class.getName(), true);
 		Object values = (attributes != null ? attributes.get("value") : null);
 		return (List<String[]>) (values != null ? values : Collections.emptyList());
