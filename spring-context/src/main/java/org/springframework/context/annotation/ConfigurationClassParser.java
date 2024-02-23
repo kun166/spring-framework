@@ -60,10 +60,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.env.CompositePropertySource;
-import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.env.*;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -77,9 +74,10 @@ import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
+import org.springframework.core.type.classreading.SimpleMetadataReader;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.lang.Nullable;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.*;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -113,6 +111,14 @@ class ConfigurationClassParser {
 
 	private static final PropertySourceFactory DEFAULT_PROPERTY_SOURCE_FACTORY = new DefaultPropertySourceFactory();
 
+	/**
+	 * 以"org.springframework.stereotype."开头的注解:
+	 * {@link Component}
+	 * {@link Controller}
+	 * {@link Indexed}
+	 * {@link Repository}
+	 * {@link Service}
+	 */
 	private static final Predicate<String> DEFAULT_EXCLUSION_FILTER = className ->
 			(className.startsWith("java.lang.annotation.") || className.startsWith("org.springframework.stereotype."));
 
@@ -296,6 +302,11 @@ class ConfigurationClassParser {
 	 * Apply processing and build a complete {@link ConfigurationClass} by reading the
 	 * annotations, members and methods from the source class. This method can be called
 	 * multiple times as relevant sources are discovered.
+	 * 通过读取注释、成员和方法。可以调用此方法多次发现相关来源。
+	 * <p>
+	 * {@link ConfigurationClassParser#processConfigurationClass(org.springframework.context.annotation.ConfigurationClass, java.util.function.Predicate)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param configClass the configuration class being build
 	 * @param sourceClass a source class
@@ -308,10 +319,23 @@ class ConfigurationClassParser {
 
 		if (configClass.getMetadata().isAnnotated(Component.class.getName())) {
 			// Recursively process any member (nested) classes first
+			/**
+			 * 如果命中了{@link Component}
+			 * 这个方法处理内部类，如果没有内部类，就不处理了
+			 * 如果有内部类，然后递归再走到这个方法
+			 */
 			processMemberClasses(configClass, sourceClass, filter);
 		}
 
 		// Process any @PropertySource annotations
+		/**
+		 * 注意下面这两个注解的不同点:
+		 * org.springframework.context.annotation.PropertySources
+		 * org.springframework.context.annotation.PropertySource
+		 * 参考:https://blog.csdn.net/qq_40837310/article/details/106587158
+		 * 如果有{@link org.springframework.context.annotation.PropertySource}注解,
+		 * 则转成{@link PropertySource}(注意不是注解了，已经解析成具体的类了)加入到{@link ConfigurationClassParser#environment}中
+		 */
 		for (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), PropertySources.class,
 				org.springframework.context.annotation.PropertySource.class)) {
@@ -324,6 +348,9 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @ComponentScan annotations
+		/**
+		 * 处理{@link ComponentScan}
+		 */
 		Set<AnnotationAttributes> componentScans = AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), ComponentScans.class, ComponentScan.class);
 		if (!componentScans.isEmpty() &&
@@ -386,12 +413,20 @@ class ConfigurationClassParser {
 
 	/**
 	 * Register member (nested) classes that happen to be configuration classes themselves.
+	 * <p>
+	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+	 * 中调用
+	 * </p>
 	 */
 	private void processMemberClasses(ConfigurationClass configClass, SourceClass sourceClass,
 									  Predicate<String> filter) throws IOException {
 
+		/**
+		 * 返回sourceClass表示的Class，拥有的内部类
+		 */
 		Collection<SourceClass> memberClasses = sourceClass.getMemberClasses();
 		if (!memberClasses.isEmpty()) {
+			// 如果没有内部类，直接返回了
 			List<SourceClass> candidates = new ArrayList<>(memberClasses.size());
 			for (SourceClass memberClass : memberClasses) {
 				if (ConfigurationClassUtils.isConfigurationCandidate(memberClass.getMetadata()) &&
@@ -401,9 +436,11 @@ class ConfigurationClassParser {
 			}
 			OrderComparator.sort(candidates);
 			for (SourceClass candidate : candidates) {
+				// 遍历符合条件的
 				if (this.importStack.contains(configClass)) {
 					this.problemReporter.error(new CircularImportProblem(configClass, this.importStack));
 				} else {
+					// 双端队列，防止循环
 					this.importStack.push(configClass);
 					try {
 						processConfigurationClass(candidate.asConfigClass(configClass), filter);
@@ -474,19 +511,28 @@ class ConfigurationClassParser {
 
 	/**
 	 * Process the given <code>@PropertySource</code> annotation metadata.
+	 * 处理{@link org.springframework.context.annotation.PropertySource}注解
+	 * 将该{@link PropertySource}(注意不是注解了，已经解析成具体的类了)加入到{@link ConfigurationClassParser#environment}中
+	 * <p>
+	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param propertySource metadata for the <code>@PropertySource</code> annotation found
 	 * @throws IOException if loading a property source failed
 	 */
 	private void processPropertySource(AnnotationAttributes propertySource) throws IOException {
+		// 注解的name
 		String name = propertySource.getString("name");
 		if (!StringUtils.hasLength(name)) {
 			name = null;
 		}
+		// 注解的编码
 		String encoding = propertySource.getString("encoding");
 		if (!StringUtils.hasLength(encoding)) {
 			encoding = null;
 		}
+		// 注解的value
 		String[] locations = propertySource.getStringArray("value");
 		Assert.isTrue(locations.length > 0, "At least one @PropertySource(value) location is required");
 		boolean ignoreResourceNotFound = propertySource.getBoolean("ignoreResourceNotFound");
@@ -496,9 +542,15 @@ class ConfigurationClassParser {
 				DEFAULT_PROPERTY_SOURCE_FACTORY : BeanUtils.instantiateClass(factoryClass));
 
 		for (String location : locations) {
+			// 这是配置文件路径
 			try {
+				// 去掉占位符，获取真正的配置文件路径
 				String resolvedLocation = this.environment.resolveRequiredPlaceholders(location);
+				// 获取路径资源
 				Resource resource = this.resourceLoader.getResource(resolvedLocation);
+				/**
+				 * 将该{@link PropertySource}(注意不是注解了，已经解析成具体的类了)加入到{@link ConfigurationClassParser#environment}中
+				 */
 				addPropertySource(factory.createPropertySource(name, new EncodedResource(resource, encoding)));
 			} catch (IllegalArgumentException | FileNotFoundException | UnknownHostException | SocketException ex) {
 				// Placeholders not resolvable or resource not found when trying to open it
@@ -513,22 +565,35 @@ class ConfigurationClassParser {
 		}
 	}
 
+	/**
+	 * 把传入的propertySource添加到{@link ConfigurationClassParser#environment}的{@link AbstractEnvironment#propertySources}里。
+	 * 根据{@link PropertySource#name},如果是否有重复添加，封装成{@link ResourcePropertySource}或者{@link CompositePropertySource}
+	 * <p>
+	 * {@link ConfigurationClassParser#processPropertySource(org.springframework.core.annotation.AnnotationAttributes)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param propertySource
+	 */
 	private void addPropertySource(PropertySource<?> propertySource) {
 		String name = propertySource.getName();
 		MutablePropertySources propertySources = ((ConfigurableEnvironment) this.environment).getPropertySources();
 
 		if (this.propertySourceNames.contains(name)) {
+			// 已经添加过了
 			// We've already added a version, we need to extend it
 			PropertySource<?> existing = propertySources.get(name);
 			if (existing != null) {
 				PropertySource<?> newSource = (propertySource instanceof ResourcePropertySource ?
 						((ResourcePropertySource) propertySource).withResourceName() : propertySource);
 				if (existing instanceof CompositePropertySource) {
+					// 如果是合成的，也就是多个了，直接添加
 					((CompositePropertySource) existing).addFirstPropertySource(newSource);
 				} else {
 					if (existing instanceof ResourcePropertySource) {
 						existing = ((ResourcePropertySource) existing).withResourceName();
 					}
+					// 还是一个，则转成合成的，把两个都添加上去
 					CompositePropertySource composite = new CompositePropertySource(name);
 					composite.addPropertySource(newSource);
 					composite.addPropertySource(existing);
@@ -687,6 +752,10 @@ class ConfigurationClassParser {
 
 	/**
 	 * Factory method to obtain a {@link SourceClass} from a {@link Class}.
+	 * <p>
+	 * {@link ConfigurationClassParser#asSourceClass(org.springframework.context.annotation.ConfigurationClass, java.util.function.Predicate)}
+	 * 中调用
+	 * </p>
 	 */
 	SourceClass asSourceClass(@Nullable Class<?> classType, Predicate<String> filter) throws IOException {
 		if (classType == null || filter.test(classType.getName())) {
@@ -718,10 +787,18 @@ class ConfigurationClassParser {
 
 	/**
 	 * Factory method to obtain a {@link SourceClass} from a class name.
+	 * 通过传入的className构建一个{@link SourceClass}
+	 * 如果是以"java"开头的系统类,则{@link SourceClass#metadata}通过{@link AnnotationMetadata#introspect(java.lang.Class)}创建
+	 * 否则{@link SourceClass#metadata}通过ASM创建
 	 * <p>
 	 * {@link ConfigurationClassParser#asSourceClass(org.springframework.context.annotation.ConfigurationClass, java.util.function.Predicate)}
 	 * 中调用
 	 * </p>
+	 *
+	 * @param className 类名
+	 * @param filter    {@link ConfigurationClassParser#DEFAULT_EXCLUSION_FILTER}
+	 * @return
+	 * @throws IOException
 	 */
 	@SuppressWarnings("deprecation")
 	SourceClass asSourceClass(@Nullable String className, Predicate<String> filter) throws IOException {
@@ -731,11 +808,13 @@ class ConfigurationClassParser {
 		if (className.startsWith("java")) {
 			// Never use ASM for core java types
 			try {
+				// 如果是以java开头的，说明是系统的类
 				return new SourceClass(ClassUtils.forName(className, this.resourceLoader.getClassLoader()));
 			} catch (ClassNotFoundException ex) {
 				throw new org.springframework.core.NestedIOException("Failed to load class [" + className + "]", ex);
 			}
 		}
+		// asm解析
 		return new SourceClass(this.metadataReaderFactory.getMetadataReader(className));
 	}
 
@@ -1005,11 +1084,32 @@ class ConfigurationClassParser {
 			return new ConfigurationClass((MetadataReader) this.source, importedBy);
 		}
 
+		/**
+		 * 返回当前{@link SourceClass#source}定义的Class，
+		 * 包含的内部类。
+		 * 不包括自身。
+		 * <p>
+		 * {@link ConfigurationClassParser#processMemberClasses(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @return
+		 * @throws IOException
+		 */
 		public Collection<SourceClass> getMemberClasses() throws IOException {
 			Object sourceToProcess = this.source;
 			if (sourceToProcess instanceof Class) {
+				/**
+				 * 如果{@link SourceClass#source}是一个Class。
+				 * 强转成一个Class
+				 */
 				Class<?> sourceClass = (Class<?>) sourceToProcess;
 				try {
+					/**
+					 * getDeclaredClasses()方法用于返回反映对象定义的私有，受保护，公共和默认值的Class对象数组，但不包括子类或接口。
+					 * 这个方法不返回本身，也不返回自身定义{}之外的Class,哪怕在同一个文件里。
+					 * 注意:虽然在同一个文件里,如果class的定义在当前class的类定义{}之外，也不会返回
+					 */
 					Class<?>[] declaredClasses = sourceClass.getDeclaredClasses();
 					List<SourceClass> members = new ArrayList<>(declaredClasses.length);
 					for (Class<?> declaredClass : declaredClasses) {
@@ -1024,6 +1124,9 @@ class ConfigurationClassParser {
 			}
 
 			// ASM-based resolution - safe for non-resolvable classes as well
+			/**
+			 * 如果不是Class，那就是一个{@link MetadataReader}。确切的说是一个{@link SimpleMetadataReader}
+			 */
 			MetadataReader sourceReader = (MetadataReader) sourceToProcess;
 			String[] memberClassNames = sourceReader.getClassMetadata().getMemberClassNames();
 			List<SourceClass> members = new ArrayList<>(memberClassNames.length);

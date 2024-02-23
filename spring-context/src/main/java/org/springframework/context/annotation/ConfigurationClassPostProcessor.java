@@ -283,6 +283,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
 		// 定义候选者
 		List<BeanDefinitionHolder> configCandidates = new ArrayList<>();
+		// 遍历所有的BeanDefinition
 		String[] candidateNames = registry.getBeanDefinitionNames();
 
 		for (String beanName : candidateNames) {

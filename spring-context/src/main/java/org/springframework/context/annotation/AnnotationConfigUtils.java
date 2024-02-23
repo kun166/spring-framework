@@ -405,6 +405,15 @@ public abstract class AnnotationConfigUtils {
 		return AnnotationAttributes.fromMap(metadata.getAnnotationAttributes(annotationClassName));
 	}
 
+	/**
+	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+	 * 中调用
+	 *
+	 * @param metadata
+	 * @param containerClass
+	 * @param annotationClass
+	 * @return
+	 */
 	static Set<AnnotationAttributes> attributesForRepeatable(AnnotationMetadata metadata,
 															 Class<?> containerClass, Class<?> annotationClass) {
 
