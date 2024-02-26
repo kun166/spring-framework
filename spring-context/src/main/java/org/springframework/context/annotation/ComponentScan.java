@@ -49,8 +49,8 @@ import org.springframework.core.type.filter.TypeFilter;
  * @author Chris Beams
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 3.1
  * @see Configuration
+ * @since 3.1
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -82,6 +82,8 @@ public @interface ComponentScan {
 	 * to scan for annotated components. The package of each class specified will be scanned.
 	 * <p>Consider creating a special no-op marker class or interface in each package
 	 * that serves no purpose other than being referenced by this attribute.
+	 * basePackageClasses 用来指定某个类所在包及其子包下{包及其子包下}包及其子包下的所有组件。
+	 * https://blog.csdn.net/winterking3/article/details/114951306
 	 */
 	Class<?>[] basePackageClasses() default {};
 
@@ -93,6 +95,7 @@ public @interface ComponentScan {
 	 * use its inherited bean name generator, e.g. the default
 	 * {@link AnnotationBeanNameGenerator} or any custom instance supplied to the
 	 * application context at bootstrap time.
+	 *
 	 * @see AnnotationConfigApplicationContext#setBeanNameGenerator(BeanNameGenerator)
 	 * @see AnnotationBeanNameGenerator
 	 * @see FullyQualifiedAnnotationBeanNameGenerator
@@ -110,6 +113,7 @@ public @interface ComponentScan {
 	 * <p>The default is defer to the default behavior of the component scanner used to
 	 * execute the actual scan.
 	 * <p>Note that setting this attribute overrides any value set for {@link #scopeResolver}.
+	 *
 	 * @see ClassPathBeanDefinitionScanner#setScopedProxyMode(ScopedProxyMode)
 	 */
 	ScopedProxyMode scopedProxy() default ScopedProxyMode.DEFAULT;
@@ -134,6 +138,7 @@ public @interface ComponentScan {
 	 * <p>Note that these filters will be applied in addition to the default filters, if specified.
 	 * Any type under the specified base packages which matches a given filter will be included,
 	 * even if it does not match the default filters (i.e. is not annotated with {@code @Component}).
+	 *
 	 * @see #resourcePattern()
 	 * @see #useDefaultFilters()
 	 */
@@ -141,6 +146,7 @@ public @interface ComponentScan {
 
 	/**
 	 * Specifies which types are not eligible for component scanning.
+	 *
 	 * @see #resourcePattern
 	 */
 	Filter[] excludeFilters() default {};
@@ -148,6 +154,7 @@ public @interface ComponentScan {
 	/**
 	 * Specify whether scanned beans should be registered for lazy initialization.
 	 * <p>Default is {@code false}; switch this to {@code true} when desired.
+	 *
 	 * @since 4.1
 	 */
 	boolean lazyInit() default false;
@@ -164,6 +171,7 @@ public @interface ComponentScan {
 		/**
 		 * The type of filter to use.
 		 * <p>Default is {@link FilterType#ANNOTATION}.
+		 *
 		 * @see #classes
 		 * @see #pattern
 		 */
@@ -171,6 +179,7 @@ public @interface ComponentScan {
 
 		/**
 		 * Alias for {@link #classes}.
+		 *
 		 * @see #classes
 		 */
 		@AliasFor("classes")
@@ -202,9 +211,10 @@ public @interface ComponentScan {
 		 * </ul>
 		 * <p>Specifying zero classes is permitted but will have no effect on component
 		 * scanning.
-		 * @since 4.2
+		 *
 		 * @see #value
 		 * @see #type
+		 * @since 4.2
 		 */
 		@AliasFor("value")
 		Class<?>[] classes() default {};
@@ -216,6 +226,7 @@ public @interface ComponentScan {
 		 * this is an AspectJ type pattern expression. If {@link #type} is
 		 * set to {@link FilterType#REGEX REGEX}, this is a regex pattern
 		 * for the fully-qualified class names to match.
+		 *
 		 * @see #type
 		 * @see #classes
 		 */

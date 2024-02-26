@@ -40,9 +40,9 @@ import org.springframework.util.StringUtils;
  * @author Chris Beams
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 3.1
  * @see ClassPathBeanDefinitionScanner#scan(String...)
  * @see ComponentScanBeanDefinitionParser
+ * @since 3.1
  */
 class ComponentScanAnnotationParser {
 
@@ -55,8 +55,17 @@ class ComponentScanAnnotationParser {
 	private final BeanDefinitionRegistry registry;
 
 
+	/**
+	 * {@link ConfigurationClassParser#ConfigurationClassParser(org.springframework.core.type.classreading.MetadataReaderFactory, org.springframework.beans.factory.parsing.ProblemReporter, org.springframework.core.env.Environment, org.springframework.core.io.ResourceLoader, org.springframework.beans.factory.support.BeanNameGenerator, org.springframework.beans.factory.support.BeanDefinitionRegistry)}
+	 * 中被调用
+	 *
+	 * @param environment
+	 * @param resourceLoader
+	 * @param beanNameGenerator
+	 * @param registry
+	 */
 	public ComponentScanAnnotationParser(Environment environment, ResourceLoader resourceLoader,
-			BeanNameGenerator beanNameGenerator, BeanDefinitionRegistry registry) {
+										 BeanNameGenerator beanNameGenerator, BeanDefinitionRegistry registry) {
 
 		this.environment = environment;
 		this.resourceLoader = resourceLoader;
@@ -64,27 +73,44 @@ class ComponentScanAnnotationParser {
 		this.registry = registry;
 	}
 
-
+	/**
+	 * <p>
+	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param componentScan
+	 * @param declaringClass 标注{@link ComponentScan}的类
+	 * @return
+	 */
 	public Set<BeanDefinitionHolder> parse(AnnotationAttributes componentScan, String declaringClass) {
 		ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(this.registry,
 				componentScan.getBoolean("useDefaultFilters"), this.environment, this.resourceLoader);
 
+		/**
+		 * {@link ComponentScan}的{@link ComponentScan#nameGenerator()}默认就是{@link BeanNameGenerator}
+		 */
 		Class<? extends BeanNameGenerator> generatorClass = componentScan.getClass("nameGenerator");
 		boolean useInheritedGenerator = (BeanNameGenerator.class == generatorClass);
 		scanner.setBeanNameGenerator(useInheritedGenerator ? this.beanNameGenerator :
 				BeanUtils.instantiateClass(generatorClass));
 
+		/**
+		 * {@link ComponentScan#scopedProxy()}默认即是{@link ScopedProxyMode#DEFAULT}
+		 */
 		ScopedProxyMode scopedProxyMode = componentScan.getEnum("scopedProxy");
 		if (scopedProxyMode != ScopedProxyMode.DEFAULT) {
 			scanner.setScopedProxyMode(scopedProxyMode);
-		}
-		else {
+		} else {
 			Class<? extends ScopeMetadataResolver> resolverClass = componentScan.getClass("scopeResolver");
 			scanner.setScopeMetadataResolver(BeanUtils.instantiateClass(resolverClass));
 		}
 
 		scanner.setResourcePattern(componentScan.getString("resourcePattern"));
 
+		/**
+		 * 默认这两者应该都是null
+		 */
 		for (AnnotationAttributes includeFilterAttributes : componentScan.getAnnotationArray("includeFilters")) {
 			List<TypeFilter> typeFilters = TypeFilterUtils.createTypeFiltersFor(includeFilterAttributes, this.environment,
 					this.resourceLoader, this.registry);
@@ -94,7 +120,7 @@ class ComponentScanAnnotationParser {
 		}
 		for (AnnotationAttributes excludeFilterAttributes : componentScan.getAnnotationArray("excludeFilters")) {
 			List<TypeFilter> typeFilters = TypeFilterUtils.createTypeFiltersFor(excludeFilterAttributes, this.environment,
-				this.resourceLoader, this.registry);
+					this.resourceLoader, this.registry);
 			for (TypeFilter typeFilter : typeFilters) {
 				scanner.addExcludeFilter(typeFilter);
 			}
@@ -105,6 +131,9 @@ class ComponentScanAnnotationParser {
 			scanner.getBeanDefinitionDefaults().setLazyInit(true);
 		}
 
+		/**
+		 * 是一个set
+		 */
 		Set<String> basePackages = new LinkedHashSet<>();
 		String[] basePackagesArray = componentScan.getStringArray("basePackages");
 		for (String pkg : basePackagesArray) {
@@ -113,12 +142,19 @@ class ComponentScanAnnotationParser {
 			Collections.addAll(basePackages, tokenized);
 		}
 		for (Class<?> clazz : componentScan.getClassArray("basePackageClasses")) {
+			// 即是把这个clazz所在的包，也添加到basePackages里。添加到扫描里面
 			basePackages.add(ClassUtils.getPackageName(clazz));
 		}
 		if (basePackages.isEmpty()) {
+			/**
+			 * 如果没有配置{@link ComponentScan#value()},{@link ComponentScan#basePackages()},{@link ComponentScan#basePackageClasses()}
+			 * 即，没有配置扫描的包,则扫描该注解所在的类的包名
+			 */
 			basePackages.add(ClassUtils.getPackageName(declaringClass));
 		}
-
+		/**
+		 * 把{@link ComponentScan}标签所在的类排除，因为已经加载过了
+		 */
 		scanner.addExcludeFilter(new AbstractTypeHierarchyTraversingFilter(false, false) {
 			@Override
 			protected boolean matchClassName(String className) {

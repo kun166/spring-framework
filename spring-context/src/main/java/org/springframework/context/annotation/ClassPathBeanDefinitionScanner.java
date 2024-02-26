@@ -177,6 +177,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * 中调用
 	 * {@link ComponentScanBeanDefinitionParser#createScanner(org.springframework.beans.factory.xml.XmlReaderContext, boolean)}
 	 * 中调用
+	 * {@link ComponentScanAnnotationParser#parse(org.springframework.core.annotation.AnnotationAttributes, java.lang.String)}中调用
 	 * </p>
 	 *
 	 * @param registry          the {@code BeanFactory} to load bean definitions into, in the form
