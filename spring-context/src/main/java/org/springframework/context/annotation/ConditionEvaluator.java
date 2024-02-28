@@ -95,6 +95,9 @@ class ConditionEvaluator {
 	 * {@link ConditionEvaluator#shouldSkip(org.springframework.core.type.AnnotatedTypeMetadata)}
 	 * 中被调用
 	 * {@link ConfigurationClassParser#processConfigurationClass(org.springframework.context.annotation.ConfigurationClass, java.util.function.Predicate)}
+	 * 中调用
+	 * {@link ConfigurationClassBeanDefinitionReader.TrackedConditionEvaluator#shouldSkip(org.springframework.context.annotation.ConfigurationClass)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param metadata the meta data {@link StandardAnnotationMetadata}

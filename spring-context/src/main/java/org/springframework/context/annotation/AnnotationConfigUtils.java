@@ -316,6 +316,8 @@ public abstract class AnnotationConfigUtils {
 	/**
 	 * {@link AnnotationConfigUtils#processCommonDefinitionAnnotations(org.springframework.beans.factory.annotation.AnnotatedBeanDefinition)}
 	 * 中被调用
+	 * {@link ConfigurationClassBeanDefinitionReader#registerBeanDefinitionForImportedConfigurationClass(org.springframework.context.annotation.ConfigurationClass)}
+	 * 中调用
 	 * <p>
 	 * 根据传入的abd,解析{@link Lazy},{@link Primary},{@link DependsOn},{@link Role},{@link Description}
 	 * 注解,并设置属性
@@ -355,6 +357,8 @@ public abstract class AnnotationConfigUtils {
 
 	/**
 	 * {@link ClassPathBeanDefinitionScanner#doScan(java.lang.String...)}中调用
+	 * {@link ConfigurationClassBeanDefinitionReader#registerBeanDefinitionForImportedConfigurationClass(org.springframework.context.annotation.ConfigurationClass)}
+	 * 中调用
 	 *
 	 * @param metadata
 	 * @param definition

@@ -251,6 +251,12 @@ class ConfigurationClassParser {
 		}
 	}
 
+	/**
+	 * {@link ConfigurationClassPostProcessor#processConfigBeanDefinitions(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
+	 * 中调用
+	 *
+	 * @return
+	 */
 	public Set<ConfigurationClass> getConfigurationClasses() {
 		return this.configurationClasses.keySet();
 	}
@@ -420,6 +426,7 @@ class ConfigurationClassParser {
 		/**
 		 * 处理{@link Import}注解
 		 * 可以参考:https://zhuanlan.zhihu.com/p/618418058
+		 * 通过{@link Import}导入的BeanDefinition，也是一个新的ConfigurationClass
 		 */
 		processImports(configClass, sourceClass, getImports(sourceClass), filter, true);
 
@@ -427,6 +434,7 @@ class ConfigurationClassParser {
 		/**
 		 * 处理{@link ImportResource}
 		 * 可以参考:https://zhuanlan.zhihu.com/p/660928548
+		 * 添加到{@link ConfigurationClass#importedResources}供外层处理
 		 */
 		AnnotationAttributes importResource =
 				AnnotationConfigUtils.attributesFor(sourceClass.getMetadata(), ImportResource.class);
@@ -443,6 +451,8 @@ class ConfigurationClassParser {
 		// Process individual @Bean methods
 		/**
 		 * 处理{@link Bean}注解
+		 * 添加到{@link ConfigurationClass#beanMethods}上，供外层处理
+		 *
 		 */
 		Set<MethodMetadata> beanMethods = retrieveBeanMethodMetadata(sourceClass);
 		for (MethodMetadata methodMetadata : beanMethods) {
