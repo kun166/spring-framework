@@ -63,13 +63,31 @@ final class ConfigurationClass {
 	@Nullable
 	private String beanName;
 
+	/**
+	 * 标注{@link Import}注解的原始类
+	 * 如果该{@link ConfigurationClass} 不是通过{@link Import}加载的，则为空
+	 */
 	private final Set<ConfigurationClass> importedBy = new LinkedHashSet<>(1);
 
+	/**
+	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+	 * 中调用
+	 * {@link ConfigurationClassParser#processInterfaces(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass)}
+	 * 中调用
+	 */
 	private final Set<BeanMethod> beanMethods = new LinkedHashSet<>();
 
+	/**
+	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+	 * 中调用
+	 */
 	private final Map<String, Class<? extends BeanDefinitionReader>> importedResources =
 			new LinkedHashMap<>();
 
+	/**
+	 * {@link ConfigurationClassParser#processImports(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.Collection, java.util.function.Predicate, boolean)}
+	 * 中调用
+	 */
 	private final Map<ImportBeanDefinitionRegistrar, AnnotationMetadata> importBeanDefinitionRegistrars =
 			new LinkedHashMap<>();
 
@@ -123,6 +141,10 @@ final class ConfigurationClass {
 	 * Create a new {@link ConfigurationClass} representing a class that was imported
 	 * using the {@link Import} annotation or automatically processed as a nested
 	 * configuration class (if imported is {@code true}).
+	 * <p>
+	 * {@link ConfigurationClassParser.SourceClass#asConfigClass(org.springframework.context.annotation.ConfigurationClass)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param clazz      the underlying {@link Class} to represent
 	 * @param importedBy the configuration class importing this one (or {@code null})
@@ -207,6 +229,14 @@ final class ConfigurationClass {
 		return this.importedBy;
 	}
 
+	/**
+	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+	 * 中调用
+	 * {@link ConfigurationClassParser#processInterfaces(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass)}
+	 * 中调用
+	 *
+	 * @param method
+	 */
 	void addBeanMethod(BeanMethod method) {
 		this.beanMethods.add(method);
 	}
@@ -215,10 +245,24 @@ final class ConfigurationClass {
 		return this.beanMethods;
 	}
 
+	/**
+	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
+	 * 中调用
+	 *
+	 * @param importedResource
+	 * @param readerClass
+	 */
 	void addImportedResource(String importedResource, Class<? extends BeanDefinitionReader> readerClass) {
 		this.importedResources.put(importedResource, readerClass);
 	}
 
+	/**
+	 * {@link ConfigurationClassParser#processImports(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.Collection, java.util.function.Predicate, boolean)}
+	 * 中调用
+	 *
+	 * @param registrar
+	 * @param importingClassMetadata
+	 */
 	void addImportBeanDefinitionRegistrar(ImportBeanDefinitionRegistrar registrar, AnnotationMetadata importingClassMetadata) {
 		this.importBeanDefinitionRegistrars.put(registrar, importingClassMetadata);
 	}
@@ -244,12 +288,25 @@ final class ConfigurationClass {
 		}
 	}
 
+	/**
+	 * 重写了equals
+	 * 也就是说两个{@link ConfigurationClass}表示的className一样，即equals
+	 *
+	 * @param other
+	 * @return
+	 */
 	@Override
 	public boolean equals(@Nullable Object other) {
 		return (this == other || (other instanceof ConfigurationClass &&
 				getMetadata().getClassName().equals(((ConfigurationClass) other).getMetadata().getClassName())));
 	}
 
+	/**
+	 * 重写了hashCode,
+	 * 也就是说两个{@link ConfigurationClass}表示的className一样，即一样
+	 *
+	 * @return
+	 */
 	@Override
 	public int hashCode() {
 		return getMetadata().getClassName().hashCode();
