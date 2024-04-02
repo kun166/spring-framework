@@ -54,6 +54,7 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder;
 import org.springframework.beans.factory.config.DependencyDescriptor;
+import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.core.CollectionFactory;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.NamedThreadLocal;
@@ -129,14 +130,18 @@ class ConstructorResolver {
 	 *                     or {@code null} if none (-> use constructor argument values from bean definition)
 	 * @return a BeanWrapper for the new instance
 	 */
-	public BeanWrapper autowireConstructor(String beanName, RootBeanDefinition mbd,
-										   @Nullable Constructor<?>[] chosenCtors, @Nullable Object[] explicitArgs) {
+	public BeanWrapper autowireConstructor(String beanName,
+										   RootBeanDefinition mbd,
+										   @Nullable Constructor<?>[] chosenCtors,
+										   @Nullable Object[] explicitArgs) {
 
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
 
+		// 构造函数
 		Constructor<?> constructorToUse = null;
 		ArgumentsHolder argsHolderToUse = null;
+		// 构造函数传参？
 		Object[] argsToUse = null;
 
 		if (explicitArgs != null) {
@@ -164,6 +169,7 @@ class ConstructorResolver {
 			if (candidates == null) {
 				Class<?> beanClass = mbd.getBeanClass();
 				try {
+					// 前者返回所有构造函数,或者返回public的构造函数
 					candidates = (mbd.isNonPublicAccessAllowed() ?
 							beanClass.getDeclaredConstructors() : beanClass.getConstructors());
 				} catch (Throwable ex) {
@@ -295,8 +301,22 @@ class ConstructorResolver {
 		return bw;
 	}
 
-	private Object instantiate(
-			String beanName, RootBeanDefinition mbd, Constructor<?> constructorToUse, Object[] argsToUse) {
+	/**
+	 * <p>
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanName
+	 * @param mbd
+	 * @param constructorToUse
+	 * @param argsToUse
+	 * @return
+	 */
+	private Object instantiate(String beanName,
+							   RootBeanDefinition mbd,
+							   Constructor<?> constructorToUse,
+							   Object[] argsToUse) {
 
 		try {
 			InstantiationStrategy strategy = this.beanFactory.getInstantiationStrategy();
@@ -388,6 +408,8 @@ class ConstructorResolver {
 	 * 中调用
 	 * </p>
 	 * 这个方法挺复杂的，等有时间再看吧
+	 * <p>
+	 * {@link AbstractBeanDefinition#getFactoryMethodName()}不为null,走的这个分支
 	 *
 	 * @param beanName     the name of the bean
 	 * @param mbd          the merged bean definition for the bean
@@ -401,11 +423,24 @@ class ConstructorResolver {
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
 
+		/**
+		 * 方法反射需要传入的第一个参数
+		 */
 		Object factoryBean;
+		/**
+		 * factory-method两种实现方式
+		 * 1,通过静态方法(也就是factory-method配置的那个方法)返回一个对象作为bean
+		 * 2,先声明一个普通的bean(factory-bean配置,姑且叫FactoryBean吧，不同点是不需要实现接口，需要指定方法。),
+		 * 再指定一个方法(也就是factory-method配置的那个方法,一般就是普通方法了)返回一个对象作为bean
+		 */
 		Class<?> factoryClass;
+		// 是否是静态方法？
 		boolean isStatic;
 		/**
 		 * {@link AbstractBeanDefinition#getFactoryMethodName()}不为null，走到这个方法
+		 * {@link BeanDefinitionParserDelegate#parseBeanDefinitionAttributes(org.w3c.dom.Element, java.lang.String, org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.support.AbstractBeanDefinition)}
+		 * https://blog.csdn.net/Kaiser__/article/details/136532780
+		 * 这个factoryBeanName,定义的是FactoryBean的 bean name
 		 */
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
@@ -427,6 +462,7 @@ class ConstructorResolver {
 			isStatic = false;
 		} else {
 			// It's a static factory method on the bean class.
+			// 通过静态方法实现的
 			/**
 			 * 不是通过{@link FactoryBean}，而是通过自身静态方法创建bean
 			 */
@@ -445,16 +481,18 @@ class ConstructorResolver {
 		// 创建bean的method
 		Method factoryMethodToUse = null;
 		ArgumentsHolder argsHolderToUse = null;
+		// 参数?
 		Object[] argsToUse = null;
 
 		if (explicitArgs != null) {
 			// 如果传了参数
 			argsToUse = explicitArgs;
 		} else {
-			// 否则，就得就得自己构造参数
+			// 否则，就得自己构造参数
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
-				// 先取缓存中的 method
+				// 先取缓存中的 method。
+				// 如果缓存中有值了，说明不是第一次创建，这里的缓存值是通过下面的逻辑缓存的
 				factoryMethodToUse = (Method) mbd.resolvedConstructorOrFactoryMethod;
 				if (factoryMethodToUse != null && mbd.constructorArgumentsResolved) {
 					// Found a cached factory method...
@@ -476,9 +514,11 @@ class ConstructorResolver {
 			// Need to determine the factory method...
 			// Try all methods with this name to see if they match the given arguments.
 			// 第一次进来，缓存中未有缓存数据
+			// 上面的缓存是从这里缓存的
+			// 获取要使用的class,如果是CGLIB_CLASS,则获取父类
 			factoryClass = ClassUtils.getUserClass(factoryClass);
 
-			// 候选人
+			// 方法候选者
 			List<Method> candidates = null;
 			if (mbd.isFactoryMethodUnique) {
 				// FactoryMethod唯一？
@@ -490,39 +530,67 @@ class ConstructorResolver {
 				}
 			}
 			if (candidates == null) {
-				// 说明不唯一？
+				// 需要初始化
 				candidates = new ArrayList<>();
+				/**
+				 * 包括自身及父类的所有方法(公共的或者私有的)
+				 * 外加 实现的接口中，定义的static或者default方法
+				 */
 				Method[] rawCandidates = getCandidateMethods(factoryClass, mbd);
 				for (Method candidate : rawCandidates) {
 					if (Modifier.isStatic(candidate.getModifiers()) == isStatic && mbd.isFactoryMethod(candidate)) {
+						/**
+						 * 两个条件,
+						 * 1,方法的static标识要和需要的一致
+						 * 2,方法名称,要和需要的一致
+						 */
 						candidates.add(candidate);
 					}
 				}
 			}
 
 			if (candidates.size() == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
+				/**
+				 * 候选方法只有一个
+				 */
 				Method uniqueCandidate = candidates.get(0);
 				if (uniqueCandidate.getParameterCount() == 0) {
+					/**
+					 * 方法无参
+					 */
 					mbd.factoryMethodToIntrospect = uniqueCandidate;
 					synchronized (mbd.constructorArgumentLock) {
 						mbd.resolvedConstructorOrFactoryMethod = uniqueCandidate;
 						mbd.constructorArgumentsResolved = true;
 						mbd.resolvedConstructorArguments = EMPTY_ARGS;
 					}
+					/**
+					 * 注意这个地方:
+					 * 如果方法是静态的
+					 * {@link Method#invoke(java.lang.Object, java.lang.Object...)}
+					 * 则第一个参数，可以不传。即factoryBean可以是null
+					 */
 					bw.setBeanInstance(instantiate(beanName, mbd, factoryBean, uniqueCandidate, EMPTY_ARGS));
 					return bw;
 				}
 			}
 
 			if (candidates.size() > 1) {  // explicitly skip immutable singletonList
+				/**
+				 * 先根据{@link Modifier#isPublic(int)}再根据方法参数排序
+				 */
 				candidates.sort(AutowireUtils.EXECUTABLE_COMPARATOR);
 			}
 
 			ConstructorArgumentValues resolvedValues = null;
+			/**
+			 * 指定构造方法是{@link AutowireCapableBeanFactory#AUTOWIRE_CONSTRUCTOR}
+			 */
 			boolean autowiring = (mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Method> ambiguousFactoryMethods = null;
 
+			// 参数长度?
 			int minNrOfArgs;
 			if (explicitArgs != null) {
 				minNrOfArgs = explicitArgs.length;
@@ -658,6 +726,19 @@ class ConstructorResolver {
 		return bw;
 	}
 
+	/**
+	 * <p>
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanName
+	 * @param mbd
+	 * @param factoryBean
+	 * @param factoryMethod
+	 * @param args
+	 * @return
+	 */
 	private Object instantiate(String beanName, RootBeanDefinition mbd,
 							   @Nullable Object factoryBean, Method factoryMethod, Object[] args) {
 
@@ -681,6 +762,10 @@ class ConstructorResolver {
 	 * Resolve the constructor arguments for this bean into the resolvedValues object.
 	 * This may involve looking up other beans.
 	 * <p>This method is also used for handling invocations of static factory methods.
+	 * <p>
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 */
 	private int resolveConstructorArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 											ConstructorArgumentValues cargs, ConstructorArgumentValues resolvedValues) {

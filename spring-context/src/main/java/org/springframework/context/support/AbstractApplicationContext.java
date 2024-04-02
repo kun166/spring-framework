@@ -60,6 +60,7 @@ import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.context.PayloadApplicationEvent;
 import org.springframework.context.ResourceLoaderAware;
+import org.springframework.context.config.ContextNamespaceHandler;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.ContextClosedEvent;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -670,6 +671,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				 * 添加{@link BeanFactoryPostProcessor}
 				 * 有啥用？可以参考下自定义Scope: https://www.cnblogs.com/sxrtb/p/14477254.html
 				 * https://blog.csdn.net/kkkloveyou/article/details/87267135
+				 * <p>
+				 * 自定义标签<context:component-scan base-package="com"/>
+				 * {@link ContextNamespaceHandler}
+				 * </p>
+				 *
 				 */
 				invokeBeanFactoryPostProcessors(beanFactory);
 

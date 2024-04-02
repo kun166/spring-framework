@@ -97,6 +97,10 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/**
 	 * Package-visible field for caching a unique factory method candidate for introspection.
+	 * <p>
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中赋值
+	 * </p>
 	 */
 	@Nullable
 	volatile Method factoryMethodToIntrospect;
@@ -116,6 +120,10 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	 * Package-visible field for caching the resolved constructor or factory method.
 	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 	 * 里缓存
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+	 * 里缓存
+	 * 这其实是一个{@link Method}或者是一个{@link Constructor}
+	 * 从字面理解，应该是通过构造器或者是FactoryMethod
 	 */
 	@Nullable
 	Executable resolvedConstructorOrFactoryMethod;
@@ -124,12 +132,16 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	 * Package-visible field that marks the constructor arguments as resolved.
 	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 	 * 里缓存
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+	 * 里缓存
 	 */
 	boolean constructorArgumentsResolved = false;
 
 	/**
 	 * Package-visible field for caching fully resolved constructor arguments.
 	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 里缓存
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
 	 * 里缓存
 	 */
 	@Nullable

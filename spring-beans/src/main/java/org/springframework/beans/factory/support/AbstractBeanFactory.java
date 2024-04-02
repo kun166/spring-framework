@@ -47,18 +47,7 @@ import org.springframework.beans.PropertyEditorRegistrySupport;
 import org.springframework.beans.SimpleTypeConverter;
 import org.springframework.beans.TypeConverter;
 import org.springframework.beans.TypeMismatchException;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanCurrentlyInCreationException;
-import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryUtils;
-import org.springframework.beans.factory.BeanIsAbstractException;
-import org.springframework.beans.factory.BeanIsNotAFactoryException;
-import org.springframework.beans.factory.BeanNotOfRequiredTypeException;
-import org.springframework.beans.factory.CannotLoadBeanClassException;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.SmartFactoryBean;
+import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.BeanExpressionContext;
@@ -456,6 +445,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 							/**
+							 * 注意这个{@link ObjectFactory}
 							 * 调用的是{@link AbstractAutowireCapableBeanFactory#createBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 							 */
 							return createBean(beanName, mbd, args);
@@ -2212,26 +2202,34 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * 中调用
 	 * </p>
 	 *
-	 * @param beanInstance the shared bean instance
-	 * @param name         the name that may include factory dereference prefix
-	 * @param beanName     the canonical bean name
+	 * @param beanInstance the shared bean instance bean的实例
+	 * @param name         the name that may include factory dereference prefix 获取bean的时候传递的name
+	 * @param beanName     the canonical bean name 传递的name通过别名什么的最终找到的name
 	 * @param mbd          the merged bean definition
 	 * @return the object to expose for the bean
 	 */
-	protected Object getObjectForBeanInstance(
-			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
+	protected Object getObjectForBeanInstance(Object beanInstance,
+											  String name, String beanName,
+											  @Nullable RootBeanDefinition mbd) {
 
 		// Don't let calling code try to dereference the factory if the bean isn't a factory.
 		if (BeanFactoryUtils.isFactoryDereference(name)) {
+			/**
+			 * name不为空,且以{@link BeanFactory#FACTORY_BEAN_PREFIX}开头
+			 */
 			if (beanInstance instanceof NullBean) {
+				// 直接返回
 				return beanInstance;
 			}
 			if (!(beanInstance instanceof FactoryBean)) {
+				// 不是FactoryBean,报异常
 				throw new BeanIsNotAFactoryException(beanName, beanInstance.getClass());
 			}
 			if (mbd != null) {
+				// 如果mbd不为空，设置mbd的isFactoryBean为true
 				mbd.isFactoryBean = true;
 			}
+			// 返回
 			return beanInstance;
 		}
 
@@ -2239,6 +2237,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
 		if (!(beanInstance instanceof FactoryBean)) {
+			// 不是FactoryBean,直接返回
 			return beanInstance;
 		}
 
@@ -2246,6 +2245,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		if (mbd != null) {
 			mbd.isFactoryBean = true;
 		} else {
+			// mbd为空
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 		if (object == null) {
@@ -2486,12 +2486,24 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	static class BeanPostProcessorCache {
 
+		/**
+		 * 实现了{@link InstantiationAwareBeanPostProcessor}的{@link BeanPostProcessor}
+		 */
 		final List<InstantiationAwareBeanPostProcessor> instantiationAware = new ArrayList<>();
 
+		/**
+		 * 实现了{@link SmartInstantiationAwareBeanPostProcessor}的{@link BeanPostProcessor}
+		 */
 		final List<SmartInstantiationAwareBeanPostProcessor> smartInstantiationAware = new ArrayList<>();
 
+		/**
+		 * 实现了{@link DestructionAwareBeanPostProcessor}的{@link BeanPostProcessor}
+		 */
 		final List<DestructionAwareBeanPostProcessor> destructionAware = new ArrayList<>();
 
+		/**
+		 * 实现了{@link MergedBeanDefinitionPostProcessor}的{@link BeanPostProcessor}
+		 */
 		final List<MergedBeanDefinitionPostProcessor> mergedDefinition = new ArrayList<>();
 	}
 

@@ -551,6 +551,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * 中调用
 	 * </p>
 	 *
+	 * @param beanName the name of the bean bean的名字
+	 * @param mbd      the merged bean definition for the bean bean的merged BeanDefinition
+	 * @param args     explicit arguments to use for constructor or factory method invocation 构造参数
+	 * @return a new instance of the bean
+	 * @throws BeanCreationException if the bean could not be created
 	 * @see #doCreateBean
 	 */
 	@Override
@@ -1260,6 +1265,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	/**
 	 * Create a new instance for the specified bean, using an appropriate instantiation strategy:
 	 * factory method, constructor autowiring, or simple instantiation.
+	 * 使用适当的实例化策略为指定的bean创建一个新实例：
+	 * 工厂方法、构造函数自动布线或简单实例化。
 	 * <p>
 	 * {@link AbstractAutowireCapableBeanFactory#doCreateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 	 * 中调用
@@ -1290,8 +1297,17 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			return obtainFromSupplier(instanceSupplier, beanName);
 		}
 
+		/**
+		 * 下面三种生成方式:
+		 * 1,{@link AbstractAutowireCapableBeanFactory#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+		 * 2,构造器{@link AbstractAutowireCapableBeanFactory#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+		 * 3,{@link AbstractAutowireCapableBeanFactory#instantiateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
+		 */
+
 		if (mbd.getFactoryMethodName() != null) {
 			// 通过FactoryMethod生成的
+			// https://blog.csdn.net/bingguang1993/article/details/81436720
+			// https://zhuanlan.zhihu.com/p/315853360?utm_id=0
 			return instantiateUsingFactoryMethod(beanName, mbd, args);
 		}
 
@@ -1299,6 +1315,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		boolean resolved = false;
 		boolean autowireNecessary = false;
 		if (args == null) {
+			/**
+			 * 传递构造参数为null
+			 */
 			synchronized (mbd.constructorArgumentLock) {
 				if (mbd.resolvedConstructorOrFactoryMethod != null) {
 					resolved = true;
@@ -1315,13 +1334,24 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Candidate constructors for autowiring?
+		/**
+		 * {@link SmartInstantiationAwareBeanPostProcessor#determineCandidateConstructors(java.lang.Class, java.lang.String)}
+		 */
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
+		/**
+		 * 走构造器的四个条件
+		 * 1,不累述
+		 * 2,{@link AbstractBeanDefinition#autowireMode}为{@link AutowireCapableBeanFactory#AUTOWIRE_CONSTRUCTOR}
+		 * 3,{@link AbstractBeanDefinition#hasConstructorArgumentValues()}为true
+		 * 4,接口调用，传入的构造器参数不为空
+		 */
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
 			return autowireConstructor(beanName, mbd, ctors, args);
 		}
 
 		// Preferred constructors for default construction?
+		// 默认构造的首选构造函数
 		ctors = mbd.getPreferredConstructors();
 		if (ctors != null) {
 			return autowireConstructor(beanName, mbd, ctors, null);
@@ -1386,6 +1416,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	/**
 	 * Determine candidate constructors to use for the given bean, checking all registered
 	 * {@link SmartInstantiationAwareBeanPostProcessor SmartInstantiationAwareBeanPostProcessors}.
+	 *
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#createBeanInstance(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanClass the raw class of the bean
 	 * @param beanName  the name of the bean

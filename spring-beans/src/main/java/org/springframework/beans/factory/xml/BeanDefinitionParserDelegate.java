@@ -688,6 +688,7 @@ public class BeanDefinitionParserDelegate {
 
 		// factory-bean
 		// https://blog.csdn.net/u012410733/article/details/52196076
+		// https://blog.csdn.net/Kaiser__/article/details/136532780
 		if (ele.hasAttribute(FACTORY_BEAN_ATTRIBUTE)) {
 			bd.setFactoryBeanName(ele.getAttribute(FACTORY_BEAN_ATTRIBUTE));
 		}

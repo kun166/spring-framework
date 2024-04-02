@@ -198,6 +198,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	protected void addSingleton(String beanName, Object singletonObject) {
 		synchronized (this.singletonObjects) {
+			/**
+			 * 向{@link DefaultSingletonBeanRegistry#singletonObjects}缓存中添加数据
+			 * 从{@link DefaultSingletonBeanRegistry#singletonFactories}缓存中删除数据
+			 * 从{@link DefaultSingletonBeanRegistry#earlySingletonObjects}缓存中删除数据
+			 * 向{@link DefaultSingletonBeanRegistry#registeredSingletons}缓存中添加数据
+			 */
 			this.singletonObjects.put(beanName, singletonObject);
 			this.singletonFactories.remove(beanName);
 			this.earlySingletonObjects.remove(beanName);
@@ -332,6 +338,10 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				 * {@link DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation}
 				 * 如果在第一个缓存中存在该beanName，直接返回
 				 * 否则把beanName添加到第二个缓存中，添加失败，说明同时创建bean,抛异常
+				 * <p>
+				 *  这个需要注意一下，向{@link DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation}中添加数据了
+				 * </p>
+				 *
 				 */
 				beforeSingletonCreation(beanName);
 				boolean newSingleton = false;
@@ -361,9 +371,18 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					/**
+					 * 创建成功后，就从{@link DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation}缓存中删除记录了
+					 */
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
+					/**
+					 * 向{@link DefaultSingletonBeanRegistry#singletonObjects}缓存中添加数据
+					 * 从{@link DefaultSingletonBeanRegistry#singletonFactories}缓存中删除数据
+					 * 从{@link DefaultSingletonBeanRegistry#earlySingletonObjects}缓存中删除数据
+					 * 向{@link DefaultSingletonBeanRegistry#registeredSingletons}缓存中添加数据
+					 */
 					addSingleton(beanName, singletonObject);
 				}
 			}
@@ -484,6 +503,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	/**
 	 * Callback after singleton creation.
 	 * <p>The default implementation marks the singleton as not in creation anymore.
+	 * 单例创建后的回调。
+	 * 默认实现将singleton标记为不再处于创建中。
+	 * <p>
+	 * {@link DefaultSingletonBeanRegistry#getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory)}中调用
+	 * </p>
 	 *
 	 * @param beanName the name of the singleton that has been created
 	 * @see #isSingletonCurrentlyInCreation
@@ -537,6 +561,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * to be destroyed before the given bean is destroyed.
 	 * <p>
 	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
+	 * 中调用
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 	 * 中调用
 	 * </p>
 	 *

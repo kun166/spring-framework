@@ -112,6 +112,19 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 		throw new UnsupportedOperationException("Method Injection not supported in SimpleInstantiationStrategy");
 	}
 
+	/**
+	 * {@link ConstructorResolver#instantiate(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor, java.lang.Object[])}
+	 * 中调用
+	 *
+	 * @param bd       the bean definition
+	 * @param beanName the name of the bean when it is created in this context.
+	 *                 The name can be {@code null} if we are autowiring a bean which doesn't
+	 *                 belong to the factory.
+	 * @param owner    the owning BeanFactory
+	 * @param ctor     the constructor to use
+	 * @param args     the constructor arguments to apply
+	 * @return
+	 */
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner,
 							  final Constructor<?> ctor, Object... args) {
@@ -142,6 +155,23 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 		throw new UnsupportedOperationException("Method Injection not supported in SimpleInstantiationStrategy");
 	}
 
+	/**
+	 * <p>
+	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param bd            the bean definition
+	 * @param beanName      the name of the bean when it is created in this context.
+	 *                      The name can be {@code null} if we are autowiring a bean which doesn't
+	 *                      belong to the factory.
+	 * @param owner         the owning BeanFactory
+	 * @param factoryBean   the factory bean instance to call the factory method on,
+	 *                      or {@code null} in case of a static factory method
+	 * @param factoryMethod the factory method to use
+	 * @param args          the factory method arguments to apply
+	 * @return
+	 */
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner,
 							  @Nullable Object factoryBean, final Method factoryMethod, Object... args) {
@@ -159,6 +189,9 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 			Method priorInvokedFactoryMethod = currentlyInvokedFactoryMethod.get();
 			try {
 				currentlyInvokedFactoryMethod.set(factoryMethod);
+				/**
+				 * 注意这个地方，如果方法是静态的，第一个参数可以不传
+				 */
 				Object result = factoryMethod.invoke(factoryBean, args);
 				if (result == null) {
 					result = new NullBean();
