@@ -1058,6 +1058,9 @@ public class ResolvableType implements Serializable {
 	 * <p>
 	 * {@link org.springframework.beans.factory.support.AbstractBeanFactory#isTypeMatch(java.lang.String, java.lang.Class)}
 	 * 中调用
+	 * <p>
+	 * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory#resolveNamedBean(java.lang.Class)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param clazz the class to introspect ({@code null} is semantically

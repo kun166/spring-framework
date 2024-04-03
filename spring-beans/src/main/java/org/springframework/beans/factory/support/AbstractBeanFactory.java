@@ -190,6 +190,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * {@link org.springframework.context.support.ApplicationListenerDetector}
 	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate.BeanPostProcessorChecker#BeanPostProcessorChecker(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, int)}
 	 * {@link org.springframework.context.support.ApplicationListenerDetector}
+	 * <p>
+	 * 在{@link AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsAfterInitialization(java.lang.Object, java.lang.String)}
+	 * 中被执行
+	 * </p>
 	 */
 	private final List<BeanPostProcessor> beanPostProcessors = new BeanPostProcessorCacheAwareList();
 
@@ -261,6 +265,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * {@link org.springframework.context.support.AbstractApplicationContext#getBean(java.lang.String)}中调用
+	 * <p>
+	 * BeanDefinition存放在{@link DefaultListableBeanFactory#beanDefinitionMap}中了
+	 * bean实例最终放在了{@link DefaultSingletonBeanRegistry#singletonObjects}中了
+	 * 创建的过程中放到了{@link DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation}中了
 	 *
 	 * @param name the name of the bean to retrieve
 	 * @return
@@ -364,6 +372,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				 * 我们肯定进入了一个循环引用
 				 * {@link AbstractBeanFactory#prototypesCurrentlyInCreation}中有值
 				 * 说明prototype的bean，进入了循环依赖？继续往下看吧
+				 *
+				 * 这个校验的是 prototype 的bean.
+				 * 这个值是在{@link AbstractBeanFactory#beforePrototypeCreation(java.lang.String)}中赋值的
+				 * 也就是说,对于prototype的bean,同一个线程中不能调用两次接口
 				 */
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
@@ -1520,6 +1532,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * <p>To be called for BeanWrappers that will create and populate bean
 	 * instances, and for SimpleTypeConverter used for constructor argument
 	 * and factory method type conversion.
+	 * <p>
+	 * {@link AbstractBeanFactory#initBeanWrapper(org.springframework.beans.BeanWrapper)}中调用
+	 * </p>
 	 *
 	 * @param registry the PropertyEditorRegistry to initialize
 	 */
@@ -2272,7 +2287,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @return the object to expose for the bean
 	 */
 	protected Object getObjectForBeanInstance(Object beanInstance,
-											  String name, String beanName,
+											  String name,
+											  String beanName,
 											  @Nullable RootBeanDefinition mbd) {
 
 		// Don't let calling code try to dereference the factory if the bean isn't a factory.
@@ -2292,32 +2308,58 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// 如果mbd不为空，设置mbd的isFactoryBean为true
 				mbd.isFactoryBean = true;
 			}
-			// 返回
+			/**
+			 * 如果name是以&开头,返回的是个{@link FactoryBean}实例
+			 */
 			return beanInstance;
 		}
 
 		// Now we have the bean instance, which may be a normal bean or a FactoryBean.
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
+		//现在我们有了bean实例，它可能是一个普通的bean或FactoryBean。
+		//如果它是FactoryBean，我们使用它来创建一个bean实例，除非
+		//调用者实际上想要一个对工厂的引用。
+		/**
+		 * name为空,或者name不以&开头,需要返回bean对象，而不是{@link FactoryBean}实例
+		 */
 		if (!(beanInstance instanceof FactoryBean)) {
-			// 不是FactoryBean,直接返回
+			/**
+			 * bean本身就不是一个{@link FactoryBean}实例,直接返回
+			 */
 			return beanInstance;
 		}
-
+		/**
+		 * beanInstance是一个{@link FactoryBean}实例,但是要返回的是一个bean
+		 */
 		Object object = null;
 		if (mbd != null) {
+			/**
+			 * 如果传递了mbd,则不从缓存中取了
+			 */
 			mbd.isFactoryBean = true;
 		} else {
-			// mbd为空
+			/**
+			 * 未传递mbd,从缓存中取。这个只缓存单例模式的bean
+			 */
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 		if (object == null) {
 			// Return bean instance from factory.
+			/**
+			 * 传递了mbd或者是从缓存中未取到
+			 */
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
 			// Caches object obtained from FactoryBean if it is a singleton.
 			if (mbd == null && containsBeanDefinition(beanName)) {
+				/**
+				 * {@link DefaultListableBeanFactory#beanDefinitionMap}中有值
+				 */
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
+			/**
+			 * 方法组合模式,外层类访问内部类私有方法方法和私有属性
+			 */
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}

@@ -45,6 +45,10 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 
 	/**
 	 * Cache of singleton objects created by FactoryBeans: FactoryBean name to object.
+	 * FactoryBean创建的单例对象的缓存：FactoryBean名称到对象。
+	 * {@link FactoryBeanRegistrySupport#getObjectFromFactoryBean(org.springframework.beans.factory.FactoryBean, java.lang.String, boolean)}
+	 * 中添加值
+	 * key为bean的名字，value为bean
 	 */
 	private final Map<String, Object> factoryBeanObjectCache = new ConcurrentHashMap<>(16);
 
@@ -92,6 +96,13 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 
 	/**
 	 * Obtain an object to expose from the given FactoryBean.
+	 * <p>
+	 * {@link AbstractBeanFactory#getObjectForBeanInstance(java.lang.Object, java.lang.String, java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
+	 * 1,单例模式的bean,会放在缓存里
+	 * 2,非单例模式的bean,每次都会从{@link FactoryBean}里取，
+	 * 且调用{@link FactoryBeanRegistrySupport#postProcessObjectFromFactoryBean(java.lang.Object, java.lang.String)}加工
 	 *
 	 * @param factory           the FactoryBean instance
 	 * @param beanName          the name of the bean
@@ -102,7 +113,14 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 */
 	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
 		if (factory.isSingleton() && containsSingleton(beanName)) {
+			/**
+			 * 单例模式
+			 */
 			synchronized (getSingletonMutex()) {
+				/**
+				 * 如果是单例模式,则{@link FactoryBean}产生的bean,
+				 * 会放到缓存{@link FactoryBeanRegistrySupport#factoryBeanObjectCache}中
+				 */
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				if (object == null) {
 					object = doGetObjectFromFactoryBean(factory, beanName);
@@ -128,6 +146,10 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 							}
 						}
 						if (containsSingleton(beanName)) {
+							/**
+							 * 这判断在外层里面已经判断过了,不知道为何还要判断一次
+							 * 放到缓存中
+							 */
 							this.factoryBeanObjectCache.put(beanName, object);
 						}
 					}
@@ -135,6 +157,9 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				return object;
 			}
 		} else {
+			/**
+			 * 非单例模式的bean,不放缓存
+			 */
 			Object object = doGetObjectFromFactoryBean(factory, beanName);
 			if (shouldPostProcess) {
 				try {
@@ -149,6 +174,12 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 
 	/**
 	 * Obtain an object to expose from the given FactoryBean.
+	 * <p>
+	 * {@link FactoryBeanRegistrySupport#getObjectFromFactoryBean(org.springframework.beans.factory.FactoryBean, java.lang.String, boolean)}
+	 * 中调用
+	 * </p>
+	 * 直接调用{@link FactoryBean#getObject()}返回
+	 * beanName仅用于记录日志
 	 *
 	 * @param factory  the FactoryBean instance
 	 * @param beanName the name of the bean
@@ -192,6 +223,10 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * The resulting object will get exposed for bean references.
 	 * <p>The default implementation simply returns the given object as-is.
 	 * Subclasses may override this, for example, to apply post-processors.
+	 * <p>
+	 * {@link FactoryBeanRegistrySupport#getObjectFromFactoryBean(org.springframework.beans.factory.FactoryBean, java.lang.String, boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param object   the object obtained from the FactoryBean.
 	 * @param beanName the name of the bean

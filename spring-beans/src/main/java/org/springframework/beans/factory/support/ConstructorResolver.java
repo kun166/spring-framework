@@ -464,7 +464,7 @@ class ConstructorResolver {
 			// It's a static factory method on the bean class.
 			// 通过静态方法实现的
 			/**
-			 * 不是通过{@link FactoryBean}，而是通过自身静态方法创建bean
+			 * 通过自身静态方法创建bean
 			 */
 			if (!mbd.hasBeanClass()) {
 				// 如果没有配置bean的class，则抛异常
@@ -919,6 +919,9 @@ class ConstructorResolver {
 	private Object[] resolvePreparedArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 											  Executable executable, Object[] argsToResolve) {
 
+		/**
+		 * 先从beanFactory取TypeConverter,如果为空,就把BeanWrapper当做TypeConverter处理
+		 */
 		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
 		BeanDefinitionValueResolver valueResolver =
@@ -926,12 +929,19 @@ class ConstructorResolver {
 		// 获取方法的参数类型
 		Class<?>[] paramTypes = executable.getParameterTypes();
 
+		// 处理过的参数数组
 		Object[] resolvedArgs = new Object[argsToResolve.length];
 		for (int argIndex = 0; argIndex < argsToResolve.length; argIndex++) {
+			// 第argIndex个参数位置的初始值
 			Object argValue = argsToResolve[argIndex];
+			// 第argIndex个参数位置的参数类型
 			Class<?> paramType = paramTypes[argIndex];
+			// 是否需要转换?
 			boolean convertNecessary = false;
 			if (argValue instanceof ConstructorDependencyDescriptor) {
+				/**
+				 * 参数类型是{@link ConstructorDependencyDescriptor}
+				 */
 				ConstructorDependencyDescriptor descriptor = (ConstructorDependencyDescriptor) argValue;
 				try {
 					argValue = resolveAutowiredArgument(descriptor, paramType, beanName,
@@ -957,6 +967,9 @@ class ConstructorResolver {
 					}
 				}
 			} else if (argValue instanceof BeanMetadataElement) {
+				/**
+				 * 这个非常重要
+				 */
 				argValue = valueResolver.resolveValueIfNecessary("constructor argument", argValue);
 				convertNecessary = true;
 			} else if (argValue instanceof String) {
@@ -995,6 +1008,10 @@ class ConstructorResolver {
 
 	/**
 	 * Resolve the specified argument which is supposed to be autowired.
+	 * <p>
+	 * {@link ConstructorResolver#resolvePreparedArguments(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.BeanWrapper, java.lang.reflect.Executable, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 */
 	@Nullable
 	Object resolveAutowiredArgument(DependencyDescriptor descriptor, Class<?> paramType, String beanName,
@@ -1009,6 +1026,10 @@ class ConstructorResolver {
 		}
 
 		try {
+			/**
+			 * 传递的参数是{@link DependencyDescriptor}
+			 * 但是方法要求的参数不是{@link InjectionPoint}
+			 */
 			return this.beanFactory.resolveDependency(descriptor, beanName, autowiredBeanNames, typeConverter);
 		} catch (NoUniqueBeanDefinitionException ex) {
 			throw ex;
