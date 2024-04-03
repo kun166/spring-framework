@@ -48,6 +48,9 @@ public abstract class ReflectionUtils {
 	/**
 	 * Pre-built {@link MethodFilter} that matches all non-bridge non-synthetic methods
 	 * which are not declared on {@code java.lang.Object}.
+	 * 非桥接，非合成，且不是Object的方法
+	 * 关于桥接模式:https://blog.csdn.net/gongm24/article/details/121440121
+	 * 关于合成模式:https://blog.csdn.net/jinlong59421/article/details/108534967
 	 *
 	 * @since 3.0.5
 	 */
@@ -440,6 +443,10 @@ public abstract class ReflectionUtils {
 	 * Get the unique set of declared methods on the leaf class and all superclasses.
 	 * Leaf class methods are included first and while traversing the superclass hierarchy
 	 * any methods found with signatures matching a method already included are filtered out.
+	 * <p>
+	 * {@link org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#getTypeForFactoryMethod}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param leafClass the class to introspect
 	 * @param mf        the filter that determines the methods to take into account
@@ -455,9 +462,15 @@ public abstract class ReflectionUtils {
 				if (method.getName().equals(existingMethod.getName()) &&
 						method.getParameterCount() == existingMethod.getParameterCount() &&
 						Arrays.equals(method.getParameterTypes(), existingMethod.getParameterTypes())) {
+					/**
+					 * 方法名称相同,方法参数数量相同,方法参数类型相同
+					 */
 					// Is this a covariant return type situation?
 					if (existingMethod.getReturnType() != method.getReturnType() &&
 							existingMethod.getReturnType().isAssignableFrom(method.getReturnType())) {
+						/**
+						 * 返回类型不同,且已经存在的方法返回类型是当前方法返回类型的超类
+						 */
 						methodBeingOverriddenWithCovariantReturnType = existingMethod;
 					} else {
 						knownSignature = true;
@@ -466,9 +479,15 @@ public abstract class ReflectionUtils {
 				}
 			}
 			if (methodBeingOverriddenWithCovariantReturnType != null) {
+				/**
+				 * 把已经存在的方法删除掉
+				 */
 				methods.remove(methodBeingOverriddenWithCovariantReturnType);
 			}
 			if (!knownSignature && !isCglibRenamedMethod(method)) {
+				/**
+				 * 添加进当前方法
+				 */
 				methods.add(method);
 			}
 		}, mf);

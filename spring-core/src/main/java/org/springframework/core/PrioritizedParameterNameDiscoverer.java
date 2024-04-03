@@ -36,6 +36,11 @@ import org.springframework.lang.Nullable;
  */
 public class PrioritizedParameterNameDiscoverer implements ParameterNameDiscoverer {
 
+	/**
+	 * 在{@link DefaultParameterNameDiscoverer#DefaultParameterNameDiscoverer()}中添加
+	 * {@link StandardReflectionParameterNameDiscoverer}
+	 * {@link LocalVariableTableParameterNameDiscoverer}
+	 */
 	private final List<ParameterNameDiscoverer> parameterNameDiscoverers = new ArrayList<>(2);
 
 
@@ -48,6 +53,15 @@ public class PrioritizedParameterNameDiscoverer implements ParameterNameDiscover
 	}
 
 
+	/**
+	 * <p>
+	 * {@link org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#getTypeForFactoryMethod}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param method the method to find parameter names for
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public String[] getParameterNames(Method method) {

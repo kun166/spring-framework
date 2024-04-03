@@ -61,12 +61,19 @@ public final class BridgeMethodResolver {
 	 * <p>It is safe to call this method passing in a non-bridge {@link Method} instance.
 	 * In such a case, the supplied {@link Method} instance is returned directly to the caller.
 	 * Callers are <strong>not</strong> required to check for bridging before calling this method.
+	 * <p>
+	 * {@link LocalVariableTableParameterNameDiscoverer#getParameterNames(java.lang.reflect.Method)}中调用
+	 * </p>
+	 *
 	 * @param bridgeMethod the method to introspect
 	 * @return the original method (either the bridged method or the passed-in method
 	 * if no more specific one could be found)
 	 */
 	public static Method findBridgedMethod(Method bridgeMethod) {
 		if (!bridgeMethod.isBridge()) {
+			/**
+			 * 不是桥接方法,直接返回
+			 */
 			return bridgeMethod;
 		}
 		Method bridgedMethod = cache.get(bridgeMethod);
@@ -77,6 +84,9 @@ public final class BridgeMethodResolver {
 					isBridgedCandidateFor(candidateMethod, bridgeMethod);
 			ReflectionUtils.doWithMethods(bridgeMethod.getDeclaringClass(), candidateMethods::add, filter);
 			if (!candidateMethods.isEmpty()) {
+				/**
+				 * 如果只有一个方法符合,则返回该方法，否则继续查找
+				 */
 				bridgedMethod = candidateMethods.size() == 1 ?
 						candidateMethods.get(0) :
 						searchCandidates(candidateMethods, bridgeMethod);
@@ -96,17 +106,32 @@ public final class BridgeMethodResolver {
 	 * considered a valid candidate for the {@link Method} that is {@link Method#isBridge() bridged}
 	 * by the supplied {@link Method bridge Method}. This method performs inexpensive
 	 * checks and can be used quickly to filter for a set of possible matches.
+	 * <p>
+	 * {@link BridgeMethodResolver#findBridgedMethod(java.lang.reflect.Method)}中调用
+	 * </p>
 	 */
 	private static boolean isBridgedCandidateFor(Method candidateMethod, Method bridgeMethod) {
-		return (!candidateMethod.isBridge() && !candidateMethod.equals(bridgeMethod) &&
-				candidateMethod.getName().equals(bridgeMethod.getName()) &&
-				candidateMethod.getParameterCount() == bridgeMethod.getParameterCount());
+		/**
+		 * 1,候选者方法不是桥接方法
+		 * 2,两个方法不能equals
+		 * 3,方法名称相同
+		 * 4,参数长度相同
+		 */
+		return (!candidateMethod.isBridge()
+				&& !candidateMethod.equals(bridgeMethod)
+				&& candidateMethod.getName().equals(bridgeMethod.getName())
+				&& candidateMethod.getParameterCount() == bridgeMethod.getParameterCount());
 	}
 
 	/**
 	 * Searches for the bridged method in the given candidates.
+	 *
+	 * <p>
+	 * {@link BridgeMethodResolver#findBridgedMethod(java.lang.reflect.Method)}中调用
+	 * </p>
+	 *
 	 * @param candidateMethods the List of candidate Methods
-	 * @param bridgeMethod the bridge method
+	 * @param bridgeMethod     the bridge method
 	 * @return the bridged method, or {@code null} if none found
 	 */
 	@Nullable
@@ -119,8 +144,7 @@ public final class BridgeMethodResolver {
 		for (Method candidateMethod : candidateMethods) {
 			if (isBridgeMethodFor(bridgeMethod, candidateMethod, bridgeMethod.getDeclaringClass())) {
 				return candidateMethod;
-			}
-			else if (previousMethod != null) {
+			} else if (previousMethod != null) {
 				sameSig = sameSig &&
 						Arrays.equals(candidateMethod.getGenericParameterTypes(), previousMethod.getGenericParameterTypes());
 			}
@@ -132,6 +156,9 @@ public final class BridgeMethodResolver {
 	/**
 	 * Determines whether the bridge {@link Method} is the bridge for the
 	 * supplied candidate {@link Method}.
+	 * <p>
+	 * {@link BridgeMethodResolver#searchCandidates(java.util.List, java.lang.reflect.Method)}中调用
+	 * </p>
 	 */
 	static boolean isBridgeMethodFor(Method bridgeMethod, Method candidateMethod, Class<?> declaringClass) {
 		if (isResolvedTypeMatch(candidateMethod, bridgeMethod, declaringClass)) {
@@ -146,6 +173,10 @@ public final class BridgeMethodResolver {
 	 * {@link Method#getGenericParameterTypes() generic Method} and concrete {@link Method}
 	 * are equal after resolving all types against the declaringType, otherwise
 	 * returns {@code false}.
+	 * <p>
+	 * {@link BridgeMethodResolver#isBridgeMethodFor(java.lang.reflect.Method, java.lang.reflect.Method, java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 */
 	private static boolean isResolvedTypeMatch(Method genericMethod, Method candidateMethod, Class<?> declaringClass) {
 		Type[] genericParameters = genericMethod.getGenericParameterTypes();
@@ -173,6 +204,7 @@ public final class BridgeMethodResolver {
 	/**
 	 * Searches for the generic {@link Method} declaration whose erased signature
 	 * matches that of the supplied bridge method.
+	 *
 	 * @throws IllegalStateException if the generic declaration cannot be found
 	 */
 	@Nullable
@@ -197,8 +229,7 @@ public final class BridgeMethodResolver {
 			Method method = searchForMatch(ifc, bridgeMethod);
 			if (method != null && !method.isBridge()) {
 				return method;
-			}
-			else {
+			} else {
 				method = searchInterfaces(ifc.getInterfaces(), bridgeMethod);
 				if (method != null) {
 					return method;
@@ -217,8 +248,7 @@ public final class BridgeMethodResolver {
 	private static Method searchForMatch(Class<?> type, Method bridgeMethod) {
 		try {
 			return type.getDeclaredMethod(bridgeMethod.getName(), bridgeMethod.getParameterTypes());
-		}
-		catch (NoSuchMethodException ex) {
+		} catch (NoSuchMethodException ex) {
 			return null;
 		}
 	}
@@ -228,6 +258,7 @@ public final class BridgeMethodResolver {
 	 * the parameter and return types are the same, it is a 'visibility' bridge method
 	 * introduced in Java 6 to fix https://bugs.openjdk.org/browse/JDK-6342411.
 	 * See also https://stas-blogspot.blogspot.com/2010/03/java-bridge-methods-explained.html
+	 *
 	 * @return whether signatures match as described
 	 */
 	public static boolean isVisibilityBridgeMethodPair(Method bridgeMethod, Method bridgedMethod) {

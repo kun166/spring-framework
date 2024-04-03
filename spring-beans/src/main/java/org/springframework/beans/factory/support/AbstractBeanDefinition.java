@@ -908,6 +908,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * Return constructor argument values for this bean (never {@code null}).
+	 * <p>
+	 * {@link BeanDefinitionParserDelegate#parseConstructorArgElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中调用,并且添加值
+	 * </p>
 	 */
 	@Override
 	public ConstructorArgumentValues getConstructorArgumentValues() {

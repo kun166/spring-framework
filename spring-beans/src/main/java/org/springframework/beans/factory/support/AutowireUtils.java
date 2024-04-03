@@ -173,6 +173,10 @@ abstract class AutowireUtils {
 	 * Method#getGenericParameterTypes() formal argument list} for the given
 	 * method</li>
 	 * </ul>
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#getTypeForFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param method      the method to introspect (never {@code null})
 	 * @param args        the arguments that will be supplied to the method when it is
@@ -187,14 +191,22 @@ abstract class AutowireUtils {
 
 		Assert.notNull(method, "Method must not be null");
 		Assert.notNull(args, "Argument array must not be null");
-
+		// https://blog.csdn.net/weixin_43706468/article/details/125177646
+		// 方法参数泛型,如果没有泛型,这个地方会返回长度为0的空数组
 		TypeVariable<Method>[] declaredTypeVariables = method.getTypeParameters();
+		// 方法返回类型
 		Type genericReturnType = method.getGenericReturnType();
+		// 方法参数类型
 		Type[] methodParameterTypes = method.getGenericParameterTypes();
 		Assert.isTrue(args.length == methodParameterTypes.length, "Argument array does not match parameter count");
 
 		// Ensure that the type variable (e.g., T) is declared directly on the method
 		// itself (e.g., via <T>), not on the enclosing class or interface.
+		//确保直接在方法上声明类型变量（例如，T）
+		//本身（例如，通过＜T＞），而不是在封闭类或接口上。
+		/**
+		 * 方法返回类型与方法参数中的某一个类型相同
+		 */
 		boolean locallyDeclaredTypeVariableMatchesReturnType = false;
 		for (TypeVariable<Method> currentTypeVariable : declaredTypeVariables) {
 			if (currentTypeVariable.equals(genericReturnType)) {

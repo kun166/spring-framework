@@ -40,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.StringJoiner;
 
+import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 
@@ -972,6 +973,12 @@ public abstract class ClassUtils {
 	/**
 	 * Return the user-defined class for the given class: usually simply the given
 	 * class, but the original class in case of a CGLIB-generated subclass.
+	 * <p>
+	 * {@link org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#getTypeForFactoryMethod}
+	 * 中调用
+	 * </p>
+	 * 如果传入的clazz name包含$$,表示是cglib生成的,返回父类
+	 * 否则返回本身
 	 *
 	 * @param clazz the class to check
 	 * @return the user-defined class
@@ -1070,6 +1077,10 @@ public abstract class ClassUtils {
 	/**
 	 * Determine the name of the class file, relative to the containing
 	 * package: e.g. "String.class"
+	 * <p>
+	 * {@link LocalVariableTableParameterNameDiscoverer#inspectClass(java.lang.Class)}中调用
+	 * </p>
+	 * 相当于{@link Class#getSimpleName()}+{@link ClassUtils#CLASS_FILE_SUFFIX}
 	 *
 	 * @param clazz the class
 	 * @return the file name of the ".class" file

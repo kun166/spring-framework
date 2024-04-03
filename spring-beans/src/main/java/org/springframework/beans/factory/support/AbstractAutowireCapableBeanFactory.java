@@ -70,13 +70,7 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
 import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
 import org.springframework.beans.factory.config.TypedStringValue;
-import org.springframework.core.DefaultParameterNameDiscoverer;
-import org.springframework.core.MethodParameter;
-import org.springframework.core.NamedThreadLocal;
-import org.springframework.core.NativeDetector;
-import org.springframework.core.ParameterNameDiscoverer;
-import org.springframework.core.PriorityOrdered;
-import org.springframework.core.ResolvableType;
+import org.springframework.core.*;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -790,6 +784,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * <p>This implementation determines the type matching {@link #createBean}'s
 	 * different creation strategies. As far as possible, we'll perform static
 	 * type checking to avoid creation of the target bean.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#determineTargetType(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class[])}
+	 * 中调用
+	 * </p>
+	 * 进入这个分支的条件是{@link AbstractBeanDefinition#getFactoryMethodName()} != null
 	 *
 	 * @param beanName     the name of the bean (for error handling purposes)
 	 * @param mbd          the merged bean definition for the bean
@@ -800,26 +799,39 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	@Nullable
 	protected Class<?> getTypeForFactoryMethod(String beanName, RootBeanDefinition mbd, Class<?>... typesToMatch) {
+		/**
+		 * 这个缓存是下面的逻辑赋值的,如果有值，说明不是第一次进来了
+		 */
 		ResolvableType cachedReturnType = mbd.factoryMethodReturnType;
 		if (cachedReturnType != null) {
 			return cachedReturnType.resolve();
 		}
 
 		Class<?> commonType = null;
+		/**
+		 * 这个缓存也是下面逻辑缓存的
+		 */
 		Method uniqueCandidate = mbd.factoryMethodToIntrospect;
 
 		if (uniqueCandidate == null) {
+			// FactoryBean的class
 			Class<?> factoryClass;
+			// 默认是静态方法
 			boolean isStatic = true;
 
+			// 获取factoryBeanName,注意这个factory-bean设置的，是bean的name
 			String factoryBeanName = mbd.getFactoryBeanName();
 			if (factoryBeanName != null) {
+				// factoryBean不能和当前bean是同一个对象
 				if (factoryBeanName.equals(beanName)) {
 					throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 							"factory-bean reference points back to the same bean definition");
 				}
 				// Check declared factory method return type on factory class.
 				factoryClass = getType(factoryBeanName);
+				/**
+				 * 如果是一个{@link FactoryBean}实现的,则方法不是static的
+				 */
 				isStatic = false;
 			} else {
 				// Check declared factory method return type on bean class.
@@ -833,24 +845,46 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 			// If all factory methods have the same return type, return that type.
 			// Can't clearly figure out exact method due to type converting / autowiring!
+			//如果所有工厂方法都具有相同的返回类型，则返回该类型。
+			//由于类型转换/自动布线，无法清楚地计算出确切的方法！
 			int minNrOfArgs =
 					(mbd.hasConstructorArgumentValues() ? mbd.getConstructorArgumentValues().getArgumentCount() : 0);
+			/**
+			 * 候选方法
+			 */
 			Method[] candidates = this.factoryMethodCandidateCache.computeIfAbsent(factoryClass,
 					clazz -> ReflectionUtils.getUniqueDeclaredMethods(clazz, ReflectionUtils.USER_DECLARED_METHODS));
 
 			for (Method candidate : candidates) {
-				if (Modifier.isStatic(candidate.getModifiers()) == isStatic && mbd.isFactoryMethod(candidate) &&
-						candidate.getParameterCount() >= minNrOfArgs) {
+				if (Modifier.isStatic(candidate.getModifiers()) == isStatic
+						&& mbd.isFactoryMethod(candidate)
+						&& candidate.getParameterCount() >= minNrOfArgs) {
+					/**
+					 * 1,方法和工厂方法一致,要么是static,要么不是static的
+					 * 2,和工厂方法方法名一致
+					 * 3,声明的方法参数不少于minNrOfArgs
+					 */
 					// Declared type variables to inspect?
 					if (candidate.getTypeParameters().length > 0) {
+						/**
+						 * getTypeParameters返回的是泛型类/接口/泛型方法尖括号内声明的泛型变量所组成的数组
+						 * https://blog.csdn.net/jiaohuizhuang6019/article/details/130432568
+						 */
 						try {
 							// Fully resolve parameter names and argument values.
+							/**
+							 * 方法的形参类型数组
+							 */
 							Class<?>[] paramTypes = candidate.getParameterTypes();
 							String[] paramNames = null;
 							ParameterNameDiscoverer pnd = getParameterNameDiscoverer();
 							if (pnd != null) {
+								/**
+								 * 调用的是{@link PrioritizedParameterNameDiscoverer#getParameterNames(java.lang.reflect.Method)}
+								 */
 								paramNames = pnd.getParameterNames(candidate);
 							}
+							// https://blog.csdn.net/m0_47703468/article/details/133750309
 							ConstructorArgumentValues cav = mbd.getConstructorArgumentValues();
 							Set<ConstructorArgumentValues.ValueHolder> usedValueHolders = new HashSet<>(paramTypes.length);
 							Object[] args = new Object[paramTypes.length];

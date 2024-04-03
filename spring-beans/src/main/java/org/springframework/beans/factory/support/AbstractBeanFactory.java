@@ -779,18 +779,48 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return isTypeMatch(name, ResolvableType.forRawClass(typeToMatch));
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#getTypeForFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class[])}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param name the name of the bean to query
+	 * @return
+	 * @throws NoSuchBeanDefinitionException
+	 */
 	@Override
 	@Nullable
 	public Class<?> getType(String name) throws NoSuchBeanDefinitionException {
 		return getType(name, true);
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractBeanFactory#getType(java.lang.String)}中调用
+	 * </p>
+	 * 获取name表示的class类型
+	 * 如果name以&开头返回实现了{@link FactoryBean}的class
+	 * 否则返回name表示的真正类型
+	 *
+	 * @param name                 the name of the bean to query
+	 * @param allowFactoryBeanInit whether a {@code FactoryBean} may get initialized
+	 *                             just for the purpose of determining its object type
+	 * @return
+	 * @throws NoSuchBeanDefinitionException
+	 */
 	@Override
 	@Nullable
 	public Class<?> getType(String name, boolean allowFactoryBeanInit) throws NoSuchBeanDefinitionException {
+		/**
+		 * 找到最初的那个name
+		 */
 		String beanName = transformedBeanName(name);
 
 		// Check manually registered singletons.
+		/**
+		 * 如果{@link DefaultSingletonBeanRegistry#singletonObjects}里已经有了,就直接使用
+		 */
 		Object beanInstance = getSingleton(beanName, false);
 		if (beanInstance != null && beanInstance.getClass() != NullBean.class) {
 			if (beanInstance instanceof FactoryBean && !BeanFactoryUtils.isFactoryDereference(name)) {
@@ -801,16 +831,25 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		// No singleton instance found -> check bean definition.
+		/**
+		 * 如果有parentBeanFactory,从parentBeanFactory查找
+		 */
 		BeanFactory parentBeanFactory = getParentBeanFactory();
 		if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
 			// No bean definition found in this factory -> delegate to parent.
 			return parentBeanFactory.getType(originalBeanName(name));
 		}
 
+		/**
+		 * 获取MergedBeanDefinition
+		 */
 		RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 
 		// Check decorated bean definition, if any: We assume it'll be easier
 		// to determine the decorated bean's type than the proxy's type.
+		/**
+		 * 这个{@link RootBeanDefinition#decoratedDefinition}不知道从哪设置的
+		 */
 		BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 		if (dbd != null && !BeanFactoryUtils.isFactoryDereference(name)) {
 			RootBeanDefinition tbd = getMergedBeanDefinition(dbd.getBeanName(), dbd.getBeanDefinition(), mbd);
@@ -1569,10 +1608,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * <p>
 	 * {@link AbstractBeanFactory#getMergedBeanDefinition(java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
 	 * 中被调用
+	 * {@link AbstractBeanFactory#getType(java.lang.String, boolean)}中调用
 	 * <p>
 	 * 网上搜了点资料:https://blog.csdn.net/qq_44587855/article/details/121684372
 	 * https://www.cnblogs.com/ssh-html/p/10740946.html
 	 * </p>
+	 * 这个方法主要就是判断是否有{@link BeanDefinition#getParentName()}
+	 * 如果有,就合并
 	 *
 	 * @param beanName     the name of the bean definition
 	 * @param bd           the original bean definition (Root/ChildBeanDefinition)
@@ -1600,19 +1642,35 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			 * {@link BeanDefinitionParserDelegate#parseBeanDefinitionElement(org.w3c.dom.Element, java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
 			 */
 			if (mbd == null || mbd.stale) {
-				// 上一个bd?
+				/**
+				 * 走到这个分支，有3个条件
+				 * 1,要么是方法第三个参数containingBd传递了
+				 * 2,要么是从{@link AbstractBeanFactory#mergedBeanDefinitions}里没获取到合并的BeanDefinition
+				 * 3,从{@link AbstractBeanFactory#mergedBeanDefinitions}里获取到的BeanDefinition,
+				 * {@link RootBeanDefinition#stale}为true,需要重新merge
+				 * <p>
+				 * 下面的这个previous:
+				 * 1,要么是null
+				 * 2,要么是{@link RootBeanDefinition#stale}为true,需要重新merge
+				 */
 				previous = mbd;
 				if (bd.getParentName() == null) {
 					// Use copy of given root bean definition.
 					// 绝大部分走这个分支了
 					// 没有 parent bean definition，包装成一个RootBeanDefinition,直接返回
 					if (bd instanceof RootBeanDefinition) {
+						// 本身就是一个RootBeanDefinition了
 						mbd = ((RootBeanDefinition) bd).cloneBeanDefinition();
 					} else {
+						// 本身不是RootBeanDefinition,转化成一个RootBeanDefinition
 						mbd = new RootBeanDefinition(bd);
 					}
 				} else {
 					// Child bean definition: needs to be merged with parent.
+					/**
+					 * {@link BeanDefinition#getParentName()}不为空
+					 * 注意,这个是bean 的name
+					 */
 					BeanDefinition pbd;
 					try {
 						// 从别名表里查询到真正的那个bean名字
@@ -1666,6 +1724,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			if (previous != null) {
 				/**
 				 * 走到这一步，说明beanName合并过，但是{@link RootBeanDefinition#stale}被设置了true,需要重新合并
+				 * 三个条件：
+				 * 1,方法第三个参数containingBd没传
+				 * 2,从{@link AbstractBeanFactory#mergedBeanDefinitions}里获取到了合并的BeanDefinition
+				 * 3,{@link RootBeanDefinition#stale}为true,需要重新merge
 				 */
 				copyRelevantMergedBeanDefinitionCaches(previous, mbd);
 			}
@@ -1981,6 +2043,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * {@link AbstractBeanFactory#isFactoryBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
 	 * 中调用
 	 * {@link AbstractBeanFactory#isTypeMatch(java.lang.String, org.springframework.core.ResolvableType, boolean)}中调用
+	 * {@link AbstractBeanFactory#getType(java.lang.String, boolean)}中调用
 	 * </p>
 	 *
 	 * @param beanName     bean 的名字

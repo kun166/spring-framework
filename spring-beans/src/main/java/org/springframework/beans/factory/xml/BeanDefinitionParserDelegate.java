@@ -563,14 +563,34 @@ public class BeanDefinitionParserDelegate {
 			 */
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
+			/**
+			 * 解析<bean>标签的attribute
+			 * 如:
+			 * "scope"
+			 * "abstract"
+			 * "lazy-init"
+			 * "autowire"
+			 * "depends-on"
+			 * "autowire-candidate"
+			 * "primary"
+			 * "init-method"
+			 * "destroy-method"
+			 * "factory-method"
+			 * "factory-bean"
+			 */
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			// description
+			// 这个只是描述,没啥实际意义吧?
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
 			parseMetaElements(ele, bd);
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
 
+			/**
+			 * constructor-arg
+			 * 重要，需要看一下
+			 */
 			parseConstructorArgElements(ele, bd);
 			parsePropertyElements(ele, bd);
 			parseQualifierElements(ele, bd);
@@ -725,7 +745,8 @@ public class BeanDefinitionParserDelegate {
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);
 			/**
-			 * 关于bean 的meta,可以参考https://blog.csdn.net/u014252478/article/details/84590067
+			 * 关于bean 的meta,可以参考
+			 * https://blog.csdn.net/u014252478/article/details/84590067
 			 */
 			if (isCandidateElement(node) && nodeNameEquals(node, META_ELEMENT)) {
 				Element metaElement = (Element) node;
@@ -876,12 +897,19 @@ public class BeanDefinitionParserDelegate {
 	 * {@link BeanDefinitionParserDelegate#parseConstructorArgElements(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
 	 * 中调用
 	 * </p>
+	 * 解析{@link BeanDefinitionParserDelegate#CONSTRUCTOR_ARG_ELEMENT}标签
 	 */
 	public void parseConstructorArgElement(Element ele, BeanDefinition bd) {
+		// index
 		String indexAttr = ele.getAttribute(INDEX_ATTRIBUTE);
+		// type
 		String typeAttr = ele.getAttribute(TYPE_ATTRIBUTE);
+		// name
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 		if (StringUtils.hasLength(indexAttr)) {
+			/**
+			 * 有index标签
+			 */
 			try {
 				int index = Integer.parseInt(indexAttr);
 				if (index < 0) {
@@ -889,18 +917,33 @@ public class BeanDefinitionParserDelegate {
 				} else {
 					try {
 						this.parseState.push(new ConstructorArgumentEntry(index));
+						/**
+						 * 解析该标签的值
+						 */
 						Object value = parsePropertyValue(ele, bd, null);
+						/**
+						 * 封装成了{@link ConstructorArgumentValues.ValueHolder}对象
+						 */
 						ConstructorArgumentValues.ValueHolder valueHolder = new ConstructorArgumentValues.ValueHolder(value);
 						if (StringUtils.hasLength(typeAttr)) {
+							/**
+							 * 类型,type
+							 */
 							valueHolder.setType(typeAttr);
 						}
 						if (StringUtils.hasLength(nameAttr)) {
+							/**
+							 * name
+							 */
 							valueHolder.setName(nameAttr);
 						}
 						valueHolder.setSource(extractSource(ele));
 						if (bd.getConstructorArgumentValues().hasIndexedArgumentValue(index)) {
 							error("Ambiguous constructor-arg entries for index " + index, ele);
 						} else {
+							/**
+							 * 重要,需要牢记
+							 */
 							bd.getConstructorArgumentValues().addIndexedArgumentValue(index, valueHolder);
 						}
 					} finally {
@@ -911,6 +954,9 @@ public class BeanDefinitionParserDelegate {
 				error("Attribute 'index' of tag 'constructor-arg' must be an integer", ele);
 			}
 		} else {
+			/**
+			 * index标签没有值
+			 */
 			try {
 				this.parseState.push(new ConstructorArgumentEntry());
 				Object value = parsePropertyValue(ele, bd, null);
@@ -1001,8 +1047,12 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Get the value of a property element. May be a list etc.
 	 * Also used for constructor arguments, "propertyName" being null in this case.
+	 * <p>
 	 * {@link BeanDefinitionParserDelegate#parsePropertyElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
 	 * 中被调用
+	 * {@link BeanDefinitionParserDelegate#parseConstructorArgElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中调用
+	 * </p>
 	 */
 	@Nullable
 	public Object parsePropertyValue(Element ele, BeanDefinition bd, @Nullable String propertyName) {
@@ -1011,25 +1061,39 @@ public class BeanDefinitionParserDelegate {
 				"<constructor-arg> element");
 
 		// Should only have one child element: ref, value, list, etc.
+		/**
+		 * ref,value,list等只有一个子元素
+		 */
 		NodeList nl = ele.getChildNodes();
 		Element subElement = null;
 		for (int i = 0; i < nl.getLength(); i++) {
 			Node node = nl.item(i);
 			if (node instanceof Element && !nodeNameEquals(node, DESCRIPTION_ELEMENT) &&
 					!nodeNameEquals(node, META_ELEMENT)) {
+				/**
+				 * 不是description,也不是meta
+				 */
 				// Child element is what we're looking for.
 				if (subElement != null) {
+					/**
+					 * 只能有一个元素
+					 */
 					error(elementName + " must not contain more than one sub-element", ele);
 				} else {
 					subElement = (Element) node;
 				}
 			}
 		}
-
+		// ref
 		boolean hasRefAttribute = ele.hasAttribute(REF_ATTRIBUTE);
+		// value
 		boolean hasValueAttribute = ele.hasAttribute(VALUE_ATTRIBUTE);
 		if ((hasRefAttribute && hasValueAttribute) ||
 				((hasRefAttribute || hasValueAttribute) && subElement != null)) {
+			/**
+			 * 要么有ref,要么有value,要么有子元素
+			 * 不能同时有其中的两者
+			 */
 			error(elementName +
 					" is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element", ele);
 		}
@@ -1039,14 +1103,23 @@ public class BeanDefinitionParserDelegate {
 			if (!StringUtils.hasText(refName)) {
 				error(elementName + " contains empty 'ref' attribute", ele);
 			}
+			/**
+			 * ref返回的是{@link RuntimeBeanReference}
+			 */
 			RuntimeBeanReference ref = new RuntimeBeanReference(refName);
 			ref.setSource(extractSource(ele));
 			return ref;
 		} else if (hasValueAttribute) {
+			/**
+			 * 如果是value,返回的是{@link TypedStringValue}
+			 */
 			TypedStringValue valueHolder = new TypedStringValue(ele.getAttribute(VALUE_ATTRIBUTE));
 			valueHolder.setSource(extractSource(ele));
 			return valueHolder;
 		} else if (subElement != null) {
+			/**
+			 * 如果是子元素,继续解析
+			 */
 			return parsePropertySubElement(subElement, bd);
 		} else {
 			// Neither child element nor "ref" or "value" attribute found.
@@ -1058,6 +1131,10 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Parse a value, ref or collection sub-element of a property or
 	 * constructor-arg element.
+	 * <p>
+	 * {@link BeanDefinitionParserDelegate#parsePropertyValue(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param ele subelement of property element; we don't know which yet
 	 * @param bd  the current bean definition (if any)
@@ -1070,6 +1147,13 @@ public class BeanDefinitionParserDelegate {
 	/**
 	 * Parse a value, ref or collection sub-element of a property or
 	 * constructor-arg element.
+	 * <p>
+	 * {@link BeanDefinitionParserDelegate#parsePropertySubElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中调用
+	 * </p>
+	 * 解析<property></property>
+	 * 或者是<constructor-arg></constructor-arg>
+	 * 子标签
 	 *
 	 * @param ele              subelement of property element; we don't know which yet
 	 * @param bd               the current bean definition (if any)
@@ -1079,8 +1163,14 @@ public class BeanDefinitionParserDelegate {
 	@Nullable
 	public Object parsePropertySubElement(Element ele, @Nullable BeanDefinition bd, @Nullable String defaultValueType) {
 		if (!isDefaultNamespace(ele)) {
+			/**
+			 * 当自定义标签处理
+			 */
 			return parseNestedCustomElement(ele, bd);
 		} else if (nodeNameEquals(ele, BEAN_ELEMENT)) {
+			/**
+			 * bean标签
+			 */
 			BeanDefinitionHolder nestedBd = parseBeanDefinitionElement(ele, bd);
 			if (nestedBd != null) {
 				nestedBd = decorateBeanDefinitionIfRequired(ele, nestedBd, bd);
@@ -1088,14 +1178,25 @@ public class BeanDefinitionParserDelegate {
 			return nestedBd;
 		} else if (nodeNameEquals(ele, REF_ELEMENT)) {
 			// A generic reference to any name of any bean.
+			/**
+			 * ref标签。
+			 * 关于parent标签，可以参阅: https://www.cnblogs.com/CloudComputing-binbin/p/15939822.html
+			 * 取 bean 的标签值
+			 */
 			String refName = ele.getAttribute(BEAN_REF_ATTRIBUTE);
 			boolean toParent = false;
 			if (!StringUtils.hasLength(refName)) {
 				// A reference to the id of another bean in a parent context.
+				/**
+				 * 如果bean 标签值为空,则获取parent标签值
+				 */
 				refName = ele.getAttribute(PARENT_REF_ATTRIBUTE);
 				toParent = true;
 				if (!StringUtils.hasLength(refName)) {
 					error("'bean' or 'parent' is required for <ref> element", ele);
+					/**
+					 * 如果既没有ref也没有parent,则返回null
+					 */
 					return null;
 				}
 			}
@@ -1107,24 +1208,32 @@ public class BeanDefinitionParserDelegate {
 			ref.setSource(extractSource(ele));
 			return ref;
 		} else if (nodeNameEquals(ele, IDREF_ELEMENT)) {
+			// idref
 			return parseIdRefElement(ele);
 		} else if (nodeNameEquals(ele, VALUE_ELEMENT)) {
+			// value
 			return parseValueElement(ele, defaultValueType);
 		} else if (nodeNameEquals(ele, NULL_ELEMENT)) {
 			// It's a distinguished null value. Let's wrap it in a TypedStringValue
 			// object in order to preserve the source location.
+			// null
 			TypedStringValue nullHolder = new TypedStringValue(null);
 			nullHolder.setSource(extractSource(ele));
 			return nullHolder;
 		} else if (nodeNameEquals(ele, ARRAY_ELEMENT)) {
+			// array
 			return parseArrayElement(ele, bd);
 		} else if (nodeNameEquals(ele, LIST_ELEMENT)) {
+			// list
 			return parseListElement(ele, bd);
 		} else if (nodeNameEquals(ele, SET_ELEMENT)) {
+			// set
 			return parseSetElement(ele, bd);
 		} else if (nodeNameEquals(ele, MAP_ELEMENT)) {
+			// map
 			return parseMapElement(ele, bd);
 		} else if (nodeNameEquals(ele, PROPS_ELEMENT)) {
+			// props
 			return parsePropsElement(ele);
 		} else {
 			error("Unknown property sub-element: [" + ele.getNodeName() + "]", ele);
@@ -1560,8 +1669,21 @@ public class BeanDefinitionParserDelegate {
 		return originalDef;
 	}
 
+	/**
+	 * <p>
+	 * {@link BeanDefinitionParserDelegate#parsePropertySubElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param ele
+	 * @param containingBd
+	 * @return
+	 */
 	@Nullable
 	private BeanDefinitionHolder parseNestedCustomElement(Element ele, @Nullable BeanDefinition containingBd) {
+		/**
+		 * 当自定义标签处理
+		 */
 		BeanDefinition innerDefinition = parseCustomElement(ele, containingBd);
 		if (innerDefinition == null) {
 			error("Incorrect usage of element '" + ele.getNodeName() + "' in a nested manner. " +
@@ -1574,6 +1696,9 @@ public class BeanDefinitionParserDelegate {
 			logger.trace("Using generated bean name [" + id +
 					"] for nested custom element '" + ele.getNodeName() + "'");
 		}
+		/**
+		 * 返回一个{@link BeanDefinitionHolder}
+		 */
 		return new BeanDefinitionHolder(innerDefinition, id);
 	}
 
@@ -1633,6 +1758,7 @@ public class BeanDefinitionParserDelegate {
 	 * <p>
 	 * {@link BeanDefinitionParserDelegate#isDefaultNamespace(org.w3c.dom.Node)}
 	 * </p>
+	 * 传入的namespaceUri为空，或者是等于{@link BeanDefinitionParserDelegate#BEANS_NAMESPACE_URI}
 	 */
 	public boolean isDefaultNamespace(@Nullable String namespaceUri) {
 		return !StringUtils.hasLength(namespaceUri) || BEANS_NAMESPACE_URI.equals(namespaceUri);

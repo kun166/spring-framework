@@ -30,14 +30,23 @@ import org.springframework.lang.Nullable;
  * combined with {@link KotlinReflectionParameterNameDiscoverer} if Kotlin is present.
  *
  * @author Juergen Hoeller
- * @since 4.0
  * @see java.lang.reflect.Method#getParameters()
  * @see java.lang.reflect.Parameter#getName()
  * @see KotlinReflectionParameterNameDiscoverer
  * @see DefaultParameterNameDiscoverer
+ * @since 4.0
  */
 public class StandardReflectionParameterNameDiscoverer implements ParameterNameDiscoverer {
 
+	/**
+	 * <p>
+	 * {@link PrioritizedParameterNameDiscoverer#getParameterNames(java.lang.reflect.Method)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param method the method to find parameter names for
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public String[] getParameterNames(Method method) {
@@ -50,6 +59,19 @@ public class StandardReflectionParameterNameDiscoverer implements ParameterNameD
 		return getParameterNames(ctor.getParameters());
 	}
 
+	/**
+	 * <p>
+	 * {@link StandardReflectionParameterNameDiscoverer#getParameterNames(java.lang.reflect.Method)}
+	 * 中调用
+	 * </p>
+	 * 自java8开始，可以通过反射得到方法的参数名，不过这有个条件：你必须手动在编译时开启-parameters 参数。
+	 * 以IDEA为例，你需要在Preferences->Build,Execution,Deployment->Compiler->java Compiler 页面添加该编译选项。
+	 * （具体可以查阅其他博主的文章，因为基本不用，这里就不啰嗦了）。
+	 * https://www.cnblogs.com/chenss15060100790/p/16822266.html
+	 *
+	 * @param parameters
+	 * @return
+	 */
 	@Nullable
 	private String[] getParameterNames(Parameter[] parameters) {
 		String[] parameterNames = new String[parameters.length];

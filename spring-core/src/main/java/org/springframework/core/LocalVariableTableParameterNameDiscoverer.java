@@ -56,9 +56,9 @@ import org.springframework.util.ClassUtils;
  * @author Juergen Hoeller
  * @author Chris Beams
  * @author Sam Brannen
- * @since 2.0
  * @see StandardReflectionParameterNameDiscoverer
  * @see DefaultParameterNameDiscoverer
+ * @since 2.0
  */
 public class LocalVariableTableParameterNameDiscoverer implements ParameterNameDiscoverer {
 
@@ -71,6 +71,14 @@ public class LocalVariableTableParameterNameDiscoverer implements ParameterNameD
 	private final Map<Class<?>, Map<Executable, String[]>> parameterNamesCache = new ConcurrentHashMap<>(32);
 
 
+	/**
+	 * <p>
+	 * {@link PrioritizedParameterNameDiscoverer#getParameterNames(java.lang.reflect.Method)}中调用
+	 * </p>
+	 *
+	 * @param method the method to find parameter names for
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public String[] getParameterNames(Method method) {
@@ -84,6 +92,15 @@ public class LocalVariableTableParameterNameDiscoverer implements ParameterNameD
 		return doGetParameterNames(ctor);
 	}
 
+	/**
+	 * <p>
+	 * {@link LocalVariableTableParameterNameDiscoverer#getParameterNames(java.lang.reflect.Method)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param executable
+	 * @return
+	 */
 	@Nullable
 	private String[] doGetParameterNames(Executable executable) {
 		Class<?> declaringClass = executable.getDeclaringClass();
@@ -95,6 +112,9 @@ public class LocalVariableTableParameterNameDiscoverer implements ParameterNameD
 	 * Inspects the target class.
 	 * <p>Exceptions will be logged, and a marker map returned to indicate the
 	 * lack of debug information.
+	 * <p>
+	 * {@link LocalVariableTableParameterNameDiscoverer#doGetParameterNames(java.lang.reflect.Executable)}中调用
+	 * </p>
 	 */
 	private Map<Executable, String[]> inspectClass(Class<?> clazz) {
 		InputStream is = clazz.getResourceAsStream(ClassUtils.getClassFileName(clazz));
@@ -114,25 +134,21 @@ public class LocalVariableTableParameterNameDiscoverer implements ParameterNameD
 			Map<Executable, String[]> map = new ConcurrentHashMap<>(32);
 			classReader.accept(new ParameterNameDiscoveringVisitor(clazz, map), 0);
 			return map;
-		}
-		catch (IOException ex) {
+		} catch (IOException ex) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Exception thrown while reading '.class' file for class [" + clazz +
 						"] - unable to determine constructor/method parameter names", ex);
 			}
-		}
-		catch (IllegalArgumentException ex) {
+		} catch (IllegalArgumentException ex) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("ASM ClassReader failed to parse class file [" + clazz +
 						"], probably due to a new Java class file version that isn't supported yet " +
 						"- unable to determine constructor/method parameter names", ex);
 			}
-		}
-		finally {
+		} finally {
 			try {
 				is.close();
-			}
-			catch (IOException ex) {
+			} catch (IOException ex) {
 				// ignore
 			}
 		}
@@ -245,8 +261,7 @@ public class LocalVariableTableParameterNameDiscoverer implements ParameterNameD
 					return this.clazz.getDeclaredConstructor(argTypes);
 				}
 				return this.clazz.getDeclaredMethod(this.name, argTypes);
-			}
-			catch (NoSuchMethodException ex) {
+			} catch (NoSuchMethodException ex) {
 				throw new IllegalStateException("Method [" + this.name +
 						"] was discovered in the .class file but cannot be resolved in the class object", ex);
 			}
@@ -259,8 +274,7 @@ public class LocalVariableTableParameterNameDiscoverer implements ParameterNameD
 				lvtIndex[i] = nextIndex;
 				if (isWideType(paramTypes[i])) {
 					nextIndex += 2;
-				}
-				else {
+				} else {
 					nextIndex++;
 				}
 			}

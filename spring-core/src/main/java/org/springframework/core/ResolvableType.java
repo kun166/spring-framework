@@ -1334,6 +1334,10 @@ public class ResolvableType implements Serializable {
 	 * Return a {@code ResolvableType} for the specified {@link Method} parameter with a
 	 * given implementation. Use this variant when the class that declares the method
 	 * includes generic parameter variables that are satisfied by the implementation class.
+	 * <p>
+	 * {@link BridgeMethodResolver#isResolvedTypeMatch(java.lang.reflect.Method, java.lang.reflect.Method, java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param method              the source method (must not be {@code null})
 	 * @param parameterIndex      the parameter index
@@ -1350,6 +1354,9 @@ public class ResolvableType implements Serializable {
 
 	/**
 	 * Return a {@code ResolvableType} for the specified {@link MethodParameter}.
+	 * <p>
+	 * {@link ResolvableType#forMethodParameter(java.lang.reflect.Method, int, java.lang.Class)}中调用
+	 * </p>
 	 *
 	 * @param methodParameter the source method parameter (must not be {@code null})
 	 * @return a {@code ResolvableType} for the specified method parameter
@@ -1383,6 +1390,9 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Return a {@code ResolvableType} for the specified {@link MethodParameter},
 	 * overriding the target type to resolve with a specific given type.
+	 * <p>
+	 * {@link ResolvableType#forMethodParameter(org.springframework.core.MethodParameter)}中调用
+	 * </p>
 	 *
 	 * @param methodParameter the source method parameter (must not be {@code null})
 	 * @param targetType      the type to resolve (a part of the method parameter's type)
