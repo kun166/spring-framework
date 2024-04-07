@@ -109,6 +109,8 @@ class BeanDefinitionValueResolver {
 	 * <p>
 	 * {@link ConstructorResolver#resolvePreparedArguments(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.BeanWrapper, java.lang.reflect.Executable, java.lang.Object[])}
 	 * 中调用
+	 * {@link ConstructorResolver#resolveConstructorArguments(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.factory.config.ConstructorArgumentValues, org.springframework.beans.factory.config.ConstructorArgumentValues)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param argName the name of the argument that the value is defined for
@@ -120,6 +122,9 @@ class BeanDefinitionValueResolver {
 		// We must check each value to see whether it requires a runtime reference
 		// to another bean to be resolved.
 		if (value instanceof RuntimeBeanReference) {
+			/**
+			 * bean 引用,即<ref>,这个返回的是bean的实例
+			 */
 			RuntimeBeanReference ref = (RuntimeBeanReference) value;
 			return resolveReference(argName, ref);
 		} else if (value instanceof RuntimeBeanNameReference) {
@@ -129,6 +134,9 @@ class BeanDefinitionValueResolver {
 				throw new BeanDefinitionStoreException(
 						"Invalid bean name '" + refName + "' in bean reference for " + argName);
 			}
+			/**
+			 * 返回的是bean name
+			 */
 			return refName;
 		} else if (value instanceof BeanDefinitionHolder) {
 			// Resolve BeanDefinitionHolder: contains BeanDefinition with name and aliases.
@@ -346,6 +354,10 @@ class BeanDefinitionValueResolver {
 	/**
 	 * Resolve an inner bean definition.
 	 *
+	 * <p>
+	 * {@link BeanDefinitionValueResolver#resolveValueIfNecessary(java.lang.Object, java.lang.Object)}中调用
+	 * </p>
+	 *
 	 * @param argName       the name of the argument that the inner bean is defined for
 	 * @param innerBeanName the name of the inner bean
 	 * @param innerBd       the bean definition for the inner bean
@@ -394,6 +406,12 @@ class BeanDefinitionValueResolver {
 	/**
 	 * Checks the given bean name whether it is unique. If not already unique,
 	 * a counter is added, increasing the counter until the name is unique.
+	 * <p>
+	 * {@link BeanDefinitionValueResolver#resolveInnerBean(java.lang.Object, java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中调用
+	 * </p>
+	 * 1,序号从0开始尝试,如果存在就+1,
+	 * 2,返回innerBeanName+"#"+序号
 	 *
 	 * @param innerBeanName the original name for the inner bean
 	 * @return the adapted name for the inner bean

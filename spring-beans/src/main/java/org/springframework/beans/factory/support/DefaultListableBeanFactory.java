@@ -231,6 +231,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	/**
 	 * Whether bean definition metadata may be cached for all beans.
+	 * 是否为所有bean缓存bean定义的元数据。
 	 */
 	private volatile boolean configurationFrozen;
 
@@ -588,15 +589,48 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this, requiredType, true, allowEagerInit);
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultListableBeanFactory#resolveNamedBean(org.springframework.core.ResolvableType, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param type the generically typed class or interface to match
+	 * @return
+	 */
 	@Override
 	public String[] getBeanNamesForType(ResolvableType type) {
 		return getBeanNamesForType(type, true, true);
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultListableBeanFactory#getBeanNamesForType(org.springframework.core.ResolvableType)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param type                 the generically typed class or interface to match
+	 *                             要匹配的类或者接口
+	 * @param includeNonSingletons whether to include prototype or scoped beans too
+	 *                             or just singletons (also applies to FactoryBeans)
+	 *                             是否匹配prototype或者scoped beans。或者仅匹配单例模式的bean
+	 * @param allowEagerInit       whether to initialize <i>lazy-init singletons</i> and
+	 *                             <i>objects created by FactoryBeans</i> (or by factory methods with a
+	 *                             "factory-bean" reference) for the type check. Note that FactoryBeans need to be
+	 *                             eagerly initialized to determine their type: So be aware that passing in "true"
+	 *                             for this flag will initialize FactoryBeans and "factory-bean" references.
+	 *                             是否初始化<i>lazy-init 属性的单例bean</i>和<i>FactoryBeans创建的对象</i>
+	 *                             (或者通过 "factory-bean" 引用的工厂方法) 来类型匹配检查。
+	 *                             应该注意到如果该参数传递true将初始化FactoryBeans和"factory-bean"引用
+	 * @return
+	 */
 	@Override
 	public String[] getBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit) {
 		Class<?> resolved = type.resolve();
 		if (resolved != null && !type.hasGenerics()) {
+			/**
+			 * 没有泛型
+			 */
 			return getBeanNamesForType(resolved, includeNonSingletons, allowEagerInit);
 		} else {
 			return doGetBeanNamesForType(type, includeNonSingletons, allowEagerInit);
@@ -613,6 +647,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * 中被调用
 	 * {@link org.springframework.context.support.PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors(org.springframework.beans.factory.config.ConfigurableListableBeanFactory, java.util.List)}
 	 * 中被调用
+	 * {@link DefaultListableBeanFactory#getBeanNamesForType(org.springframework.core.ResolvableType, boolean, boolean)}
+	 * 中调用
 	 *
 	 * @param type                 the class or interface to match, or {@code null} for all bean names
 	 * @param includeNonSingletons whether to include prototype or scoped beans too
@@ -656,6 +692,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// Check all bean definitions.
 		for (String beanName : this.beanDefinitionNames) {
 			// Only consider bean as eligible if the bean name is not defined as alias for some other bean.
+			/**
+			 * 呃,遍历整个{@link DefaultListableBeanFactory#beanDefinitionNames}……
+			 */
 			if (!isAlias(beanName)) {
 				try {
 					RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
@@ -1362,6 +1401,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * <p>
 	 * {@link DefaultListableBeanFactory#resolveNamedBean(java.lang.Class)}中调用
 	 * </p>
+	 * 大体上的思路就是:
+	 * 1,根据requiredType查询beanName的集合
+	 * 2,如果只有一个,就包装后返回
+	 * 3,如果有多个,筛选那个{@link AbstractBeanDefinition#primary}为true的bean name
 	 *
 	 * @param requiredType
 	 * @param args
@@ -1372,8 +1415,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
-	private <T> NamedBeanHolder<T> resolveNamedBean(
-			ResolvableType requiredType, @Nullable Object[] args, boolean nonUniqueAsNull) throws BeansException {
+	private <T> NamedBeanHolder<T> resolveNamedBean(ResolvableType requiredType,
+													@Nullable Object[] args,
+													boolean nonUniqueAsNull) throws BeansException {
 
 		Assert.notNull(requiredType, "Required type must not be null");
 		String[] candidateNames = getBeanNamesForType(requiredType);
@@ -1804,6 +1848,12 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Determine the primary candidate in the given set of beans.
 	 *
+	 * <p>
+	 * {@link DefaultListableBeanFactory#resolveNamedBean(org.springframework.core.ResolvableType, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
+	 * 从candidates中，筛选那个{@link AbstractBeanDefinition#primary}为true的bean name
+	 *
 	 * @param candidates   a Map of candidate names and candidate instances
 	 *                     (or candidate classes if not created yet) that match the required type
 	 * @param requiredType the target dependency type to match against
@@ -1817,10 +1867,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			String candidateBeanName = entry.getKey();
 			Object beanInstance = entry.getValue();
 			if (isPrimary(candidateBeanName, beanInstance)) {
+				/**
+				 * {@link AbstractBeanDefinition#primary}为true
+				 */
 				if (primaryBeanName != null) {
 					boolean candidateLocal = containsBeanDefinition(candidateBeanName);
 					boolean primaryLocal = containsBeanDefinition(primaryBeanName);
 					if (candidateLocal && primaryLocal) {
+						/**
+						 * 存在两个{@link AbstractBeanDefinition#primary}为true的,抛异常
+						 */
 						throw new NoUniqueBeanDefinitionException(requiredType, candidates.size(),
 								"more than one 'primary' bean found among candidates: " + candidates.keySet());
 					} else if (candidateLocal) {
@@ -1839,6 +1895,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * <p>Based on {@code @javax.annotation.Priority}. As defined by the related
 	 * {@link org.springframework.core.Ordered} interface, the lowest value has
 	 * the highest priority.
+	 * <p>
+	 * {@link DefaultListableBeanFactory#resolveNamedBean(org.springframework.core.ResolvableType, java.lang.Object[], boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param candidates   a Map of candidate names and candidate instances
 	 *                     (or candidate classes if not created yet) that match the required type
@@ -1909,6 +1969,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 */
 	@Nullable
 	protected Integer getPriority(Object beanInstance) {
+		/**
+		 * {@link AnnotationAwareOrderComparator}
+		 */
 		Comparator<Object> comparator = getDependencyComparator();
 		if (comparator instanceof OrderComparator) {
 			return ((OrderComparator) comparator).getPriority(beanInstance);

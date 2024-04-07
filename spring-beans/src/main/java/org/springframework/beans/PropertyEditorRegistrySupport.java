@@ -106,6 +106,10 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	@Nullable
 	private ConversionService conversionService;
 
+	/**
+	 * {@link PropertyEditorRegistrySupport#registerDefaultEditors()}
+	 * 中设置为true
+	 */
 	private boolean defaultEditorsActive = false;
 
 	/**
@@ -136,6 +140,9 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	/**
 	 * Specify a Spring 3.0 ConversionService to use for converting
 	 * property values, as an alternative to JavaBeans PropertyEditors.
+	 * <p>
+	 * {@link AbstractBeanFactory#initBeanWrapper(org.springframework.beans.BeanWrapper)}中调用
+	 * </p>
 	 */
 	public void setConversionService(@Nullable ConversionService conversionService) {
 		this.conversionService = conversionService;
@@ -157,6 +164,10 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	/**
 	 * Activate the default editors for this registry instance,
 	 * allowing for lazily registering default editors when needed.
+	 * <p>
+	 * {@link AbstractNestablePropertyAccessor#AbstractNestablePropertyAccessor(java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 */
 	protected void registerDefaultEditors() {
 		this.defaultEditorsActive = true;
@@ -168,6 +179,10 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	 * <p>Those editors are not registered by default simply because they are in
 	 * general inappropriate for data binding purposes. Of course, you may register
 	 * them individually in any case, through {@link #registerCustomEditor}.
+	 * <p>
+	 * {@link AbstractBeanFactory#registerCustomEditors(org.springframework.beans.PropertyEditorRegistry)}
+	 * 中调用
+	 * </p>
 	 */
 	public void useConfigValueEditors() {
 		this.configValueEditorsActive = true;
@@ -178,6 +193,10 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	 * <p>Note that this is different from registering a custom editor in that the editor
 	 * semantically still is a default editor. A ConversionService will override such a
 	 * default editor, whereas custom editors usually override the ConversionService.
+	 * <p>
+	 * {@link ResourceEditorRegistrar#doRegisterEditor(org.springframework.beans.PropertyEditorRegistry, java.lang.Class, java.beans.PropertyEditor)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param requiredType   the type of the property
 	 * @param propertyEditor the editor to register
@@ -332,6 +351,18 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link TypeConverterDelegate#convertIfNecessary(java.lang.String, java.lang.Object, java.lang.Object, java.lang.Class, org.springframework.core.convert.TypeDescriptor)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param requiredType the type of the property (can be {@code null} if a property
+	 *                     is given but should be specified in any case for consistency checking)
+	 * @param propertyPath the path of the property (name or nested path), or
+	 *                     {@code null} if looking for an editor for all properties of the given type
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public PropertyEditor findCustomEditor(@Nullable Class<?> requiredType, @Nullable String propertyPath) {
@@ -418,6 +449,10 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	 * Get custom editor for the given type. If no direct match found,
 	 * try custom editor for superclass (which will in any case be able
 	 * to render a value as String via {@code getAsText}).
+	 * <p>
+	 * {@link PropertyEditorRegistrySupport#findCustomEditor(java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param requiredType the type to look for
 	 * @return the custom editor, or {@code null} if none found for this type

@@ -25,6 +25,7 @@ import java.net.URL;
 import java.nio.file.Path;
 
 import org.springframework.beans.factory.support.AbstractBeanFactory;
+import org.springframework.core.env.StandardEnvironment;
 import org.xml.sax.InputSource;
 
 import org.springframework.beans.PropertyEditorRegistrar;
@@ -62,14 +63,28 @@ import org.springframework.core.io.support.ResourcePatternResolver;
  */
 public class ResourceEditorRegistrar implements PropertyEditorRegistrar {
 
+	/**
+	 * {@link ResourceEditorRegistrar#ResourceEditorRegistrar(org.springframework.core.io.ResourceLoader, org.springframework.core.env.PropertyResolver)}
+	 * 中赋值
+	 * {@link StandardEnvironment#StandardEnvironment()}
+	 */
 	private final PropertyResolver propertyResolver;
 
+	/**
+	 * {@link ResourceEditorRegistrar#ResourceEditorRegistrar(org.springframework.core.io.ResourceLoader, org.springframework.core.env.PropertyResolver)}
+	 * 中赋值
+	 * {@link org.springframework.context.support.AbstractApplicationContext}
+	 */
 	private final ResourceLoader resourceLoader;
 
 
 	/**
 	 * Create a new ResourceEditorRegistrar for the given {@link ResourceLoader}
 	 * and {@link PropertyResolver}.
+	 * <p>
+	 * {@link org.springframework.context.support.AbstractApplicationContext#prepareBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param resourceLoader   the ResourceLoader (or ResourcePatternResolver)
 	 *                         to create editors for (usually an ApplicationContext)
@@ -132,6 +147,10 @@ public class ResourceEditorRegistrar implements PropertyEditorRegistrar {
 	/**
 	 * Override default editor, if possible (since that's what we really mean to do here);
 	 * otherwise register as a custom editor.
+	 * <p>
+	 * {@link ResourceEditorRegistrar#registerCustomEditors(org.springframework.beans.PropertyEditorRegistry)}
+	 * 中调用
+	 * </p>
 	 */
 	private void doRegisterEditor(PropertyEditorRegistry registry, Class<?> requiredType, PropertyEditor editor) {
 		if (registry instanceof PropertyEditorRegistrySupport) {

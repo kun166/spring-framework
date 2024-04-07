@@ -265,6 +265,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * {@link org.springframework.context.support.AbstractApplicationContext#getBean(java.lang.String)}中调用
+	 * {@link DefaultListableBeanFactory#resolveNamedBean(org.springframework.core.ResolvableType, java.lang.Object[], boolean)}中调用
 	 * <p>
 	 * BeanDefinition存放在{@link DefaultListableBeanFactory#beanDefinitionMap}中了
 	 * bean实例最终放在了{@link DefaultSingletonBeanRegistry#singletonObjects}中了
@@ -794,6 +795,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/**
 	 * <p>
 	 * {@link AbstractAutowireCapableBeanFactory#getTypeForFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class[])}
+	 * 中调用
+	 * {@link DefaultListableBeanFactory#resolveNamedBean(org.springframework.core.ResolvableType, java.lang.Object[], boolean)}
 	 * 中调用
 	 * </p>
 	 *

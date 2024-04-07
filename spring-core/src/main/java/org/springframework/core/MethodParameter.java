@@ -850,8 +850,13 @@ public class MethodParameter {
 	 * <p>This is a convenience factory method for scenarios where a
 	 * Method or Constructor reference is treated in a generic fashion.
 	 *
-	 * @param executable     the Method or Constructor to specify a parameter for
-	 * @param parameterIndex the index of the parameter
+	 * <p>
+	 * {@link org.springframework.beans.factory.support.ConstructorResolver#createArgumentArray}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param executable     the Method or Constructor to specify a parameter for。构造函数或者是方法
+	 * @param parameterIndex the index of the parameter 参数中的位置
 	 * @return the corresponding MethodParameter instance
 	 * @since 5.0
 	 */

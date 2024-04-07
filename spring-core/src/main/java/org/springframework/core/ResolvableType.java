@@ -532,6 +532,10 @@ public class ResolvableType implements Serializable {
 
 	/**
 	 * Return {@code true} if this type contains generic parameters.
+	 * <p>
+	 * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory#getBeanNamesForType(org.springframework.core.ResolvableType, boolean, boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @see #getGeneric(int...)
 	 * @see #getGenerics()
@@ -729,6 +733,9 @@ public class ResolvableType implements Serializable {
 	 * access a specific generic consider using the {@link #getGeneric(int...)} method as
 	 * it allows access to nested generics and protects against
 	 * {@code IndexOutOfBoundsExceptions}.
+	 * <p>
+	 * {@link ResolvableType#hasGenerics()}中调用
+	 * </p>
 	 *
 	 * @return an array of {@code ResolvableType ResolvableTypes} representing the generic parameters
 	 * (never {@code null})
@@ -743,13 +750,25 @@ public class ResolvableType implements Serializable {
 		}
 		ResolvableType[] generics = this.generics;
 		if (generics == null) {
+			/**
+			 * 第一次进来,初始化{@link ResolvableType#generics}
+			 */
 			if (this.type instanceof Class) {
+				/**
+				 * 原始类型是一个class
+				 * https://blog.csdn.net/weixin_41092496/article/details/131262977
+				 * 用于获取泛型类或接口的泛型声明所声明的类型参数。
+				 */
 				Type[] typeParams = ((Class<?>) this.type).getTypeParameters();
 				generics = new ResolvableType[typeParams.length];
 				for (int i = 0; i < generics.length; i++) {
 					generics[i] = ResolvableType.forType(typeParams[i], this);
 				}
 			} else if (this.type instanceof ParameterizedType) {
+				/**
+				 * ParameterizedType泛型
+				 * https://blog.csdn.net/liuzipeizliuziyu/article/details/132067680
+				 */
 				Type[] actualTypeArguments = ((ParameterizedType) this.type).getActualTypeArguments();
 				generics = new ResolvableType[actualTypeArguments.length];
 				for (int i = 0; i < actualTypeArguments.length; i++) {

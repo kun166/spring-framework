@@ -57,6 +57,8 @@ public class PrioritizedParameterNameDiscoverer implements ParameterNameDiscover
 	 * <p>
 	 * {@link org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#getTypeForFactoryMethod}
 	 * 中调用
+	 * {@link org.springframework.beans.factory.support.ConstructorResolver#instantiateUsingFactoryMethod}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param method the method to find parameter names for
