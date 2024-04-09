@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.support.AbstractBeanFactory;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -264,6 +265,11 @@ public abstract class BeanFactoryUtils {
 	 * only raw FactoryBeans will be checked (which doesn't require initialization
 	 * of each FactoryBean).
 	 *
+	 * <p>
+	 * {@link DefaultListableBeanFactory#findAutowireCandidates(java.lang.String, java.lang.Class, org.springframework.beans.factory.config.DependencyDescriptor)}
+	 * 中调用
+	 * </p>
+	 *
 	 * @param lbf                  the bean factory
 	 * @param includeNonSingletons whether to include prototype or scoped beans too
 	 *                             or just singletons (also applies to FactoryBeans)
@@ -276,8 +282,10 @@ public abstract class BeanFactoryUtils {
 	 * @return the array of matching bean names, or an empty array if none
 	 * @see ListableBeanFactory#getBeanNamesForType(Class, boolean, boolean)
 	 */
-	public static String[] beanNamesForTypeIncludingAncestors(
-			ListableBeanFactory lbf, Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
+	public static String[] beanNamesForTypeIncludingAncestors(ListableBeanFactory lbf,
+															  Class<?> type,
+															  boolean includeNonSingletons,
+															  boolean allowEagerInit) {
 
 		Assert.notNull(lbf, "ListableBeanFactory must not be null");
 		String[] result = lbf.getBeanNamesForType(type, includeNonSingletons, allowEagerInit);

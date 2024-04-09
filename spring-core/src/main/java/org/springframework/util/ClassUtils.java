@@ -603,6 +603,10 @@ public abstract class ClassUtils {
 	 * Determine if the given type is assignable from the given value,
 	 * assuming setting by reflection. Considers primitive wrapper classes
 	 * as assignable to the corresponding primitive types.
+	 * <p>
+	 * {@link MethodInvoker#getTypeDifferenceWeight(java.lang.Class[], java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param type  the target type
 	 * @param value the value that should be assigned to the type

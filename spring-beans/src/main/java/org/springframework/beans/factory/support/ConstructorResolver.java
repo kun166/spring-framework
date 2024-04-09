@@ -37,12 +37,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 
-import org.springframework.beans.BeanMetadataElement;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.TypeConverter;
-import org.springframework.beans.TypeMismatchException;
+import org.springframework.beans.*;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.BeanFactory;
@@ -336,6 +331,10 @@ class ConstructorResolver {
 	/**
 	 * Resolve the factory method in the specified bean definition, if possible.
 	 * {@link RootBeanDefinition#getResolvedFactoryMethod()} can be checked for the result.
+	 * <p>
+	 * {@link DefaultListableBeanFactory#isAutowireCandidate(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.DependencyDescriptor, org.springframework.beans.factory.support.AutowireCandidateResolver)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param mbd the bean definition to check
 	 */
@@ -364,9 +363,22 @@ class ConstructorResolver {
 				}
 			}
 		}
+		/**
+		 * 如果此时uniqueCandidate!=null,说明只存在一个方法和{@link AbstractBeanDefinition#getFactoryMethodName()}相同
+		 */
 		mbd.factoryMethodToIntrospect = uniqueCandidate;
 	}
 
+	/**
+	 * <p>
+	 * {@link ConstructorResolver#resolveFactoryMethodIfPossible(org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param uniqueCandidate
+	 * @param candidate
+	 * @return
+	 */
 	private boolean isParamMismatch(Method uniqueCandidate, Method candidate) {
 		int uniqueCandidateParameterCount = uniqueCandidate.getParameterCount();
 		int candidateParameterCount = candidate.getParameterCount();
@@ -410,6 +422,10 @@ class ConstructorResolver {
 	 * 这个方法挺复杂的，等有时间再看吧
 	 * <p>
 	 * {@link AbstractBeanDefinition#getFactoryMethodName()}不为null,走的这个分支
+	 * <p>
+	 * 从该方法的代码逻辑上来看,如果未有实际传参,
+	 * 如果有多个候选方法,则形参和实参差距最小的那个会被选中。
+	 * 更进一步，如果未通过xml中定义<constructor-arg>,则很大概率是参数最少的那个被选中,这个和构造器的选参方式不一致
 	 *
 	 * @param beanName     the name of the bean
 	 * @param mbd          the merged bean definition for the bean
@@ -493,6 +509,11 @@ class ConstructorResolver {
 			synchronized (mbd.constructorArgumentLock) {
 				// 先取缓存中的 method。
 				// 如果缓存中有值了，说明不是第一次创建，这里的缓存值是通过下面的逻辑缓存的
+				/**
+				 * 下面这些缓存,是从这个方法的最后缓存的,是通过调用
+				 * {@link ArgumentsHolder#storeCache(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Executable)}
+				 * 方法缓存的
+				 */
 				factoryMethodToUse = (Method) mbd.resolvedConstructorOrFactoryMethod;
 				if (factoryMethodToUse != null && mbd.constructorArgumentsResolved) {
 					// Found a cached factory method...
@@ -610,6 +631,9 @@ class ConstructorResolver {
 					 */
 					ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
 					resolvedValues = new ConstructorArgumentValues();
+					/**
+					 * 方法里面把cargs定义的参数，转成实际的值，放到了resolvedValues里
+					 */
 					minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 				} else {
 					/**
@@ -656,6 +680,9 @@ class ConstructorResolver {
 								 */
 								paramNames = pnd.getParameterNames(candidate);
 							}
+							/**
+							 * 这个方法很重要
+							 */
 							argsHolder = createArgumentArray(beanName, mbd, resolvedValues, bw,
 									paramTypes, paramNames, candidate, autowiring, candidates.size() == 1);
 						} catch (UnsatisfiedDependencyException ex) {
@@ -671,10 +698,16 @@ class ConstructorResolver {
 						}
 					}
 
+					/**
+					 * 计算该方法的实际传参和形参的类型差距
+					 */
 					int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 							argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 					// Choose this factory method if it represents the closest match.
 					if (typeDiffWeight < minTypeDiffWeight) {
+						/**
+						 * 挑选差距最小的那个
+						 */
 						factoryMethodToUse = candidate;
 						argsHolderToUse = argsHolder;
 						argsToUse = argsHolder.arguments;
@@ -686,20 +719,30 @@ class ConstructorResolver {
 					// and eventually raise an ambiguity exception.
 					// However, only perform that check in non-lenient constructor resolution mode,
 					// and explicitly ignore overridden methods (with the same parameter signature).
-					else if (factoryMethodToUse != null && typeDiffWeight == minTypeDiffWeight &&
-							!mbd.isLenientConstructorResolution() &&
-							paramTypes.length == factoryMethodToUse.getParameterCount() &&
-							!Arrays.equals(paramTypes, factoryMethodToUse.getParameterTypes())) {
+					else if (factoryMethodToUse != null
+							&& typeDiffWeight == minTypeDiffWeight
+							&& !mbd.isLenientConstructorResolution()
+							&& paramTypes.length == factoryMethodToUse.getParameterCount()
+							&& !Arrays.equals(paramTypes, factoryMethodToUse.getParameterTypes())) {
+						/**
+						 * 两个候选方法的实际传参和形参差距一致
+						 */
 						if (ambiguousFactoryMethods == null) {
 							ambiguousFactoryMethods = new LinkedHashSet<>();
 							ambiguousFactoryMethods.add(factoryMethodToUse);
 						}
+						/**
+						 * 把所有实际传参和形参差距最小,且相等的方法记录到ambiguousFactoryMethods里
+						 */
 						ambiguousFactoryMethods.add(candidate);
 					}
 				}
 			}
 
 			if (factoryMethodToUse == null || argsToUse == null) {
+				/**
+				 * 说明没有找到候选方法
+				 */
 				if (causes != null) {
 					UnsatisfiedDependencyException ex = causes.removeLast();
 					for (Exception cause : causes) {
@@ -707,21 +750,44 @@ class ConstructorResolver {
 					}
 					throw ex;
 				}
+				/**
+				 * 说明也不是转换出错了,那就是candidates为空
+				 */
 				List<String> argTypes = new ArrayList<>(minNrOfArgs);
 				if (explicitArgs != null) {
+					/**
+					 * 实际传参不为空
+					 */
 					for (Object arg : explicitArgs) {
+						/**
+						 * 遍历每个实际传参,如果不为null,就记录参数类型
+						 */
 						argTypes.add(arg != null ? arg.getClass().getSimpleName() : "null");
 					}
 				} else if (resolvedValues != null) {
+					/**
+					 * xml中定义了<constructor-arg>
+					 */
 					Set<ValueHolder> valueHolders = new LinkedHashSet<>(resolvedValues.getArgumentCount());
+					/**
+					 * 添加所有定义的参数
+					 */
 					valueHolders.addAll(resolvedValues.getIndexedArgumentValues().values());
 					valueHolders.addAll(resolvedValues.getGenericArgumentValues());
 					for (ValueHolder value : valueHolders) {
+						/**
+						 * 转换类型参数。
+						 * 1,如果定义了类型,直接取类型
+						 * 2,如果未定义类型,但是给予了值,则取值的类型
+						 */
 						String argType = (value.getType() != null ? ClassUtils.getShortName(value.getType()) :
 								(value.getValue() != null ? value.getValue().getClass().getSimpleName() : "null"));
 						argTypes.add(argType);
 					}
 				}
+				/**
+				 * 组织字符串,抛异常
+				 */
 				String argDesc = StringUtils.collectionToCommaDelimitedString(argTypes);
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"No matching factory method found on class [" + factoryClass.getName() + "]: " +
@@ -733,10 +799,16 @@ class ConstructorResolver {
 								"exists and that it is " +
 								(isStatic ? "static" : "non-static") + ".");
 			} else if (void.class == factoryMethodToUse.getReturnType()) {
+				/**
+				 * 找到了方法,但是方法返回值为void,抛异常
+				 */
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"Invalid factory method '" + mbd.getFactoryMethodName() + "' on class [" +
 								factoryClass.getName() + "]: needs to have a non-void return type!");
 			} else if (ambiguousFactoryMethods != null) {
+				/**
+				 * 好吧，找到多个也抛异常了
+				 */
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"Ambiguous factory method matches found on class [" + factoryClass.getName() + "] " +
 								"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities): " +
@@ -908,6 +980,7 @@ class ConstructorResolver {
 		ArgumentsHolder args = new ArgumentsHolder(paramTypes.length);
 		// 记录已经使用过了的ValueHolder
 		Set<ConstructorArgumentValues.ValueHolder> usedValueHolders = new HashSet<>(paramTypes.length);
+		// 记录自动装配的bean name的set
 		Set<String> allAutowiredBeanNames = new LinkedHashSet<>(paramTypes.length * 2);
 
 		for (int paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
@@ -922,12 +995,17 @@ class ConstructorResolver {
 			if (resolvedValues != null) {
 				/**
 				 * 如果xml中配置了<constructor-arg>,则从配置项里查找
+				 * 从带index的参数里面找
 				 */
 				valueHolder = resolvedValues.getArgumentValue(paramIndex, paramType, paramName, usedValueHolders);
 				// If we couldn't find a direct match and are not supposed to autowire,
 				// let's try the next generic, untyped argument value as fallback:
 				// it could match after type conversion (for example, String -> int).
 				if (valueHolder == null && (!autowiring || paramTypes.length == resolvedValues.getArgumentCount())) {
+					/**
+					 * 从不带index的参数里面找
+					 * 遍历不带index的每个参数,如果参数未被使用过且name为null且type为null,就会被选中
+					 */
 					valueHolder = resolvedValues.getGenericArgumentValue(null, null, usedValueHolders);
 				}
 			}
@@ -946,6 +1024,9 @@ class ConstructorResolver {
 				} else {
 					MethodParameter methodParam = MethodParameter.forExecutable(executable, paramIndex);
 					try {
+						/**
+						 * {@link TypeConverterSupport#convertIfNecessary(java.lang.Object, java.lang.Class, org.springframework.core.MethodParameter)}
+						 */
 						convertedValue = converter.convertIfNecessary(originalValue, paramType, methodParam);
 					} catch (TypeMismatchException ex) {
 						throw new UnsatisfiedDependencyException(
@@ -964,6 +1045,9 @@ class ConstructorResolver {
 				args.arguments[paramIndex] = convertedValue;
 				args.rawArguments[paramIndex] = originalValue;
 			} else {
+				/**
+				 * 说明未定义<constructor-arg>,或者从<constructor-arg>里面没有获取到合适的配置项
+				 */
 				MethodParameter methodParam = MethodParameter.forExecutable(executable, paramIndex);
 				// No explicit match found: we're either supposed to autowire or
 				// have to fail creating an argument array for the given constructor.
@@ -976,8 +1060,7 @@ class ConstructorResolver {
 				try {
 					ConstructorDependencyDescriptor desc = new ConstructorDependencyDescriptor(methodParam, true);
 					Set<String> autowiredBeanNames = new LinkedHashSet<>(2);
-					Object arg = resolveAutowiredArgument(
-							desc, paramType, beanName, autowiredBeanNames, converter, fallback);
+					Object arg = resolveAutowiredArgument(desc, paramType, beanName, autowiredBeanNames, converter, fallback);
 					if (arg != null) {
 						setShortcutIfPossible(desc, paramType, autowiredBeanNames);
 					}
@@ -1100,11 +1183,17 @@ class ConstructorResolver {
 	 * <p>
 	 * {@link ConstructorResolver#resolvePreparedArguments(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.BeanWrapper, java.lang.reflect.Executable, java.lang.Object[])}
 	 * 中调用
+	 * {@link ConstructorResolver#createArgumentArray(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.ConstructorArgumentValues, org.springframework.beans.BeanWrapper, java.lang.Class[], java.lang.String[], java.lang.reflect.Executable, boolean, boolean)}
+	 * 中调用
 	 * </p>
 	 */
 	@Nullable
-	Object resolveAutowiredArgument(DependencyDescriptor descriptor, Class<?> paramType, String beanName,
-									@Nullable Set<String> autowiredBeanNames, TypeConverter typeConverter, boolean fallback) {
+	Object resolveAutowiredArgument(DependencyDescriptor descriptor,
+									Class<?> paramType,
+									String beanName,
+									@Nullable Set<String> autowiredBeanNames,
+									TypeConverter typeConverter,
+									boolean fallback) {
 
 		if (InjectionPoint.class.isAssignableFrom(paramType)) {
 			InjectionPoint injectionPoint = currentInjectionPoint.get();
@@ -1138,8 +1227,19 @@ class ConstructorResolver {
 		}
 	}
 
-	private void setShortcutIfPossible(
-			ConstructorDependencyDescriptor descriptor, Class<?> paramType, Set<String> autowiredBeanNames) {
+	/**
+	 * <p>
+	 * {@link ConstructorResolver#createArgumentArray(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.ConstructorArgumentValues, org.springframework.beans.BeanWrapper, java.lang.Class[], java.lang.String[], java.lang.reflect.Executable, boolean, boolean)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param descriptor
+	 * @param paramType
+	 * @param autowiredBeanNames
+	 */
+	private void setShortcutIfPossible(ConstructorDependencyDescriptor descriptor,
+									   Class<?> paramType,
+									   Set<String> autowiredBeanNames) {
 
 		if (autowiredBeanNames.size() == 1) {
 			String autowiredBeanName = autowiredBeanNames.iterator().next();
@@ -1150,6 +1250,16 @@ class ConstructorResolver {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link ConstructorResolver#createArgumentArray(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.ConstructorArgumentValues, org.springframework.beans.BeanWrapper, java.lang.Class[], java.lang.String[], java.lang.reflect.Executable, boolean, boolean)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param executable
+	 * @param beanName
+	 * @param autowiredBeanNames
+	 */
 	private void registerDependentBeans(
 			Executable executable, String beanName, Set<String> autowiredBeanNames) {
 
@@ -1179,12 +1289,27 @@ class ConstructorResolver {
 	 */
 	private static class ArgumentsHolder {
 
+		/**
+		 * 未经加工的,原始的参数列表
+		 */
 		public final Object[] rawArguments;
 
+		/**
+		 * 转化后的参数列表
+		 */
 		public final Object[] arguments;
 
+		/**
+		 * {@link ValueHolder#source}不为null，且为{@link ValueHolder}
+		 * 从{@link ValueHolder#source}里获取的参数
+		 */
 		public final Object[] preparedArguments;
 
+		/**
+		 * {@link ValueHolder#source}不为null，且为{@link ValueHolder}
+		 * 则设置为true
+		 * {@link ArgumentsHolder#arguments}被转换,设置为true
+		 */
 		public boolean resolveNecessary = false;
 
 		public ArgumentsHolder(int size) {
@@ -1205,13 +1330,32 @@ class ConstructorResolver {
 			this.preparedArguments = args;
 		}
 
+		/**
+		 * <p>
+		 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param paramTypes
+		 * @return
+		 */
 		public int getTypeDifferenceWeight(Class<?>[] paramTypes) {
 			// If valid arguments found, determine type difference weight.
 			// Try type difference weight on both the converted arguments and
 			// the raw arguments. If the raw weight is better, use it.
 			// Decrease raw weight by 1024 to prefer it over equal converted weight.
+			/**
+			 * 计算转换后的实际参数和定义参数之间的差距
+			 */
 			int typeDiffWeight = MethodInvoker.getTypeDifferenceWeight(paramTypes, this.arguments);
+			/**
+			 * 计算转换前的实际参数和定义参数之间的差距
+			 */
 			int rawTypeDiffWeight = MethodInvoker.getTypeDifferenceWeight(paramTypes, this.rawArguments) - 1024;
+			/**
+			 * 从这里可以看出来,{@link ArgumentsHolder#rawArguments}也参与了比较
+			 * 也就是说,如果转换前后的实际参数一致,则差距更小
+			 */
 			return Math.min(rawTypeDiffWeight, typeDiffWeight);
 		}
 
@@ -1229,6 +1373,15 @@ class ConstructorResolver {
 			return Integer.MAX_VALUE - 1024;
 		}
 
+		/**
+		 * <p>
+		 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param mbd
+		 * @param constructorOrFactoryMethod
+		 */
 		public void storeCache(RootBeanDefinition mbd, Executable constructorOrFactoryMethod) {
 			synchronized (mbd.constructorArgumentLock) {
 				mbd.resolvedConstructorOrFactoryMethod = constructorOrFactoryMethod;
@@ -1273,13 +1426,34 @@ class ConstructorResolver {
 	@SuppressWarnings("serial")
 	private static class ConstructorDependencyDescriptor extends DependencyDescriptor {
 
+		/**
+		 * {@link ConstructorResolver#setShortcutIfPossible(org.springframework.beans.factory.support.ConstructorResolver.ConstructorDependencyDescriptor, java.lang.Class, java.util.Set)}
+		 * 中赋值
+		 */
 		@Nullable
 		private volatile String shortcut;
 
+		/**
+		 * <p>
+		 * {@link ConstructorResolver#createArgumentArray(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.ConstructorArgumentValues, org.springframework.beans.BeanWrapper, java.lang.Class[], java.lang.String[], java.lang.reflect.Executable, boolean, boolean)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param methodParameter
+		 * @param required
+		 */
 		public ConstructorDependencyDescriptor(MethodParameter methodParameter, boolean required) {
 			super(methodParameter, required);
 		}
 
+		/**
+		 * <p>
+		 * {@link ConstructorResolver#setShortcutIfPossible(org.springframework.beans.factory.support.ConstructorResolver.ConstructorDependencyDescriptor, java.lang.Class, java.util.Set)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param shortcut
+		 */
 		public void setShortcut(@Nullable String shortcut) {
 			this.shortcut = shortcut;
 		}
@@ -1288,6 +1462,15 @@ class ConstructorResolver {
 			return (this.shortcut != null);
 		}
 
+		/**
+		 * <p>
+		 * {@link DefaultListableBeanFactory#doResolveDependency(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String, java.util.Set, org.springframework.beans.TypeConverter)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param beanFactory the associated factory
+		 * @return
+		 */
 		@Override
 		public Object resolveShortcut(BeanFactory beanFactory) {
 			String shortcut = this.shortcut;

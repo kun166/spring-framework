@@ -136,6 +136,10 @@ abstract class AutowireUtils {
 	/**
 	 * Resolve the given autowiring value against the given required type,
 	 * e.g. an {@link ObjectFactory} value to its actual object result.
+	 * <p>
+	 * {@link DefaultListableBeanFactory#findAutowireCandidates(java.lang.String, java.lang.Class, org.springframework.beans.factory.config.DependencyDescriptor)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param autowiringValue the value to resolve
 	 * @param requiredType    the type to assign the result to
@@ -143,14 +147,27 @@ abstract class AutowireUtils {
 	 */
 	public static Object resolveAutowiringValue(Object autowiringValue, Class<?> requiredType) {
 		if (autowiringValue instanceof ObjectFactory && !requiredType.isInstance(autowiringValue)) {
+			/**
+			 * autowiringValue是一个{@link ObjectFactory},且autowiringValue不是requiredType的实例
+			 */
 			ObjectFactory<?> factory = (ObjectFactory<?>) autowiringValue;
 			if (autowiringValue instanceof Serializable && requiredType.isInterface()) {
+				/**
+				 * autowiringValue实现了{@link Serializable},且requiredType是一个接口
+				 * 返回一个代理模式
+				 */
 				autowiringValue = Proxy.newProxyInstance(requiredType.getClassLoader(),
 						new Class<?>[]{requiredType}, new ObjectFactoryDelegatingInvocationHandler(factory));
 			} else {
+				/**
+				 * 直接返回{@link ObjectFactory#getObject()}
+				 */
 				return factory.getObject();
 			}
 		}
+		/**
+		 * 不做处理，直接返回
+		 */
 		return autowiringValue;
 	}
 

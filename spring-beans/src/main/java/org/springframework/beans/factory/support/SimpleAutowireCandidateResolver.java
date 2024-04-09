@@ -32,11 +32,22 @@ public class SimpleAutowireCandidateResolver implements AutowireCandidateResolve
 
 	/**
 	 * Shared instance of {@code SimpleAutowireCandidateResolver}.
+	 *
 	 * @since 5.2.7
 	 */
 	public static final SimpleAutowireCandidateResolver INSTANCE = new SimpleAutowireCandidateResolver();
 
 
+	/**
+	 * <p>
+	 * {@link DefaultListableBeanFactory#isAutowireCandidate(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.DependencyDescriptor, org.springframework.beans.factory.support.AutowireCandidateResolver)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param bdHolder   the bean definition including bean name and aliases
+	 * @param descriptor the descriptor for the target method parameter or field
+	 * @return
+	 */
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		return bdHolder.getBeanDefinition().isAutowireCandidate();
@@ -52,12 +63,31 @@ public class SimpleAutowireCandidateResolver implements AutowireCandidateResolve
 		return false;
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultListableBeanFactory#doResolveDependency(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String, java.util.Set, org.springframework.beans.TypeConverter)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param descriptor the descriptor for the target method parameter or field
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public Object getSuggestedValue(DependencyDescriptor descriptor) {
 		return null;
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultListableBeanFactory#resolveDependency(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String, java.util.Set, org.springframework.beans.TypeConverter)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param descriptor the descriptor for the target method parameter or field
+	 * @param beanName   the name of the bean that contains the injection point
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, @Nullable String beanName) {
@@ -66,6 +96,7 @@ public class SimpleAutowireCandidateResolver implements AutowireCandidateResolve
 
 	/**
 	 * This implementation returns {@code this} as-is.
+	 *
 	 * @see #INSTANCE
 	 */
 	@Override

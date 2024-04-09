@@ -1012,6 +1012,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		this.conversionService = conversionService;
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractBeanFactory#initBeanWrapper(org.springframework.beans.BeanWrapper)}
+	 * 中调用。打断点，这个地方是null
+	 * </p>
+	 *
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public ConversionService getConversionService() {

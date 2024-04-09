@@ -140,11 +140,17 @@ class TypeConverterDelegate {
 									@Nullable TypeDescriptor typeDescriptor) throws IllegalArgumentException {
 
 		// Custom editor for this type?
+		/**
+		 * 这个应该返回null
+		 */
 		PropertyEditor editor = this.propertyEditorRegistry.findCustomEditor(requiredType, propertyName);
 
 		ConversionFailedException conversionAttemptEx = null;
 
 		// No custom editor but custom ConversionService specified?
+		/**
+		 * 这个应该也是null
+		 */
 		ConversionService conversionService = this.propertyEditorRegistry.getConversionService();
 		if (editor == null && conversionService != null && newValue != null && typeDescriptor != null) {
 			TypeDescriptor sourceTypeDesc = TypeDescriptor.forObject(newValue);
@@ -182,7 +188,9 @@ class TypeConverterDelegate {
 
 		if (requiredType != null) {
 			// Try to apply some standard type conversion rules if appropriate.
-
+			/**
+			 * 走这个分支？
+			 */
 			if (convertedValue != null) {
 				if (Object.class == requiredType) {
 					return (T) convertedValue;

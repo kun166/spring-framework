@@ -170,6 +170,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private String[] dependsOn;
 
+	/**
+	 * https://blog.csdn.net/java_wxid/article/details/131277017
+	 */
 	private boolean autowireCandidate = true;
 
 	private boolean primary = false;
@@ -181,6 +184,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private boolean nonPublicAccessAllowed = true;
 
+	/**
+	 * 仁慈的,宽大的
+	 */
 	private boolean lenientConstructorResolution = true;
 
 	@Nullable

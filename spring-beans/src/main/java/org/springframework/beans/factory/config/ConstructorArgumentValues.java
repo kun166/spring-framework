@@ -27,6 +27,7 @@ import java.util.Set;
 import org.springframework.beans.BeanMetadataElement;
 import org.springframework.beans.Mergeable;
 import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
+import org.springframework.beans.factory.support.ConstructorResolver;
 import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -302,6 +303,8 @@ public class ConstructorArgumentValues {
 	 * <p>
 	 * {@link ConstructorArgumentValues#getArgumentValue(int, java.lang.Class, java.lang.String, java.util.Set)}
 	 * 中调用
+	 * {@link ConstructorResolver#createArgumentArray(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.ConstructorArgumentValues, org.springframework.beans.BeanWrapper, java.lang.Class[], java.lang.String[], java.lang.reflect.Executable, boolean, boolean)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param requiredType     the type to match (can be {@code null} to find
@@ -319,18 +322,33 @@ public class ConstructorArgumentValues {
 
 		for (ValueHolder valueHolder : this.genericArgumentValues) {
 			if (usedValueHolders != null && usedValueHolders.contains(valueHolder)) {
+				// 已经使用过了,略过
 				continue;
 			}
-			if (valueHolder.getName() != null && (requiredName == null ||
-					(!requiredName.isEmpty() && !requiredName.equals(valueHolder.getName())))) {
+			if (valueHolder.getName() != null
+					&& (requiredName == null || (!requiredName.isEmpty() && !requiredName.equals(valueHolder.getName())))) {
+				/**
+				 * 定义的参数有name,传入的参数为null,或者和定义的参数name不一致
+				 * 略过
+				 */
 				continue;
 			}
 			if (valueHolder.getType() != null && (requiredType == null ||
 					!ClassUtils.matchesTypeName(requiredType, valueHolder.getType()))) {
+				/**
+				 * 定义的参数有type类型,传入的参数type为空,或者和定义的参数type类型不匹配
+				 * 略过
+				 */
 				continue;
 			}
 			if (requiredType != null && valueHolder.getType() == null && valueHolder.getName() == null &&
 					!ClassUtils.isAssignableValue(requiredType, valueHolder.getValue())) {
+				/**
+				 * 传入的type参数不为null,
+				 * 且定义的参数type类型为空,
+				 * 且定义的参数name为空,
+				 * 且传入的type参数和参数定义的值类型不符
+				 */
 				continue;
 			}
 			return valueHolder;

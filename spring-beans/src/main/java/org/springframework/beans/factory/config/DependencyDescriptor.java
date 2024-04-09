@@ -33,6 +33,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
+import org.springframework.beans.factory.support.ConstructorResolver;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodParameter;
@@ -53,14 +54,26 @@ import org.springframework.util.ObjectUtils;
 @SuppressWarnings("serial")
 public class DependencyDescriptor extends InjectionPoint implements Serializable {
 
+	/**
+	 * 方法归属的类
+	 */
 	private final Class<?> declaringClass;
 
+	/**
+	 * 方法名称
+	 */
 	@Nullable
 	private String methodName;
 
+	/**
+	 * 方法参数类型
+	 */
 	@Nullable
 	private Class<?>[] parameterTypes;
 
+	/**
+	 * 在方法参数中的位置,数组下标
+	 */
 	private int parameterIndex;
 
 	@Nullable
@@ -85,6 +98,10 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	/**
 	 * Create a new descriptor for a method or constructor parameter.
 	 * Considers the dependency as 'eager'.
+	 * <p>
+	 * {@link ConstructorResolver.ConstructorDependencyDescriptor#ConstructorDependencyDescriptor(org.springframework.core.MethodParameter, boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param methodParameter the MethodParameter to wrap
 	 * @param required        whether the dependency is required
@@ -95,6 +112,11 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 	/**
 	 * Create a new descriptor for a method or constructor parameter.
+	 *
+	 * <p>
+	 * {@link DependencyDescriptor#DependencyDescriptor(org.springframework.core.MethodParameter, boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param methodParameter the MethodParameter to wrap
 	 * @param required        whether the dependency is required
@@ -399,6 +421,10 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 	/**
 	 * Determine the declared (non-generic) type of the wrapped parameter/field.
+	 * <p>
+	 * {@link DefaultListableBeanFactory#resolveDependency(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String, java.util.Set, org.springframework.beans.TypeConverter)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @return the declared type (never {@code null})
 	 */

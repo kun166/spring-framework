@@ -100,7 +100,8 @@ public abstract class TypeConverterSupport extends PropertyEditorRegistrySupport
 	 */
 	@Nullable
 	@Override
-	public <T> T convertIfNecessary(@Nullable Object value, @Nullable Class<T> requiredType,
+	public <T> T convertIfNecessary(@Nullable Object value,
+									@Nullable Class<T> requiredType,
 									@Nullable TypeDescriptor typeDescriptor) throws TypeMismatchException {
 
 		Assert.state(this.typeConverterDelegate != null, "No TypeConverterDelegate");
