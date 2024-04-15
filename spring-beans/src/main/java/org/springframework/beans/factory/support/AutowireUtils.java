@@ -52,8 +52,11 @@ import org.springframework.util.ClassUtils;
 abstract class AutowireUtils {
 
 	/**
-	 * 1,先按方法是否是public排序:不是public的排在前面
-	 * 2,再按方法的参数数量排序:少的排在前面,多的排在后面
+	 * 1,先按方法是否是public排序:public的排在前面
+	 * 2,再按方法的参数数量排序:参数多地排在前面,参数少地排在后面
+	 * <p>
+	 * 细节是魔鬼啊,看下面的代码,传参是e1,e2;
+	 * 结果比较的时候,总是拿e2在前面
 	 */
 	public static final Comparator<Executable> EXECUTABLE_COMPARATOR = (e1, e2) -> {
 		int result = Boolean.compare(Modifier.isPublic(e2.getModifiers()), Modifier.isPublic(e1.getModifiers()));

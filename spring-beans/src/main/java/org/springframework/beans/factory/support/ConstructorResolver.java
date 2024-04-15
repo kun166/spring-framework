@@ -117,6 +117,7 @@ class ConstructorResolver {
 	 * {@link AbstractAutowireCapableBeanFactory#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
 	 * 中调用
 	 * </p>
+	 * 通过构造器创建bean
 	 *
 	 * @param beanName     the name of the bean
 	 * @param mbd          the merged bean definition for the bean
@@ -133,15 +134,20 @@ class ConstructorResolver {
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
 
-		// 构造函数
+		// 构造函数方法
 		Constructor<?> constructorToUse = null;
+		// 形参和实参包装对象
 		ArgumentsHolder argsHolderToUse = null;
-		// 构造函数传参？
+		// 实参数组
 		Object[] argsToUse = null;
 
 		if (explicitArgs != null) {
+			// 如果传递了实参,则用传递
 			argsToUse = explicitArgs;
 		} else {
+			/**
+			 * 这些是方法执行最后的缓存,先不看
+			 */
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
@@ -160,11 +166,17 @@ class ConstructorResolver {
 
 		if (constructorToUse == null || argsToUse == null) {
 			// Take specified constructors, if any.
+			/**
+			 * 未命中缓存
+			 */
 			Constructor<?>[] candidates = chosenCtors;
 			if (candidates == null) {
+				/**
+				 * 也未传递构造函数数组,需要自己获取。
+				 */
 				Class<?> beanClass = mbd.getBeanClass();
 				try {
-					// 前者返回所有构造函数,或者返回public的构造函数
+					// 前者返回所有构造函数,后者返回public的构造函数
 					candidates = (mbd.isNonPublicAccessAllowed() ?
 							beanClass.getDeclaredConstructors() : beanClass.getConstructors());
 				} catch (Throwable ex) {
@@ -175,8 +187,17 @@ class ConstructorResolver {
 			}
 
 			if (candidates.length == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
+				/**
+				 * 走到这个分支需满足三个条件:
+				 * 1,候选构造函数只有一个
+				 * 2,未传递实参
+				 * 3,mergedBeanDefinition未定义{@link AbstractBeanDefinition#constructorArgumentValues},即xml未定义<constructor-arg>
+				 */
 				Constructor<?> uniqueCandidate = candidates[0];
 				if (uniqueCandidate.getParameterCount() == 0) {
+					/**
+					 * 4,构造函数为无参构造器
+					 */
 					synchronized (mbd.constructorArgumentLock) {
 						mbd.resolvedConstructorOrFactoryMethod = uniqueCandidate;
 						mbd.constructorArgumentsResolved = true;
@@ -192,8 +213,10 @@ class ConstructorResolver {
 					mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
 			ConstructorArgumentValues resolvedValues = null;
 
+			// 最少参数
 			int minNrOfArgs;
 			if (explicitArgs != null) {
+				// 如果传递了实参,那就只能是实参的数组长度
 				minNrOfArgs = explicitArgs.length;
 			} else {
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
@@ -201,29 +224,58 @@ class ConstructorResolver {
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 			}
 
+			/**
+			 * 排序构造器方法
+			 * 1,先按方法是否是public排序:public的排在前面
+			 * 2,再按方法的参数数量排序:参数多地排在前面,参数少地排在后面
+			 */
 			AutowireUtils.sortConstructors(candidates);
+			// 预先定义一个最低期望值。期望值最低的那个会被选中
 			int minTypeDiffWeight = Integer.MAX_VALUE;
+			// 记录都是最低期望值,且多余一个的那些构造器
 			Set<Constructor<?>> ambiguousConstructors = null;
 			Deque<UnsatisfiedDependencyException> causes = null;
 
 			for (Constructor<?> candidate : candidates) {
+				/**
+				 * 遍历所有候选构造方法
+				 */
 				int parameterCount = candidate.getParameterCount();
 
 				if (constructorToUse != null && argsToUse != null && argsToUse.length > parameterCount) {
 					// Already found greedy constructor that can be satisfied ->
 					// do not look any further, there are only less greedy constructors left.
+					/**
+					 * 说明参数多的构造器已经被选中了,后面的就不选了
+					 */
 					break;
 				}
 				if (parameterCount < minNrOfArgs) {
+					/**
+					 * 如果构造函数需要的参数,少于要求的最少参数,就略过这个构造器,计算下一个构造器方法
+					 */
 					continue;
 				}
 
+				/**
+				 * 记录当前构造方法每一个参数的类型及实参值
+				 */
 				ArgumentsHolder argsHolder;
 				Class<?>[] paramTypes = candidate.getParameterTypes();
 				if (resolvedValues != null) {
+					/**
+					 * 说明未传递实参
+					 */
 					try {
+						/**
+						 * 获取注解{@link ConstructorProperties}的值
+						 * 即构造器的参数名称
+						 */
 						String[] paramNames = ConstructorPropertiesChecker.evaluate(candidate, parameterCount);
 						if (paramNames == null) {
+							/**
+							 * 如果未标该注解,从beanFactory里面获取ParameterNameDiscoverer获取
+							 */
 							ParameterNameDiscoverer pnd = this.beanFactory.getParameterNameDiscoverer();
 							if (pnd != null) {
 								paramNames = pnd.getParameterNames(candidate);
@@ -244,9 +296,18 @@ class ConstructorResolver {
 					}
 				} else {
 					// Explicit arguments given -> arguments length must match exactly.
+					/**
+					 * 已经传递了实参
+					 */
 					if (parameterCount != explicitArgs.length) {
+						/**
+						 * 传递实参的情况下，构造器参数必须与传递的实参数量相等,否则不是要找的构造器
+						 */
 						continue;
 					}
+					/**
+					 * 用传递的实参，构造ArgumentsHolder
+					 */
 					argsHolder = new ArgumentsHolder(explicitArgs);
 				}
 
@@ -254,12 +315,19 @@ class ConstructorResolver {
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// Choose this constructor if it represents the closest match.
 				if (typeDiffWeight < minTypeDiffWeight) {
+					/**
+					 * 形参和实参差距最小的,就会被选中
+					 */
 					constructorToUse = candidate;
 					argsHolderToUse = argsHolder;
 					argsToUse = argsHolder.arguments;
 					minTypeDiffWeight = typeDiffWeight;
 					ambiguousConstructors = null;
 				} else if (constructorToUse != null && typeDiffWeight == minTypeDiffWeight) {
+					/**
+					 * 形参和实参差距最小的,且存在多个。
+					 * 这里其实还隐含着一个条件:构造函数参数数量相同(1,前者是public,后者是public;2,前者是private,后者是private;前者是public,后者是private)。
+					 */
 					if (ambiguousConstructors == null) {
 						ambiguousConstructors = new LinkedHashSet<>();
 						ambiguousConstructors.add(constructorToUse);
@@ -280,6 +348,11 @@ class ConstructorResolver {
 						"Could not resolve matching constructor on bean class [" + mbd.getBeanClassName() + "] " +
 								"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities)");
 			} else if (ambiguousConstructors != null && !mbd.isLenientConstructorResolution()) {
+				/**
+				 * 哪怕形参和实参差距最小的,存在多个。参数数量也相同。
+				 * 但是如果{@link AbstractBeanDefinition#isLenientConstructorResolution()}为true(默认是true)
+				 * 也不会抛异常,会选中第一个
+				 */
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"Ambiguous constructor matches found on bean class [" + mbd.getBeanClassName() + "] " +
 								"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities): " +
@@ -446,7 +519,7 @@ class ConstructorResolver {
 		/**
 		 * factory-method两种实现方式
 		 * 1,通过静态方法(也就是factory-method配置的那个方法)返回一个对象作为bean
-		 * 2,先声明一个普通的bean(factory-bean配置,姑且叫FactoryBean吧，不同点是不需要实现接口，需要指定方法。),
+		 * 2,先声明一个普通的bean(factory-bean配置,姑且叫ObjectFactory吧，不同点是不需要实现接口，需要指定方法。),
 		 * 再指定一个方法(也就是factory-method配置的那个方法,一般就是普通方法了)返回一个对象作为bean
 		 */
 		Class<?> factoryClass;
@@ -864,7 +937,13 @@ class ConstructorResolver {
 	 * <p>
 	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 	 * 中调用
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+	 * 中调用
 	 * </p>
+	 * 这个方法的作用:
+	 * 1,如果传参cargs为空(未定义形参及转换前的实参),则什么都不做,返回0
+	 * 2,如果传参cargs不为空,将cargs定义的形参,以及转换前的实参转成转换后的实参,初始化给参数resolvedValues,
+	 * 并返回cargs定义的index和无index的参数的和。如果有定义的index+1大于参数的和,则返回这个最大的index+1
 	 *
 	 * @param beanName       the name of the bean
 	 * @param mbd            the merged bean definition for the bean
@@ -873,8 +952,11 @@ class ConstructorResolver {
 	 * @param resolvedValues
 	 * @return
 	 */
-	private int resolveConstructorArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
-											ConstructorArgumentValues cargs, ConstructorArgumentValues resolvedValues) {
+	private int resolveConstructorArguments(String beanName,
+											RootBeanDefinition mbd,
+											BeanWrapper bw,
+											ConstructorArgumentValues cargs,
+											ConstructorArgumentValues resolvedValues) {
 
 		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
@@ -950,6 +1032,8 @@ class ConstructorResolver {
 	 * <p>
 	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 	 * 中调用
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param beanName       beanName
@@ -986,6 +1070,8 @@ class ConstructorResolver {
 		for (int paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
 			/**
 			 * 遍历executable方法的方法参数数组
+			 * 注意这个resolvedValues参数,对于{@link ConstructorResolver#autowireConstructor}方法来说,
+			 * 它可能是一个未记录任何参数的实例
 			 */
 			Class<?> paramType = paramTypes[paramIndex];
 			// 方法参数名称
@@ -1086,6 +1172,8 @@ class ConstructorResolver {
 	 * <p>
 	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 	 * 中调用
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+	 * 中调用
 	 * </p>
 	 */
 	private Object[] resolvePreparedArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
@@ -1164,6 +1252,16 @@ class ConstructorResolver {
 		return resolvedArgs;
 	}
 
+	/**
+	 * <p>
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+	 * 中调用
+	 * </p>
+	 * 检测constructor的归属class是否带$$,即表示是cglib生成的。是的话获取父类的该构造器
+	 *
+	 * @param constructor
+	 * @return
+	 */
 	private Constructor<?> getUserDeclaredConstructor(Constructor<?> constructor) {
 		Class<?> declaringClass = constructor.getDeclaringClass();
 		Class<?> userClass = ClassUtils.getUserClass(declaringClass);
@@ -1215,6 +1313,9 @@ class ConstructorResolver {
 			if (fallback) {
 				// Single constructor or factory method -> let's return an empty array/collection
 				// for e.g. a vararg or a non-null List/Set/Map parameter.
+				/**
+				 * 如果没找到,且就这一个方法,且是array或者Collection或者map就返回一个空的响应对象回去
+				 */
 				if (paramType.isArray()) {
 					return Array.newInstance(paramType.getComponentType(), 0);
 				} else if (CollectionFactory.isApproximableCollectionType(paramType)) {
@@ -1398,6 +1499,10 @@ class ConstructorResolver {
 
 	/**
 	 * Delegate for checking Java's {@link ConstructorProperties} annotation.
+	 * <p>
+	 * {@link ConstructorResolver#autowireConstructor(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.reflect.Constructor[], java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 */
 	private static class ConstructorPropertiesChecker {
 
@@ -1429,6 +1534,7 @@ class ConstructorResolver {
 		/**
 		 * {@link ConstructorResolver#setShortcutIfPossible(org.springframework.beans.factory.support.ConstructorResolver.ConstructorDependencyDescriptor, java.lang.Class, java.util.Set)}
 		 * 中赋值
+		 * 这里记录的是bean name
 		 */
 		@Nullable
 		private volatile String shortcut;
