@@ -455,6 +455,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// Create bean instance.
 				if (mbd.isSingleton()) {
 					// 如果scope是singleton或者是默认的空
+					/**
+					 * 这个{@link DefaultSingletonBeanRegistry#getSingleton(java.lang.String, org.springframework.beans.factory.ObjectFactory)}
+					 * 方法里面，在调用{@link ObjectFactory#getObject()}前
+					 * 向{@link DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation}中添加数据,
+					 * 在调用后,删除了缓存数据
+					 */
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 							/**

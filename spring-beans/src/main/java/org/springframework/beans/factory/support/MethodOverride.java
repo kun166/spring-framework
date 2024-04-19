@@ -47,6 +47,7 @@ public abstract class MethodOverride implements BeanMetadataElement {
 
 	/**
 	 * Construct a new override for the given method.
+	 *
 	 * @param methodName the name of the method to override
 	 */
 	protected MethodOverride(String methodName) {
@@ -67,6 +68,14 @@ public abstract class MethodOverride implements BeanMetadataElement {
 	 * type matching needs to occur to disambiguate methods of the same name).
 	 * <p>Default is {@code true}; can be switched to {@code false} to optimize
 	 * runtime performance.
+	 * 设置重写的方法是否重载</em>（即，参数是否为
+	 * 需要进行类型匹配以消除同名方法的歧义）。
+	 * ＜p＞默认值为｛@code true｝；可以切换到{@code-false}进行优化
+	 * 运行时性能。
+	 * <p>
+	 * {@link AbstractBeanDefinition#prepareMethodOverride(org.springframework.beans.factory.support.MethodOverride)}
+	 * 中调用
+	 * </p>
 	 */
 	protected void setOverloaded(boolean overloaded) {
 		this.overloaded = overloaded;
@@ -98,6 +107,7 @@ public abstract class MethodOverride implements BeanMetadataElement {
 	 * Subclasses must override this to indicate whether they <em>match</em> the
 	 * given method. This allows for argument list checking as well as method
 	 * name checking.
+	 *
 	 * @param method the method to check
 	 * @return whether this override matches the given method
 	 */

@@ -202,6 +202,12 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private ConstructorArgumentValues constructorArgumentValues;
 
+	/**
+	 * <p>
+	 * {@link BeanDefinitionParserDelegate#parsePropertyElement(org.w3c.dom.Element, org.springframework.beans.factory.config.BeanDefinition)}
+	 * 中添加值
+	 * </p>
+	 */
 	@Nullable
 	private MutablePropertyValues propertyValues;
 

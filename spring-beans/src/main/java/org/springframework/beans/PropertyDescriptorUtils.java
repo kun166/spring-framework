@@ -47,12 +47,16 @@ abstract class PropertyDescriptorUtils {
 	 * <p>This just supports the basic JavaBeans conventions, without indexed
 	 * properties or any customizers, and without other BeanInfo metadata.
 	 * For standard JavaBeans introspection, use the JavaBeans Introspector.
+	 * <p>
+	 * {@link SimpleBeanInfoFactory#getBeanInfo(java.lang.Class)}中调用
+	 * </p>
+	 *
 	 * @param beanClass the target class to introspect
 	 * @return a collection of property descriptors
 	 * @throws IntrospectionException from introspecting the given bean class
-	 * @since 5.3.24
 	 * @see SimpleBeanInfoFactory
 	 * @see java.beans.Introspector#getBeanInfo(Class)
+	 * @since 5.3.24
 	 */
 	public static Collection<? extends PropertyDescriptor> determineBasicProperties(Class<?> beanClass)
 			throws IntrospectionException {
@@ -60,26 +64,30 @@ abstract class PropertyDescriptorUtils {
 		Map<String, BasicPropertyDescriptor> pdMap = new TreeMap<>();
 
 		for (Method method : beanClass.getMethods()) {
+			/**
+			 * 遍历beanClass的所有方法
+			 * 获取方法名称
+			 */
 			String methodName = method.getName();
-
+			// 是否是set方法
 			boolean setter;
+			// 方法名截取属性名长度
 			int nameIndex;
 			if (methodName.startsWith("set") && method.getParameterCount() == 1) {
 				setter = true;
 				nameIndex = 3;
-			}
-			else if (methodName.startsWith("get") && method.getParameterCount() == 0 && method.getReturnType() != Void.TYPE) {
+			} else if (methodName.startsWith("get") && method.getParameterCount() == 0 && method.getReturnType() != Void.TYPE) {
 				setter = false;
 				nameIndex = 3;
-			}
-			else if (methodName.startsWith("is") && method.getParameterCount() == 0 && method.getReturnType() == boolean.class) {
+			} else if (methodName.startsWith("is") && method.getParameterCount() == 0 && method.getReturnType() == boolean.class) {
 				setter = false;
 				nameIndex = 2;
-			}
-			else {
+			} else {
 				continue;
 			}
-
+			/**
+			 * 获取属性名称
+			 */
 			String propertyName = Introspector.decapitalize(methodName.substring(nameIndex));
 			if (propertyName.isEmpty()) {
 				continue;
@@ -87,23 +95,35 @@ abstract class PropertyDescriptorUtils {
 
 			BasicPropertyDescriptor pd = pdMap.get(propertyName);
 			if (pd != null) {
+				/**
+				 * 如果已经处理过该属性了
+				 */
 				if (setter) {
 					if (pd.getWriteMethod() == null ||
 							pd.getWriteMethod().getParameterTypes()[0].isAssignableFrom(method.getParameterTypes()[0])) {
+						/**
+						 * 1,set方法
+						 * 2,pd getWriteMethod为空,或者getWriteMethod参数是method参数的父类
+						 * 设置{@link BasicPropertyDescriptor#writeMethod}
+						 */
 						pd.setWriteMethod(method);
-					}
-					else {
+					} else {
+						/**
+						 * 添加{@link BasicPropertyDescriptor#writeMethod}
+						 */
 						pd.addWriteMethod(method);
 					}
-				}
-				else {
+				} else {
+					/**
+					 * 1,get方法
+					 * 2,pd getReadMethod方法为空,或者getReadMethod方法返回值是method方法返回值的
+					 */
 					if (pd.getReadMethod() == null ||
 							(pd.getReadMethod().getReturnType() == method.getReturnType() && method.getName().startsWith("is"))) {
 						pd.setReadMethod(method);
 					}
 				}
-			}
-			else {
+			} else {
 				pd = new BasicPropertyDescriptor(propertyName, (!setter ? method : null), (setter ? method : null));
 				pdMap.put(propertyName, pd);
 			}
@@ -164,16 +184,13 @@ abstract class PropertyDescriptorUtils {
 				if (propertyType.isAssignableFrom(params[0])) {
 					// Write method's property type potentially more specific
 					propertyType = params[0];
-				}
-				else if (params[0].isAssignableFrom(propertyType)) {
+				} else if (params[0].isAssignableFrom(propertyType)) {
 					// Proceed with read method's property type
-				}
-				else {
+				} else {
 					throw new IntrospectionException(
 							"Type mismatch between read and write methods: " + readMethod + " - " + writeMethod);
 				}
-			}
-			else {
+			} else {
 				propertyType = params[0];
 			}
 		}
@@ -186,7 +203,7 @@ abstract class PropertyDescriptorUtils {
 	 */
 	@Nullable
 	public static Class<?> findIndexedPropertyType(String name, @Nullable Class<?> propertyType,
-			@Nullable Method indexedReadMethod, @Nullable Method indexedWriteMethod) throws IntrospectionException {
+												   @Nullable Method indexedReadMethod, @Nullable Method indexedWriteMethod) throws IntrospectionException {
 
 		Class<?> indexedPropertyType = null;
 
@@ -216,16 +233,13 @@ abstract class PropertyDescriptorUtils {
 				if (indexedPropertyType.isAssignableFrom(params[1])) {
 					// Write method's property type potentially more specific
 					indexedPropertyType = params[1];
-				}
-				else if (params[1].isAssignableFrom(indexedPropertyType)) {
+				} else if (params[1].isAssignableFrom(indexedPropertyType)) {
 					// Proceed with read method's property type
-				}
-				else {
+				} else {
 					throw new IntrospectionException("Type mismatch between indexed read and write methods: " +
 							indexedReadMethod + " - " + indexedWriteMethod);
 				}
-			}
-			else {
+			} else {
 				indexedPropertyType = params[1];
 			}
 		}
@@ -243,6 +257,7 @@ abstract class PropertyDescriptorUtils {
 	 * Compare the given {@code PropertyDescriptors} and return {@code true} if
 	 * they are equivalent, i.e. their read method, write method, property type,
 	 * property editor and flags are equivalent.
+	 *
 	 * @see java.beans.PropertyDescriptor#equals(Object)
 	 */
 	public static boolean equals(PropertyDescriptor pd, PropertyDescriptor otherPd) {
@@ -258,6 +273,7 @@ abstract class PropertyDescriptorUtils {
 	 * PropertyDescriptor for {@link #determineBasicProperties(Class)},
 	 * not performing any early type determination for
 	 * {@link #setReadMethod}/{@link #setWriteMethod}.
+	 *
 	 * @since 5.3.24
 	 */
 	private static class BasicPropertyDescriptor extends PropertyDescriptor {
@@ -306,8 +322,7 @@ abstract class PropertyDescriptorUtils {
 			if (this.writeMethod == null && !this.alternativeWriteMethods.isEmpty()) {
 				if (this.readMethod == null) {
 					return this.alternativeWriteMethods.get(0);
-				}
-				else {
+				} else {
 					for (Method method : this.alternativeWriteMethods) {
 						if (this.readMethod.getReturnType().isAssignableFrom(method.getParameterTypes()[0])) {
 							this.writeMethod = method;

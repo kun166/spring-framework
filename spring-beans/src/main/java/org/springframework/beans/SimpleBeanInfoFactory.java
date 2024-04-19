@@ -39,12 +39,21 @@ import org.springframework.lang.NonNull;
  * {@link BeanInfoFactory} types to take precedence.
  *
  * @author Juergen Hoeller
- * @since 5.3.24
  * @see ExtendedBeanInfoFactory
  * @see CachedIntrospectionResults
+ * @since 5.3.24
  */
 public class SimpleBeanInfoFactory implements BeanInfoFactory, Ordered {
 
+	/**
+	 * <p>
+	 * {@link CachedIntrospectionResults#getBeanInfo(java.lang.Class)}中调用
+	 * </p>
+	 *
+	 * @param beanClass the bean class
+	 * @return
+	 * @throws IntrospectionException
+	 */
 	@Override
 	@NonNull
 	public BeanInfo getBeanInfo(Class<?> beanClass) throws IntrospectionException {
@@ -56,6 +65,7 @@ public class SimpleBeanInfoFactory implements BeanInfoFactory, Ordered {
 			public BeanDescriptor getBeanDescriptor() {
 				return new BeanDescriptor(beanClass);
 			}
+
 			@Override
 			public PropertyDescriptor[] getPropertyDescriptors() {
 				return pds.toArray(PropertyDescriptorUtils.EMPTY_PROPERTY_DESCRIPTOR_ARRAY);
