@@ -40,8 +40,8 @@ import org.springframework.util.Assert;
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @author Mark Fisher
- * @since 2.5
  * @see AopNamespaceUtils
+ * @since 2.5
  */
 public abstract class AopConfigUtils {
 
@@ -81,6 +81,16 @@ public abstract class AopConfigUtils {
 		return registerAspectJAutoProxyCreatorIfNecessary(registry, null);
 	}
 
+	/**
+	 * <p>
+	 * {@link AopNamespaceUtils#registerAspectJAutoProxyCreatorIfNecessary(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param registry
+	 * @param source
+	 * @return
+	 */
 	@Nullable
 	public static BeanDefinition registerAspectJAutoProxyCreatorIfNecessary(
 			BeanDefinitionRegistry registry, @Nullable Object source) {
@@ -93,6 +103,16 @@ public abstract class AopConfigUtils {
 		return registerAspectJAnnotationAutoProxyCreatorIfNecessary(registry, null);
 	}
 
+	/**
+	 * <p>
+	 * {@link AopNamespaceUtils#registerAspectJAnnotationAutoProxyCreatorIfNecessary(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param registry
+	 * @param source
+	 * @return
+	 */
 	@Nullable
 	public static BeanDefinition registerAspectJAnnotationAutoProxyCreatorIfNecessary(
 			BeanDefinitionRegistry registry, @Nullable Object source) {
@@ -100,6 +120,17 @@ public abstract class AopConfigUtils {
 		return registerOrEscalateApcAsRequired(AnnotationAwareAspectJAutoProxyCreator.class, registry, source);
 	}
 
+	/**
+	 * <p>
+	 * {@link AopNamespaceUtils#useClassProxyingIfNecessary(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.w3c.dom.Element)}
+	 * 中调用
+	 * "proxy-target-class"属性,值为"true"
+	 * </p>
+	 * 设置名字为{@link AopConfigUtils#AUTO_PROXY_CREATOR_BEAN_NAME}的bean,
+	 * 配置项"proxyTargetClass"为true
+	 *
+	 * @param registry
+	 */
 	public static void forceAutoProxyCreatorToUseClassProxying(BeanDefinitionRegistry registry) {
 		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
 			BeanDefinition definition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
@@ -107,6 +138,17 @@ public abstract class AopConfigUtils {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link AopNamespaceUtils#useClassProxyingIfNecessary(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.w3c.dom.Element)}
+	 * 中调用
+	 * "expose-proxy"属性,值为"true"
+	 * </p>
+	 * 设置名字为{@link AopConfigUtils#AUTO_PROXY_CREATOR_BEAN_NAME}的bean,
+	 * 配置项"exposeProxy"为true
+	 *
+	 * @param registry
+	 */
 	public static void forceAutoProxyCreatorToExposeProxy(BeanDefinitionRegistry registry) {
 		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
 			BeanDefinition definition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
@@ -114,18 +156,46 @@ public abstract class AopConfigUtils {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link AopConfigUtils#registerAspectJAutoProxyCreatorIfNecessary(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)}
+	 * 中调用
+	 * {@link AopConfigUtils#registerAspectJAnnotationAutoProxyCreatorIfNecessary(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param cls
+	 * @param registry
+	 * @param source
+	 * @return
+	 */
 	@Nullable
-	private static BeanDefinition registerOrEscalateApcAsRequired(
-			Class<?> cls, BeanDefinitionRegistry registry, @Nullable Object source) {
+	private static BeanDefinition registerOrEscalateApcAsRequired(Class<?> cls,
+																  BeanDefinitionRegistry registry,
+																  @Nullable Object source) {
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 
 		if (registry.containsBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME)) {
+			/**
+			 * 该名字的bean,会在方法下面注册进spring。进入这个分支，说明方法不是第一次调用了
+			 */
 			BeanDefinition apcDefinition = registry.getBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME);
 			if (!cls.getName().equals(apcDefinition.getBeanClassName())) {
+				/**
+				 * 注册的名字为{@link AopConfigUtils#AUTO_PROXY_CREATOR_BEAN_NAME}的bean,与传入的cls不一致
+				 * 这个返回的是{@link AopConfigUtils#APC_PRIORITY_LIST}里添加的三个class的index
+				 */
 				int currentPriority = findPriorityForClass(apcDefinition.getBeanClassName());
 				int requiredPriority = findPriorityForClass(cls);
 				if (currentPriority < requiredPriority) {
+					/**
+					 *{@link AopConfigUtils#APC_PRIORITY_LIST}里面的三个类
+					 * {@link InfrastructureAdvisorAutoProxyCreator}
+					 * {@link AspectJAwareAdvisorAutoProxyCreator}
+					 * {@link AnnotationAwareAspectJAutoProxyCreator}
+					 * 越往下的权限越高,会覆盖掉上面的类
+					 */
 					apcDefinition.setBeanClassName(cls.getName());
 				}
 			}
@@ -134,7 +204,13 @@ public abstract class AopConfigUtils {
 
 		RootBeanDefinition beanDefinition = new RootBeanDefinition(cls);
 		beanDefinition.setSource(source);
+		/**
+		 * order设置为{@link Integer#MIN_VALUE}了
+		 */
 		beanDefinition.getPropertyValues().add("order", Ordered.HIGHEST_PRECEDENCE);
+		/**
+		 * 系统内置的bean
+		 */
 		beanDefinition.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
 		registry.registerBeanDefinition(AUTO_PROXY_CREATOR_BEAN_NAME, beanDefinition);
 		return beanDefinition;

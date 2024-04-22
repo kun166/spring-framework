@@ -34,9 +34,9 @@ import org.springframework.lang.Nullable;
  *
  * @author Rob Harrop
  * @author Juergen Hoeller
- * @since 2.0
  * @see XmlReaderContext
  * @see BeanDefinitionParserDelegate
+ * @since 2.0
  */
 public final class ParserContext {
 
@@ -47,6 +47,12 @@ public final class ParserContext {
 	@Nullable
 	private BeanDefinition containingBeanDefinition;
 
+	/**
+	 * <p>
+	 * {@link org.springframework.aop.config.ConfigBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中添加
+	 * </p>
+	 */
 	private final Deque<CompositeComponentDefinition> containingComponents = new ArrayDeque<>();
 
 
@@ -56,7 +62,7 @@ public final class ParserContext {
 	}
 
 	public ParserContext(XmlReaderContext readerContext, BeanDefinitionParserDelegate delegate,
-			@Nullable BeanDefinition containingBeanDefinition) {
+						 @Nullable BeanDefinition containingBeanDefinition) {
 
 		this.readerContext = readerContext;
 		this.delegate = delegate;
@@ -99,6 +105,14 @@ public final class ParserContext {
 		return this.containingComponents.peek();
 	}
 
+	/**
+	 * <p>
+	 * {@link org.springframework.aop.config.ConfigBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param containingComponent
+	 */
 	public void pushContainingComponent(CompositeComponentDefinition containingComponent) {
 		this.containingComponents.push(containingComponent);
 	}
@@ -111,12 +125,19 @@ public final class ParserContext {
 		registerComponent(popContainingComponent());
 	}
 
+	/**
+	 * <p>
+	 * {@link org.springframework.aop.config.AopNamespaceUtils#registerComponentIfNecessary(org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param component
+	 */
 	public void registerComponent(ComponentDefinition component) {
 		CompositeComponentDefinition containingComponent = getContainingComponent();
 		if (containingComponent != null) {
 			containingComponent.addNestedComponent(component);
-		}
-		else {
+		} else {
 			this.readerContext.fireComponentRegistered(component);
 		}
 	}

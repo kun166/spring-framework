@@ -16,6 +16,7 @@
 
 package org.springframework.aop.config;
 
+import org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator;
 import org.w3c.dom.Element;
 
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -37,8 +38,8 @@ import org.springframework.lang.Nullable;
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @author Mark Fisher
- * @since 2.0
  * @see AopConfigUtils
+ * @since 2.0
  */
 public abstract class AopNamespaceUtils {
 
@@ -62,8 +63,17 @@ public abstract class AopNamespaceUtils {
 		registerComponentIfNecessary(beanDefinition, parserContext);
 	}
 
-	public static void registerAspectJAutoProxyCreatorIfNecessary(
-			ParserContext parserContext, Element sourceElement) {
+	/**
+	 * <p>
+	 * {@link ConfigBeanDefinitionParser#configureAutoProxyCreator(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param parserContext
+	 * @param sourceElement
+	 */
+	public static void registerAspectJAutoProxyCreatorIfNecessary(ParserContext parserContext,
+																  Element sourceElement) {
 
 		BeanDefinition beanDefinition = AopConfigUtils.registerAspectJAutoProxyCreatorIfNecessary(
 				parserContext.getRegistry(), parserContext.extractSource(sourceElement));
@@ -71,21 +81,49 @@ public abstract class AopNamespaceUtils {
 		registerComponentIfNecessary(beanDefinition, parserContext);
 	}
 
-	public static void registerAspectJAnnotationAutoProxyCreatorIfNecessary(
-			ParserContext parserContext, Element sourceElement) {
-
+	/**
+	 * <p>
+	 * {@link AspectJAutoProxyBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param parserContext
+	 * @param sourceElement
+	 */
+	public static void registerAspectJAnnotationAutoProxyCreatorIfNecessary(ParserContext parserContext,
+																			Element sourceElement) {
+		/**
+		 * 将{@link AnnotationAwareAspectJAutoProxyCreator}注册进spring
+		 */
 		BeanDefinition beanDefinition = AopConfigUtils.registerAspectJAnnotationAutoProxyCreatorIfNecessary(
 				parserContext.getRegistry(), parserContext.extractSource(sourceElement));
 		useClassProxyingIfNecessary(parserContext.getRegistry(), sourceElement);
 		registerComponentIfNecessary(beanDefinition, parserContext);
 	}
 
-	private static void useClassProxyingIfNecessary(BeanDefinitionRegistry registry, @Nullable Element sourceElement) {
+	/**
+	 * <p>
+	 * {@link AopNamespaceUtils#registerAspectJAnnotationAutoProxyCreatorIfNecessary(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param registry
+	 * @param sourceElement
+	 */
+	private static void useClassProxyingIfNecessary(BeanDefinitionRegistry registry,
+													@Nullable Element sourceElement) {
 		if (sourceElement != null) {
+			/**
+			 * 获取"proxy-target-class"属性
+			 */
 			boolean proxyTargetClass = Boolean.parseBoolean(sourceElement.getAttribute(PROXY_TARGET_CLASS_ATTRIBUTE));
 			if (proxyTargetClass) {
 				AopConfigUtils.forceAutoProxyCreatorToUseClassProxying(registry);
 			}
+			/**
+			 * 关于"expose-proxy"
+			 * 可以参考:https://www.cnblogs.com/chihirotan/p/7356683.html
+			 */
 			boolean exposeProxy = Boolean.parseBoolean(sourceElement.getAttribute(EXPOSE_PROXY_ATTRIBUTE));
 			if (exposeProxy) {
 				AopConfigUtils.forceAutoProxyCreatorToExposeProxy(registry);
@@ -93,7 +131,17 @@ public abstract class AopNamespaceUtils {
 		}
 	}
 
-	private static void registerComponentIfNecessary(@Nullable BeanDefinition beanDefinition, ParserContext parserContext) {
+	/**
+	 * <p>
+	 * {@link AopNamespaceUtils#registerAspectJAnnotationAutoProxyCreatorIfNecessary(org.springframework.beans.factory.xml.ParserContext, org.w3c.dom.Element)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanDefinition
+	 * @param parserContext
+	 */
+	private static void registerComponentIfNecessary(@Nullable BeanDefinition beanDefinition,
+													 ParserContext parserContext) {
 		if (beanDefinition != null) {
 			parserContext.registerComponent(
 					new BeanComponentDefinition(beanDefinition, AopConfigUtils.AUTO_PROXY_CREATOR_BEAN_NAME));
