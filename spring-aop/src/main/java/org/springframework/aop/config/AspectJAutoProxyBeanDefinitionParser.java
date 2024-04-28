@@ -56,6 +56,16 @@ class AspectJAutoProxyBeanDefinitionParser implements BeanDefinitionParser {
 		return null;
 	}
 
+	/**
+	 * <p>
+	 * {@link AspectJAutoProxyBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 * </p>
+	 * 有<aop:include name="" />标签就解析，没有就算了
+	 *
+	 * @param element
+	 * @param parserContext
+	 */
 	private void extendBeanDefinition(Element element, ParserContext parserContext) {
 		BeanDefinition beanDef =
 				parserContext.getRegistry().getBeanDefinition(AopConfigUtils.AUTO_PROXY_CREATOR_BEAN_NAME);
@@ -64,6 +74,17 @@ class AspectJAutoProxyBeanDefinitionParser implements BeanDefinitionParser {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link AspectJAutoProxyBeanDefinitionParser#extendBeanDefinition(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 * </p>
+	 * 解析:<aop:include name="" />标签
+	 *
+	 * @param element
+	 * @param parserContext
+	 * @param beanDef
+	 */
 	private void addIncludePatterns(Element element, ParserContext parserContext, BeanDefinition beanDef) {
 		ManagedList<TypedStringValue> includePatterns = new ManagedList<>();
 		NodeList childNodes = element.getChildNodes();
