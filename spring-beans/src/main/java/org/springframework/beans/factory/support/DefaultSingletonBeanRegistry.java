@@ -82,6 +82,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * 单例对象集合，也常被成为单例池；
 	 * 在{@link DefaultSingletonBeanRegistry#addSingleton(java.lang.String, java.lang.Object)}
 	 * 方法中添加元素
+	 * <p>
+	 * 一级缓存
+	 * 这是最主要的缓存，通常被称为“单例池”。它存储了完全初始化好的单例Bean实例。
+	 * 当一个Bean被创建并初始化完成后（包括属性填充和AOP代理等），就会被放置到这里。
+	 * 之后每次请求这个Bean时，Spring直接从这个缓存中返回实例，而无需再次创建。
+	 * </p>
 	 */
 	private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
 
@@ -90,6 +96,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * 单例对象工厂集合，可以通过工厂对象的 getObject 方法获取工厂所对应的 Bean 单例对象；
 	 * {@link DefaultSingletonBeanRegistry#addSingletonFactory(java.lang.String, org.springframework.beans.factory.ObjectFactory)}
 	 * 方法中添加值
+	 * <p>
+	 * 三级缓存
+	 * 这个缓存存储的是生产Bean实例的ObjectFactory对象。
+	 * 当Spring创建了一个Bean的原始实例（即未进行任何后处理，如AOP代理等）后，会将其包装成一个ObjectFactory，并放入这个缓存中。
+	 * 这样做可以在需要时通过调用工厂方法来获取或重获Bean实例，尤其是在解决循环依赖时非常有用，
+	 * 因为这样可以确保每个Bean只被正确初始化一次，同时支持后续的AOP代理等操作。
+	 * </p>
 	 */
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
@@ -98,6 +111,11 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * 早期单例对象集合，即已经完成实例化但还未完成初始化（即未完成属性注入，属于 Bean 的中间状态），主要用来解决 Bean 的循环依赖问题；
 	 * {@link DefaultSingletonBeanRegistry#addSingletonFactory(java.lang.String, org.springframework.beans.factory.ObjectFactory)}
 	 * 中删除值
+	 * <p>
+	 * 二级缓存
+	 * 这个缓存用于存放提前曝光的、尚未完成全部初始化过程的单例Bean实例。在某些场景下，为了尽快解决循环依赖，
+	 * Spring会在Bean实例化后但尚未完成属性填充等初始化步骤时，将这个“半成品”的Bean实例放入此缓存中。
+	 * </p>
 	 */
 	private final Map<String, Object> earlySingletonObjects = new ConcurrentHashMap<>(16);
 
@@ -236,8 +254,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	}
 
 	/**
+	 * <p>
 	 * {@link AbstractBeanFactory#doGetBean(java.lang.String, java.lang.Class, java.lang.Object[], boolean)}
 	 * 中调用
+	 * </p>
+	 * 这个是{@link Override}方法。
+	 * allowEarlyReference固定传参为true
+	 * 也就是调用此方法，允许获取早期
 	 *
 	 * @param beanName the name of the bean to look for
 	 * @return
@@ -280,17 +303,23 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				// 正在创建中，且allowEarlyReference为true
 				synchronized (this.singletonObjects) {
 					// Consistent creation of early reference within full singleton lock
-					// 双重判定，再分别去singletonObjects和earlySingletonObjects中取一次
+					/**
+					 * 加锁之后,再分别去一级缓存singletonObjects和二级缓存earlySingletonObjects中取一次
+					 */
 					singletonObject = this.singletonObjects.get(beanName);
 					if (singletonObject == null) {
 						singletonObject = this.earlySingletonObjects.get(beanName);
 						if (singletonObject == null) {
-							// 正在创建中，且singletonObjects和earlySingletonObjects中均还未记录
+							/**
+							 * 去三级缓存中取
+							 */
 							ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 							if (singletonFactory != null) {
 								// singletonFactories中有记录了
 								singletonObject = singletonFactory.getObject();
-								// 添加到earlySingletonObjects中，同时从singletonFactories中删除
+								/**
+								 * 三级缓存中有记录了，从三级缓存中取出来放到二级缓存中
+								 */
 								this.earlySingletonObjects.put(beanName, singletonObject);
 								this.singletonFactories.remove(beanName);
 							}
@@ -319,7 +348,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
 			/**
-			 * 三层缓冲中的第三层缓存{@link DefaultSingletonBeanRegistry#singletonObjects}
+			 * 这个地方要特别注意：对了，就是到这里的时候，开始加同步锁了
+			 * 三层缓冲中的第一层缓存{@link DefaultSingletonBeanRegistry#singletonObjects}
 			 */
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
@@ -496,6 +526,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		 * {@link DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation}
 		 */
 		if (!this.inCreationCheckExclusions.contains(beanName) && !this.singletonsCurrentlyInCreation.add(beanName)) {
+			/**
+			 * 如果已经存在了，说明正在创建中，且未创建完毕，又要创建，那就是循环依赖了，就报错了
+			 */
 			throw new BeanCurrentlyInCreationException(beanName);
 		}
 	}

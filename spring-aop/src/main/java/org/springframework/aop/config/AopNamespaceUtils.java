@@ -115,6 +115,7 @@ public abstract class AopNamespaceUtils {
 		if (sourceElement != null) {
 			/**
 			 * 获取"proxy-target-class"属性
+			 * <aop:config expose-proxy="" proxy-target-class="">
 			 */
 			boolean proxyTargetClass = Boolean.parseBoolean(sourceElement.getAttribute(PROXY_TARGET_CLASS_ATTRIBUTE));
 			if (proxyTargetClass) {
@@ -122,6 +123,7 @@ public abstract class AopNamespaceUtils {
 			}
 			/**
 			 * 关于"expose-proxy"
+			 * <aop:config expose-proxy="" proxy-target-class="">
 			 * 可以参考:https://www.cnblogs.com/chihirotan/p/7356683.html
 			 */
 			boolean exposeProxy = Boolean.parseBoolean(sourceElement.getAttribute(EXPOSE_PROXY_ATTRIBUTE));

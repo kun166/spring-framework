@@ -129,6 +129,10 @@ public abstract class AutoProxyUtils {
 	 * Determine whether the given bean name indicates an "original instance"
 	 * according to {@link AutowireCapableBeanFactory#ORIGINAL_INSTANCE_SUFFIX},
 	 * skipping any proxy attempts for it.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#shouldSkip(java.lang.Class, java.lang.String)}中调用
+	 * </p>
+	 * 判断beanName是否等于beanClass.getName()+".ORIGINAL"
 	 *
 	 * @param beanName  the name of the bean
 	 * @param beanClass the corresponding bean class
@@ -140,6 +144,10 @@ public abstract class AutoProxyUtils {
 				beanClass.getName().length() + AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX.length()) {
 			return false;
 		}
+		/**
+		 * 这个方法看不懂什么意思，莫非想省字符串?
+		 *
+		 */
 		return (beanName.startsWith(beanClass.getName()) &&
 				beanName.endsWith(AutowireCapableBeanFactory.ORIGINAL_INSTANCE_SUFFIX));
 	}

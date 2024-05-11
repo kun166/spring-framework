@@ -59,8 +59,12 @@ public final class ParseState {
 
 	/**
 	 * Add a new {@link Entry} to the {@link ArrayDeque}.
+	 * <p>
 	 * {@link BeanDefinitionParserDelegate#parseBeanDefinitionElement(org.w3c.dom.Element, java.lang.String, org.springframework.beans.factory.config.BeanDefinition)}
 	 * 中调用
+	 * {@link org.springframework.aop.config.ConfigBeanDefinitionParser#parsePointcut(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 * </p>
 	 */
 	public void push(Entry entry) {
 		this.state.push(entry);

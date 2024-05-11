@@ -49,6 +49,7 @@ import org.springframework.beans.PropertyValue;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.TypeConverter;
 import org.springframework.beans.factory.*;
+import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.AutowiredPropertyMarker;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -464,6 +465,20 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		return initializeBean(beanName, existingBean, null);
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param existingBean the existing bean instance
+	 * @param beanName     the name of the bean, to be passed to it if necessary
+	 *                     (only passed to {@link BeanPostProcessor BeanPostProcessors};
+	 *                     can follow the {@link #ORIGINAL_INSTANCE_SUFFIX} convention in order to
+	 *                     enforce the given instance to be returned, i.e. no proxies etc)
+	 * @return
+	 * @throws BeansException
+	 */
 	@Override
 	public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName)
 			throws BeansException {
@@ -479,6 +494,20 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		return result;
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#postProcessObjectFromFactoryBean(java.lang.Object, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param existingBean the existing bean instance
+	 * @param beanName     the name of the bean, to be passed to it if necessary
+	 *                     (only passed to {@link BeanPostProcessor BeanPostProcessors};
+	 *                     can follow the {@link #ORIGINAL_INSTANCE_SUFFIX} convention in order to
+	 *                     enforce the given instance to be returned, i.e. no proxies etc)
+	 * @return
+	 * @throws BeansException
+	 */
 	@Override
 	public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
 			throws BeansException {
@@ -486,6 +515,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Object result = existingBean;
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
 			Object current = processor.postProcessAfterInitialization(result, beanName);
+			/**
+			 * 从这里来看，只要有一个拦截器返回了null,就不再执行下面的拦截器了
+			 */
 			if (current == null) {
 				return result;
 			}
@@ -575,6 +607,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			/**
 			 * 如果{@link AbstractBeanFactory#beanPostProcessors}有{@link InstantiationAwareBeanPostProcessor}的BeanPostProcessor，
 			 * 则通过他们生成bean,否则返回null
+			 * 这个方法非常重要，需要看一下。
 			 */
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
@@ -1252,6 +1285,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	@Nullable
 	protected Object resolveBeforeInstantiation(String beanName, RootBeanDefinition mbd) {
 		Object bean = null;
+		/**
+		 * 注意,{@link  RootBeanDefinition#beforeInstantiationResolved}属性是Boolean的,默认是null,
+		 * 因此默认的情况下就进入下面这个分支了
+		 */
 		if (!Boolean.FALSE.equals(mbd.beforeInstantiationResolved)) {
 			/**
 			 * 第一次进来{@link RootBeanDefinition#beforeInstantiationResolved}为null,则进入该分支
@@ -1260,6 +1297,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			/**
 			 * https://blog.csdn.net/Gefangenes/article/details/130773271
 			 * 合成的？
+			 * 用户创建的BeanDefinition,一般{@link AbstractBeanDefinition#synthetic}都是false
+			 * <p>
+			 * 关于BeanPostProcessor:
+			 * 在<context:component-scan/>标签添加了{@link AutowiredAnnotationBeanPostProcessor}
+			 * 和{@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor}两个
+			 * 在<aop:aspectj-autoproxy/>中添加了一个{@link org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator}
+			 *
 			 */
 			if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 				Class<?> targetType = determineTargetType(beanName, mbd);
@@ -1294,6 +1338,15 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	@Nullable
 	protected Object applyBeanPostProcessorsBeforeInstantiation(Class<?> beanClass, String beanName) {
 		for (InstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().instantiationAware) {
+			/**
+			 * {@link AutowiredAnnotationBeanPostProcessor}
+			 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor}两个
+			 * {@link org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator}
+			 * <p>
+			 * {@link org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+			 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+			 *
+			 */
 			Object result = bp.postProcessBeforeInstantiation(beanClass, beanName);
 			if (result != null) {
 				return result;
@@ -1640,6 +1693,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				pvs = mbd.getPropertyValues();
 			}
 			for (InstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().instantiationAware) {
+				/**
+				 * {@link org.springframework.context.annotation.ConfigurationClassPostProcessor.ImportAwareBeanPostProcessor#postProcessProperties}
+				 * {@link org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator}
+				 * 上面这个其实是调用了{@link org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#postProcessProperties(org.springframework.beans.PropertyValues, java.lang.Object, java.lang.String)}
+				 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#postProcessProperties}
+				 * {@link org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor#postProcessProperties}
+				 */
 				PropertyValues pvsToUse = bp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
 				if (pvsToUse == null) {
 					if (filteredPds == null) {

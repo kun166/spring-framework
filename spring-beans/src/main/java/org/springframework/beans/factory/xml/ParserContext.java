@@ -52,6 +52,9 @@ public final class ParserContext {
 	 * {@link org.springframework.aop.config.ConfigBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
 	 * 中添加
 	 * </p>
+	 * <p>
+	 * {@link org.springframework.aop.config.AopNamespaceUtils#registerComponentIfNecessary(org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.xml.ParserContext)}
+	 * </p>
 	 */
 	private final Deque<CompositeComponentDefinition> containingComponents = new ArrayDeque<>();
 
@@ -129,11 +132,17 @@ public final class ParserContext {
 	 * <p>
 	 * {@link org.springframework.aop.config.AopNamespaceUtils#registerComponentIfNecessary(org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.xml.ParserContext)}
 	 * 中调用
+	 * {@link org.springframework.aop.config.ConfigBeanDefinitionParser#parsePointcut(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param component
 	 */
 	public void registerComponent(ComponentDefinition component) {
+		/**
+		 * {@link org.springframework.aop.config.ConfigBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+		 * 中才会向队列中push一个{@link CompositeComponentDefinition}
+		 */
 		CompositeComponentDefinition containingComponent = getContainingComponent();
 		if (containingComponent != null) {
 			containingComponent.addNestedComponent(component);

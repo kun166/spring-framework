@@ -228,6 +228,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private boolean enforceDestroyMethod = true;
 
+	/**
+	 * 设置此bean定义是否为“合成的”，也就是说，不是由应用程序本身定义的（例如，通过<aop:config>创建的用于自动代理的帮助器之类的基础结构bean）。
+	 * 如果synthetic为true,看代码好像不经过{@link org.springframework.beans.factory.config.BeanPostProcessor}的处理
+	 */
 	private boolean synthetic = false;
 
 	private int role = BeanDefinition.ROLE_APPLICATION;
@@ -1080,6 +1084,12 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Set whether this bean definition is 'synthetic', that is, not defined
 	 * by the application itself (for example, an infrastructure bean such
 	 * as a helper for auto-proxying, created through {@code <aop:config>}).
+	 * <p>
+	 * 设置此bean定义是否为“合成的”，也就是说，不是由应用程序本身定义的（例如，通过<aop:config>创建的用于自动代理的帮助器之类的基础结构bean）。
+	 * <p>
+	 * {@link org.springframework.aop.config.ConfigBeanDefinitionParser#createPointcutDefinition(java.lang.String)}
+	 * 中调用
+	 * </p>
 	 */
 	public void setSynthetic(boolean synthetic) {
 		this.synthetic = synthetic;

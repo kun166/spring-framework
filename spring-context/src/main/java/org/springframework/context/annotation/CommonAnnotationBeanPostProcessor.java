@@ -61,6 +61,8 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.config.EmbeddedValueResolver;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
+import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
+import org.springframework.beans.factory.support.MergedBeanDefinitionPostProcessor;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.core.BridgeMethodResolver;
 import org.springframework.core.MethodParameter;
@@ -112,7 +114,7 @@ import org.springframework.util.StringValueResolver;
  *
  * <pre class="code">
  * &lt;bean class="org.springframework.context.annotation.CommonAnnotationBeanPostProcessor"/&gt;</pre>
- *
+ * <p>
  * For direct JNDI access, resolving resource names as JNDI resource references
  * within the Java EE application's "java:comp/env/" namespace, use the following:
  *
@@ -120,7 +122,7 @@ import org.springframework.util.StringValueResolver;
  * &lt;bean class="org.springframework.context.annotation.CommonAnnotationBeanPostProcessor"&gt;
  *   &lt;property name="alwaysUseJndiLookup" value="true"/&gt;
  * &lt;/bean&gt;</pre>
- *
+ * <p>
  * {@code mappedName} references will always be resolved in JNDI,
  * allowing for global JNDI names (including "java:" prefix) as well. The
  * "alwaysUseJndiLookup" flag just affects {@code name} references and
@@ -136,11 +138,11 @@ import org.springframework.util.StringValueResolver;
  *
  * @author Juergen Hoeller
  * @author Sam Brannen
- * @since 2.5
  * @see #setAlwaysUseJndiLookup
  * @see #setResourceFactory
  * @see org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor
  * @see org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor
+ * @since 2.5
  */
 @SuppressWarnings("serial")
 public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBeanPostProcessor
@@ -150,6 +152,11 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	private static final boolean jndiPresent = ClassUtils.isPresent(
 			"javax.naming.InitialContext", CommonAnnotationBeanPostProcessor.class.getClassLoader());
 
+	/**
+	 * 在下面static代码中初始化
+	 * {@link Resource}
+	 * {@link javax.xml.ws.WebServiceRef}
+	 */
 	private static final Set<Class<? extends Annotation>> resourceAnnotationTypes = new LinkedHashSet<>(4);
 
 	@Nullable
@@ -173,21 +180,39 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	}
 
 
+	/**
+	 * "javax.xml.ws.WebServiceContext"
+	 */
 	private final Set<String> ignoredResourceTypes = new HashSet<>(1);
 
 	private boolean fallbackToDefaultTypeMatch = true;
 
 	private boolean alwaysUseJndiLookup = false;
 
+	/**
+	 * 构造函数中赋值{@link SimpleJndiBeanFactory}
+	 */
 	@Nullable
 	private transient BeanFactory jndiFactory;
 
+	/**
+	 * {@link CommonAnnotationBeanPostProcessor#setBeanFactory(org.springframework.beans.factory.BeanFactory)}中赋值
+	 * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory}
+	 */
 	@Nullable
 	private transient BeanFactory resourceFactory;
 
+	/**
+	 * {@link CommonAnnotationBeanPostProcessor#setBeanFactory(org.springframework.beans.factory.BeanFactory)}中赋值
+	 * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory}
+	 */
 	@Nullable
 	private transient BeanFactory beanFactory;
 
+	/**
+	 * {@link CommonAnnotationBeanPostProcessor#setBeanFactory(org.springframework.beans.factory.BeanFactory)}中赋值
+	 * {@link EmbeddedValueResolver#EmbeddedValueResolver(org.springframework.beans.factory.config.ConfigurableBeanFactory)}
+	 */
 	@Nullable
 	private transient StringValueResolver embeddedValueResolver;
 
@@ -199,6 +224,9 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * with the init and destroy annotation types set to
 	 * {@link javax.annotation.PostConstruct} and {@link javax.annotation.PreDestroy},
 	 * respectively.
+	 * <p>
+	 * 构造函数
+	 * </p>
 	 */
 	public CommonAnnotationBeanPostProcessor() {
 		setOrder(Ordered.LOWEST_PRECEDENCE - 3);
@@ -218,6 +246,11 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * annotations.
 	 * <p>By default, the {@code javax.xml.ws.WebServiceContext} interface
 	 * will be ignored, since it will be resolved by the JAX-WS runtime.
+	 * <p>
+	 * {@link CommonAnnotationBeanPostProcessor#CommonAnnotationBeanPostProcessor()}
+	 * 构造函数中调用
+	 * </p>
+	 *
 	 * @param resourceType the resource type to ignore
 	 */
 	public void ignoreResourceType(String resourceType) {
@@ -233,6 +266,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * dependency will be attempted if this flag is "true".
 	 * <p>Default is "true". Switch this flag to "false" in order to enforce a
 	 * by-name lookup in all cases, throwing an exception in case of no name match.
+	 *
 	 * @see org.springframework.beans.factory.config.AutowireCapableBeanFactory#resolveDependency
 	 */
 	public void setFallbackToDefaultTypeMatch(boolean fallbackToDefaultTypeMatch) {
@@ -246,6 +280,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * containing BeanFactory; only {@code mappedName} attributes point directly
 	 * into JNDI. Switch this flag to "true" for enforcing Java EE style JNDI lookups
 	 * in any case, even for {@code name} attributes and default names.
+	 *
 	 * @see #setJndiFactory
 	 * @see #setResourceFactory
 	 */
@@ -261,6 +296,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * to enforce JNDI lookups even for {@code name} attributes and default names.
 	 * <p>The default is a {@link org.springframework.jndi.support.SimpleJndiBeanFactory}
 	 * for JNDI lookup behavior equivalent to standard Java EE 5 resource injection.
+	 *
 	 * @see #setResourceFactory
 	 * @see #setAlwaysUseJndiLookup
 	 */
@@ -280,6 +316,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * leads to JNDI lookup behavior equivalent to standard Java EE 5 resource injection,
 	 * even for {@code name} attributes and default names. This is the same behavior
 	 * that the "alwaysUseJndiLookup" flag enables.
+	 *
 	 * @see #setAlwaysUseJndiLookup
 	 */
 	public void setResourceFactory(BeanFactory resourceFactory) {
@@ -287,6 +324,14 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		this.resourceFactory = resourceFactory;
 	}
 
+	/**
+	 * <p>
+	 * 实现自接口{@link BeanFactoryAware}的方法。初始化完成会被调用
+	 * </p>
+	 *
+	 * @param beanFactory owning BeanFactory (never {@code null}).
+	 *                    The bean can immediately call methods on the factory.
+	 */
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) {
 		Assert.notNull(beanFactory, "BeanFactory must not be null");
@@ -300,6 +345,13 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	}
 
 
+	/**
+	 * 实现了接口{@link MergedBeanDefinitionPostProcessor}的方法
+	 *
+	 * @param beanDefinition
+	 * @param beanType
+	 * @param beanName
+	 */
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
 		super.postProcessMergedBeanDefinition(beanDefinition, beanType, beanName);
@@ -322,13 +374,23 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		return true;
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#populateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.BeanWrapper)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param pvs      the property values that the factory is about to apply (never {@code null})
+	 * @param bean     the bean instance created, but whose properties have not yet been set
+	 * @param beanName the name of the bean
+	 * @return
+	 */
 	@Override
 	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
 		InjectionMetadata metadata = findResourceMetadata(beanName, bean.getClass(), pvs);
 		try {
 			metadata.inject(bean, beanName, pvs);
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			throw new BeanCreationException(beanName, "Injection of resource dependencies failed", ex);
 		}
 		return pvs;
@@ -343,12 +405,28 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	}
 
 
+	/**
+	 * <p>
+	 * {@link CommonAnnotationBeanPostProcessor#postProcessProperties(org.springframework.beans.PropertyValues, java.lang.Object, java.lang.String)}
+	 * 中调用
+	 * {@link CommonAnnotationBeanPostProcessor#postProcessMergedBeanDefinition(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanName
+	 * @param clazz
+	 * @param pvs
+	 * @return
+	 */
 	private InjectionMetadata findResourceMetadata(String beanName, Class<?> clazz, @Nullable PropertyValues pvs) {
 		// Fall back to class name as cache key, for backwards compatibility with custom callers.
 		String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
 		// Quick check on the concurrent map first, with minimal locking.
 		InjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
 		if (InjectionMetadata.needsRefresh(metadata, clazz)) {
+			/**
+			 * 走这个分支
+			 */
 			synchronized (this.injectionMetadataCache) {
 				metadata = this.injectionMetadataCache.get(cacheKey);
 				if (InjectionMetadata.needsRefresh(metadata, clazz)) {
@@ -363,6 +441,15 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		return metadata;
 	}
 
+	/**
+	 * <p>
+	 * {@link CommonAnnotationBeanPostProcessor#findResourceMetadata(java.lang.String, java.lang.Class, org.springframework.beans.PropertyValues)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param clazz
+	 * @return
+	 */
 	private InjectionMetadata buildResourceMetadata(Class<?> clazz) {
 		if (!AnnotationUtils.isCandidateClass(clazz, resourceAnnotationTypes)) {
 			return InjectionMetadata.EMPTY;
@@ -374,21 +461,25 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		do {
 			final List<InjectionMetadata.InjectedElement> currElements = new ArrayList<>();
 
+			/**
+			 * 注意:下面是处理属性上标注了注解
+			 */
 			ReflectionUtils.doWithLocalFields(targetClass, field -> {
 				if (webServiceRefClass != null && field.isAnnotationPresent(webServiceRefClass)) {
 					if (Modifier.isStatic(field.getModifiers())) {
 						throw new IllegalStateException("@WebServiceRef annotation is not supported on static fields");
 					}
 					currElements.add(new WebServiceRefElement(field, field, null));
-				}
-				else if (ejbClass != null && field.isAnnotationPresent(ejbClass)) {
+				} else if (ejbClass != null && field.isAnnotationPresent(ejbClass)) {
 					if (Modifier.isStatic(field.getModifiers())) {
 						throw new IllegalStateException("@EJB annotation is not supported on static fields");
 					}
 					currElements.add(new EjbRefElement(field, field, null));
-				}
-				else if (field.isAnnotationPresent(Resource.class)) {
+				} else if (field.isAnnotationPresent(Resource.class)) {
 					if (Modifier.isStatic(field.getModifiers())) {
+						/**
+						 * 属性不能是static,就是不能是类属性
+						 */
 						throw new IllegalStateException("@Resource annotation is not supported on static fields");
 					}
 					if (!this.ignoredResourceTypes.contains(field.getType().getName())) {
@@ -397,7 +488,13 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 				}
 			});
 
+			/**
+			 * 下面是处理方法上标注了注解
+			 */
 			ReflectionUtils.doWithLocalMethods(targetClass, method -> {
+				/**
+				 *当父类是泛型，而子类不是泛型时，如果子类重写了父类的方法，那么子类实际上会有两个同名的方法，参数为Object的方法则是桥接方法。
+				 */
 				Method bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
 				if (!BridgeMethodResolver.isVisibilityBridgeMethodPair(method, bridgedMethod)) {
 					return;
@@ -412,8 +509,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 						}
 						PropertyDescriptor pd = BeanUtils.findPropertyForMethod(bridgedMethod, clazz);
 						currElements.add(new WebServiceRefElement(method, bridgedMethod, pd));
-					}
-					else if (ejbClass != null && bridgedMethod.isAnnotationPresent(ejbClass)) {
+					} else if (ejbClass != null && bridgedMethod.isAnnotationPresent(ejbClass)) {
 						if (Modifier.isStatic(method.getModifiers())) {
 							throw new IllegalStateException("@EJB annotation is not supported on static methods");
 						}
@@ -422,13 +518,15 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 						}
 						PropertyDescriptor pd = BeanUtils.findPropertyForMethod(bridgedMethod, clazz);
 						currElements.add(new EjbRefElement(method, bridgedMethod, pd));
-					}
-					else if (bridgedMethod.isAnnotationPresent(Resource.class)) {
+					} else if (bridgedMethod.isAnnotationPresent(Resource.class)) {
 						if (Modifier.isStatic(method.getModifiers())) {
 							throw new IllegalStateException("@Resource annotation is not supported on static methods");
 						}
 						Class<?>[] paramTypes = method.getParameterTypes();
 						if (paramTypes.length != 1) {
+							/**
+							 * 标注{@link Resource}的方法必须只有一个参数
+							 */
 							throw new IllegalStateException("@Resource annotation requires a single-arg method: " + method);
 						}
 						if (!this.ignoredResourceTypes.contains(paramTypes[0].getName())) {
@@ -450,12 +548,13 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	/**
 	 * Obtain a lazily resolving resource proxy for the given name and type,
 	 * delegating to {@link #getResource} on demand once a method call comes in.
-	 * @param element the descriptor for the annotated field/method
+	 *
+	 * @param element            the descriptor for the annotated field/method
 	 * @param requestingBeanName the name of the requesting bean
 	 * @return the resource object (never {@code null})
-	 * @since 4.2
 	 * @see #getResource
 	 * @see Lazy
+	 * @since 4.2
 	 */
 	protected Object buildLazyResourceProxy(final LookupElement element, final @Nullable String requestingBeanName) {
 		TargetSource ts = new TargetSource() {
@@ -463,14 +562,17 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			public Class<?> getTargetClass() {
 				return element.lookupType;
 			}
+
 			@Override
 			public boolean isStatic() {
 				return false;
 			}
+
 			@Override
 			public Object getTarget() {
 				return getResource(element, requestingBeanName);
 			}
+
 			@Override
 			public void releaseTarget(Object target) {
 			}
@@ -488,7 +590,8 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 	/**
 	 * Obtain the resource object for the given name and type.
-	 * @param element the descriptor for the annotated field/method
+	 *
+	 * @param element            the descriptor for the annotated field/method
 	 * @param requestingBeanName the name of the requesting bean
 	 * @return the resource object (never {@code null})
 	 * @throws NoSuchBeanDefinitionException if no corresponding target resource found
@@ -500,8 +603,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		String jndiName = null;
 		if (StringUtils.hasLength(element.mappedName)) {
 			jndiName = element.mappedName;
-		}
-		else if (this.alwaysUseJndiLookup) {
+		} else if (this.alwaysUseJndiLookup) {
 			jndiName = element.name;
 		}
 		if (jndiName != null) {
@@ -523,8 +625,9 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	/**
 	 * Obtain a resource object for the given name and type through autowiring
 	 * based on the given factory.
-	 * @param factory the factory to autowire against
-	 * @param element the descriptor for the annotated field/method
+	 *
+	 * @param factory            the factory to autowire against
+	 * @param element            the descriptor for the annotated field/method
 	 * @param requestingBeanName the name of the requesting bean
 	 * @return the resource object (never {@code null})
 	 * @throws NoSuchBeanDefinitionException if no corresponding target resource found
@@ -545,13 +648,11 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 				if (resource == null) {
 					throw new NoSuchBeanDefinitionException(element.getLookupType(), "No resolvable resource object");
 				}
-			}
-			else {
+			} else {
 				resource = beanFactory.resolveBeanByName(name, descriptor);
 				autowiredBeanNames = Collections.singleton(name);
 			}
-		}
-		else {
+		} else {
 			resource = factory.getBean(name, element.lookupType);
 			autowiredBeanNames = Collections.singleton(name);
 		}
@@ -575,8 +676,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		try {
 			return (Class<? extends Annotation>)
 					ClassUtils.forName(name, CommonAnnotationBeanPostProcessor.class.getClassLoader());
-		}
-		catch (ClassNotFoundException ex) {
+		} catch (ClassNotFoundException ex) {
 			return null;
 		}
 	}
@@ -621,8 +721,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		public final DependencyDescriptor getDependencyDescriptor() {
 			if (this.isField) {
 				return new LookupDependencyDescriptor((Field) this.member, this.lookupType);
-			}
-			else {
+			} else {
 				return new LookupDependencyDescriptor((Method) this.member, this.lookupType);
 			}
 		}
@@ -637,25 +736,52 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 		private final boolean lazyLookup;
 
+		/**
+		 * <p>
+		 * {@link CommonAnnotationBeanPostProcessor#buildResourceMetadata(java.lang.Class)}中调用
+		 * </p>
+		 *
+		 * @param member
+		 * @param ae
+		 * @param pd
+		 */
 		public ResourceElement(Member member, AnnotatedElement ae, @Nullable PropertyDescriptor pd) {
 			super(member, pd);
+			/**
+			 * 获取标注的注解{@link Resource}
+			 * 例如@Resource("beanName")
+			 */
 			Resource resource = ae.getAnnotation(Resource.class);
+			/**
+			 * 注解上的name,即bean的name
+			 */
 			String resourceName = resource.name();
+			/**
+			 * 注解上的type,bean的Type……好吧,{@link Resource}注解居然也能指定type
+			 */
 			Class<?> resourceType = resource.type();
 			this.isDefaultName = !StringUtils.hasLength(resourceName);
 			if (this.isDefaultName) {
+				/**
+				 * 如果注解上没有指明beanName
+				 * 则取属性的名字或者方法的名字
+				 */
 				resourceName = this.member.getName();
 				if (this.member instanceof Method && resourceName.startsWith("set") && resourceName.length() > 3) {
+					/**
+					 * 如果是方法名字,则去掉set
+					 */
 					resourceName = Introspector.decapitalize(resourceName.substring(3));
 				}
-			}
-			else if (embeddedValueResolver != null) {
+			} else if (embeddedValueResolver != null) {
+				/**
+				 * 这个是占位符替换,好像不需要关注
+				 */
 				resourceName = embeddedValueResolver.resolveStringValue(resourceName);
 			}
 			if (Object.class != resourceType) {
 				checkResourceType(resourceType);
-			}
-			else {
+			} else {
 				// No resource type specified... check field/method.
 				resourceType = getResourceType();
 			}
@@ -699,8 +825,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			}
 			if (Object.class != resourceType) {
 				checkResourceType(resourceType);
-			}
-			else {
+			} else {
 				// No resource type specified... check field/method.
 				resourceType = getResourceType();
 			}
@@ -708,8 +833,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			this.elementType = resourceType;
 			if (Service.class.isAssignableFrom(resourceType)) {
 				this.lookupType = resourceType;
-			}
-			else {
+			} else {
 				this.lookupType = resource.value();
 			}
 			this.mappedName = resource.mappedName();
@@ -721,8 +845,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			Service service;
 			try {
 				service = (Service) getResource(this, requestingBeanName);
-			}
-			catch (NoSuchBeanDefinitionException notFound) {
+			} catch (NoSuchBeanDefinitionException notFound) {
 				// Service to be created through generated class.
 				if (Service.class == this.lookupType) {
 					throw new IllegalStateException("No resource with name '" + this.name + "' found in context, " +
@@ -740,18 +863,15 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 						}
 						service = (Service) BeanUtils.instantiateClass(ctor,
 								new URL(this.wsdlLocation), new QName(clientAnn.targetNamespace(), clientAnn.name()));
-					}
-					catch (NoSuchMethodException ex) {
+					} catch (NoSuchMethodException ex) {
 						throw new IllegalStateException("JAX-WS Service class [" + this.lookupType.getName() +
 								"] does not have a (URL, QName) constructor. Cannot apply specified WSDL location [" +
 								this.wsdlLocation + "].");
-					}
-					catch (MalformedURLException ex) {
+					} catch (MalformedURLException ex) {
 						throw new IllegalArgumentException(
 								"Specified WSDL location [" + this.wsdlLocation + "] isn't a valid URL");
 					}
-				}
-				else {
+				} else {
 					service = (Service) BeanUtils.instantiateClass(this.lookupType);
 				}
 			}
@@ -783,8 +903,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			Class<?> resourceType = resource.beanInterface();
 			if (Object.class != resourceType) {
 				checkResourceType(resourceType);
-			}
-			else {
+			} else {
 				// No resource type specified... check field/method.
 				resourceType = getResourceType();
 			}
@@ -804,8 +923,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 						((ConfigurableBeanFactory) beanFactory).registerDependentBean(this.beanName, requestingBeanName);
 					}
 					return bean;
-				}
-				else if (this.isDefaultName && !StringUtils.hasLength(this.mappedName)) {
+				} else if (this.isDefaultName && !StringUtils.hasLength(this.mappedName)) {
 					throw new NoSuchBeanDefinitionException(this.beanName,
 							"Cannot resolve 'beanName' in local BeanFactory. Consider specifying a general 'name' value instead.");
 				}

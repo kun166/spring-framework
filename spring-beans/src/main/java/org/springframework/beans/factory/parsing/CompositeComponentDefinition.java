@@ -38,12 +38,20 @@ public class CompositeComponentDefinition extends AbstractComponentDefinition {
 	@Nullable
 	private final Object source;
 
+	/**
+	 * <p>
+	 * {@link org.springframework.aop.config.AopNamespaceUtils#registerComponentIfNecessary(org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中添加
+	 * </p>
+	 */
 	private final List<ComponentDefinition> nestedComponents = new ArrayList<>();
 
 
 	/**
 	 * Create a new CompositeComponentDefinition.
 	 * <p>
+	 * {@link org.springframework.context.annotation.ComponentScanBeanDefinitionParser#registerComponents(org.springframework.beans.factory.xml.XmlReaderContext, java.util.Set, org.w3c.dom.Element)}
+	 * 中调用
 	 * {@link org.springframework.aop.config.ConfigBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
 	 * 中调用
 	 * </p>

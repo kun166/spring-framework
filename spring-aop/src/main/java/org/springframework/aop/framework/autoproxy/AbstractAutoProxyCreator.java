@@ -33,6 +33,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.aop.Advisor;
 import org.springframework.aop.Pointcut;
 import org.springframework.aop.TargetSource;
+import org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator;
+import org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator;
 import org.springframework.aop.framework.AopInfrastructureBean;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ProxyProcessorSupport;
@@ -47,6 +49,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
+import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
 import org.springframework.core.SmartClassLoader;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -140,6 +143,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	@Nullable
 	private TargetSourceCreator[] customTargetSourceCreators;
 
+	/**
+	 * 通过{@link AbstractAutoProxyCreator#setBeanFactory(org.springframework.beans.factory.BeanFactory)}设置
+	 */
 	@Nullable
 	private BeanFactory beanFactory;
 
@@ -216,6 +222,15 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		this.applyCommonInterceptorsFirst = applyCommonInterceptorsFirst;
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAdvisorAutoProxyCreator#setBeanFactory(org.springframework.beans.factory.BeanFactory)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanFactory owning BeanFactory (never {@code null}).
+	 *                    The bean can immediately call methods on the factory.
+	 */
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
@@ -254,6 +269,16 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		return wrapIfNecessary(bean, beanName, cacheKey);
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsBeforeInstantiation(java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanClass the class of the bean to be instantiated
+	 * @param beanName  the name of the bean
+	 * @return
+	 */
 	@Override
 	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
 		Object cacheKey = getCacheKey(beanClass, beanName);
@@ -263,6 +288,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 				return null;
 			}
 			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
+				/**
+				 * 注意:if的两个条件,{@link AnnotationAwareAspectJAutoProxyCreator#isInfrastructureClass(java.lang.Class)}
+				 * {@link AspectJAwareAdvisorAutoProxyCreator#shouldSkip(java.lang.Class, java.lang.String)}
+				 * 都走了子类的方法……
+				 */
 				this.advisedBeans.put(cacheKey, Boolean.FALSE);
 				return null;
 			}
@@ -315,6 +345,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * a plain bean name, prepended with {@link BeanFactory#FACTORY_BEAN_PREFIX}
 	 * in case of a {@code FactoryBean}; or if no bean name specified, then the
 	 * given bean {@code Class} as-is.
+	 *
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanClass the bean class
 	 * @param beanName  the bean name
@@ -372,6 +407,15 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * that should never be proxied.
 	 * <p>The default implementation considers Advices, Advisors and
 	 * AopInfrastructureBeans as infrastructure classes.
+	 * 返回给定的bean类是否表示基础结构类,永远不应该代理。
+	 * {@link AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 * 是否实现了以下四个接口中的一个
+	 * {@link Advice}
+	 * {@link Pointcut}
+	 * {@link Advisor}
+	 * {@link AopInfrastructureBean}
 	 *
 	 * @param beanClass the class of the bean
 	 * @return whether the bean represents an infrastructure class
@@ -398,6 +442,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * a circular reference or if the existing target instance needs to be preserved.
 	 * This implementation returns {@code false} unless the bean name indicates an
 	 * "original instance" according to {@code AutowireCapableBeanFactory} conventions.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param beanClass the class of the bean
 	 * @param beanName  the name of the bean
@@ -422,6 +469,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	@Nullable
 	protected TargetSource getCustomTargetSource(Class<?> beanClass, String beanName) {
 		// We can't create fancy target sources for directly registered singletons.
+		/**
+		 * 通过打断点，这个{@link AbstractAutoProxyCreator#customTargetSourceCreators}是null
+		 */
 		if (this.customTargetSourceCreators != null &&
 				this.beanFactory != null && this.beanFactory.containsBean(beanName)) {
 			for (TargetSourceCreator tsc : this.customTargetSourceCreators) {

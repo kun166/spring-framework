@@ -37,6 +37,16 @@ public class PointcutComponentDefinition extends AbstractComponentDefinition {
 	private final String description;
 
 
+	/**
+	 * <p>
+	 * {@link ConfigBeanDefinitionParser#parsePointcut(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param pointcutBeanName
+	 * @param pointcutDefinition
+	 * @param expression
+	 */
 	public PointcutComponentDefinition(String pointcutBeanName, BeanDefinition pointcutDefinition, String expression) {
 		Assert.notNull(pointcutBeanName, "Bean name must not be null");
 		Assert.notNull(pointcutDefinition, "Pointcut definition must not be null");
@@ -59,7 +69,7 @@ public class PointcutComponentDefinition extends AbstractComponentDefinition {
 
 	@Override
 	public BeanDefinition[] getBeanDefinitions() {
-		return new BeanDefinition[] {this.pointcutDefinition};
+		return new BeanDefinition[]{this.pointcutDefinition};
 	}
 
 	@Override

@@ -326,6 +326,13 @@ public abstract class ReflectionUtils {
 	 * Perform the given callback operation on all matching methods of the given
 	 * class, as locally declared or equivalent thereof (such as default methods
 	 * on Java 8 based interfaces that the given class implements).
+	 * <p>
+	 * {@link org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor#buildLifecycleMetadata(java.lang.Class)}
+	 * 中调用
+	 * </p>
+	 * 自身声明的全部方法,包括private的
+	 * 外加 实现的接口中，定义的static或者default方法
+	 * 这些方法都执行{@link MethodCallback#doWith(java.lang.reflect.Method)}
 	 *
 	 * @param clazz the class to introspect
 	 * @param mc    the callback to invoke for each method
@@ -515,12 +522,14 @@ public abstract class ReflectionUtils {
 	 * <p>
 	 * {@link ReflectionUtils#doWithMethods(java.lang.Class, org.springframework.util.ReflectionUtils.MethodCallback, org.springframework.util.ReflectionUtils.MethodFilter)}
 	 * 中调用
+	 * {@link ReflectionUtils#doWithLocalMethods(java.lang.Class, org.springframework.util.ReflectionUtils.MethodCallback)}
+	 * 中调用
 	 * </p>
 	 * 自身声明的全部方法,包括private的
 	 * 外加 实现的接口中，定义的static或者default方法
 	 *
 	 * @param clazz
-	 * @param defensive
+	 * @param defensive 防御的,这个如果传false就返回结果自身,否则返回结果的clone对象
 	 * @return
 	 */
 	private static Method[] getDeclaredMethods(Class<?> clazz, boolean defensive) {
@@ -741,6 +750,10 @@ public abstract class ReflectionUtils {
 
 	/**
 	 * Invoke the given callback on all locally declared fields in the given class.
+	 * <p>
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#buildResourceMetadata(java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param clazz the target class to analyze
 	 * @param fc    the callback to invoke for each field
@@ -802,6 +815,11 @@ public abstract class ReflectionUtils {
 	/**
 	 * This variant retrieves {@link Class#getDeclaredFields()} from a local cache
 	 * in order to avoid the JVM's SecurityManager check and defensive array copying.
+	 * <p>
+	 * {@link ReflectionUtils#doWithLocalFields(java.lang.Class, org.springframework.util.ReflectionUtils.FieldCallback)}
+	 * 中调用
+	 * </p>
+	 * 获取传递参数clazz的自身所有声明属性,包括private的
 	 *
 	 * @param clazz the class to introspect
 	 * @return the cached array of fields

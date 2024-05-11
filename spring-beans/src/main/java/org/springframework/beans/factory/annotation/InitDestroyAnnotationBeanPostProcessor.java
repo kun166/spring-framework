@@ -48,6 +48,9 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor} implementation
  * that invokes annotated init and destroy methods. Allows for an annotation
@@ -72,9 +75,9 @@ import org.springframework.util.ReflectionUtils;
  * for annotation-driven injection of named beans.
  *
  * @author Juergen Hoeller
- * @since 2.5
  * @see #setInitAnnotationType
  * @see #setDestroyAnnotationType
+ * @since 2.5
  */
 @SuppressWarnings("serial")
 public class InitDestroyAnnotationBeanPostProcessor
@@ -85,12 +88,15 @@ public class InitDestroyAnnotationBeanPostProcessor
 				@Override
 				public void checkConfigMembers(RootBeanDefinition beanDefinition) {
 				}
+
 				@Override
 				public void invokeInitMethods(Object target, String beanName) {
 				}
+
 				@Override
 				public void invokeDestroyMethods(Object target, String beanName) {
 				}
+
 				@Override
 				public boolean hasDestroyMethods() {
 					return false;
@@ -100,9 +106,17 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 	protected transient Log logger = LogFactory.getLog(getClass());
 
+	/**
+	 * 在{@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#CommonAnnotationBeanPostProcessor()}
+	 * 中被赋值{@link PostConstruct}
+	 */
 	@Nullable
 	private Class<? extends Annotation> initAnnotationType;
 
+	/**
+	 * 在{@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#CommonAnnotationBeanPostProcessor()}
+	 * 中被赋值{@link PreDestroy}
+	 */
 	@Nullable
 	private Class<? extends Annotation> destroyAnnotationType;
 
@@ -144,6 +158,16 @@ public class InitDestroyAnnotationBeanPostProcessor
 	}
 
 
+	/**
+	 * <p>
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#postProcessMergedBeanDefinition(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanDefinition the merged bean definition for the bean
+	 * @param beanType       the actual type of the managed bean instance
+	 * @param beanName       the name of the bean
+	 */
 	@Override
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
 		LifecycleMetadata metadata = findLifecycleMetadata(beanType);
@@ -155,11 +179,9 @@ public class InitDestroyAnnotationBeanPostProcessor
 		LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());
 		try {
 			metadata.invokeInitMethods(bean, beanName);
-		}
-		catch (InvocationTargetException ex) {
+		} catch (InvocationTargetException ex) {
 			throw new BeanCreationException(beanName, "Invocation of init method failed", ex.getTargetException());
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			throw new BeanCreationException(beanName, "Failed to invoke init method", ex);
 		}
 		return bean;
@@ -175,17 +197,14 @@ public class InitDestroyAnnotationBeanPostProcessor
 		LifecycleMetadata metadata = findLifecycleMetadata(bean.getClass());
 		try {
 			metadata.invokeDestroyMethods(bean, beanName);
-		}
-		catch (InvocationTargetException ex) {
+		} catch (InvocationTargetException ex) {
 			String msg = "Destroy method on bean with name '" + beanName + "' threw an exception";
 			if (logger.isDebugEnabled()) {
 				logger.warn(msg, ex.getTargetException());
-			}
-			else {
+			} else {
 				logger.warn(msg + ": " + ex.getTargetException());
 			}
-		}
-		catch (Throwable ex) {
+		} catch (Throwable ex) {
 			logger.warn("Failed to invoke destroy method on bean with name '" + beanName + "'", ex);
 		}
 	}
@@ -196,9 +215,21 @@ public class InitDestroyAnnotationBeanPostProcessor
 	}
 
 
+	/**
+	 * <p>
+	 * {@link InitDestroyAnnotationBeanPostProcessor#postProcessMergedBeanDefinition(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param clazz
+	 * @return
+	 */
 	private LifecycleMetadata findLifecycleMetadata(Class<?> clazz) {
 		if (this.lifecycleMetadataCache == null) {
 			// Happens after deserialization, during destruction...
+			/**
+			 * 看注释的意思是,在destroy的时候,会走这个分支。否则有默认值走不到这边
+			 */
 			return buildLifecycleMetadata(clazz);
 		}
 		// Quick check on the concurrent map first, with minimal locking.
@@ -216,6 +247,20 @@ public class InitDestroyAnnotationBeanPostProcessor
 		return metadata;
 	}
 
+	/**
+	 * <p>
+	 * {@link InitDestroyAnnotationBeanPostProcessor#findLifecycleMetadata(java.lang.Class)}
+	 * 中调用
+	 * </p>
+	 * 返回一个{@link LifecycleMetadata#LifecycleMetadata(java.lang.Class, java.util.Collection, java.util.Collection)}
+	 * 对象
+	 * 第一个参数是clazz自身
+	 * 第二个参数是标有{@link InitDestroyAnnotationBeanPostProcessor#initAnnotationType}注解的方法集合
+	 * 第三个参数是标有{@link InitDestroyAnnotationBeanPostProcessor#destroyAnnotationType}注解的方法集合
+	 *
+	 * @param clazz
+	 * @return
+	 */
 	private LifecycleMetadata buildLifecycleMetadata(final Class<?> clazz) {
 		if (!AnnotationUtils.isCandidateClass(clazz, Arrays.asList(this.initAnnotationType, this.destroyAnnotationType))) {
 			return this.emptyLifecycleMetadata;
@@ -229,8 +274,17 @@ public class InitDestroyAnnotationBeanPostProcessor
 			final List<LifecycleElement> currInitMethods = new ArrayList<>();
 			final List<LifecycleElement> currDestroyMethods = new ArrayList<>();
 
+			/**
+			 * targetClass上的自身声明的全部方法,包括private的
+			 * 外加 实现的接口中，定义的static或者default方法,
+			 * 都执行一遍第二个参数构造的{@link ReflectionUtils.MethodCallback#doWith(java.lang.reflect.Method)}方法
+			 */
 			ReflectionUtils.doWithLocalMethods(targetClass, method -> {
 				if (this.initAnnotationType != null && method.isAnnotationPresent(this.initAnnotationType)) {
+					/**
+					 * {@link InitDestroyAnnotationBeanPostProcessor#initAnnotationType}注解不为null
+					 * 且方法上有标有该注解
+					 */
 					LifecycleElement element = new LifecycleElement(method);
 					currInitMethods.add(element);
 					if (logger.isTraceEnabled()) {
@@ -245,8 +299,14 @@ public class InitDestroyAnnotationBeanPostProcessor
 				}
 			});
 
+			/**
+			 * 父类的放在前面了
+			 */
 			initMethods.addAll(0, currInitMethods);
 			destroyMethods.addAll(currDestroyMethods);
+			/**
+			 * 递归调用父类
+			 */
 			targetClass = targetClass.getSuperclass();
 		}
 		while (targetClass != null && targetClass != Object.class);
@@ -286,19 +346,39 @@ public class InitDestroyAnnotationBeanPostProcessor
 		@Nullable
 		private volatile Set<LifecycleElement> checkedDestroyMethods;
 
+		/**
+		 * <p>
+		 * {@link InitDestroyAnnotationBeanPostProcessor#buildLifecycleMetadata(java.lang.Class)}中调用
+		 * </p>
+		 *
+		 * @param targetClass
+		 * @param initMethods
+		 * @param destroyMethods
+		 */
 		public LifecycleMetadata(Class<?> targetClass, Collection<LifecycleElement> initMethods,
-				Collection<LifecycleElement> destroyMethods) {
+								 Collection<LifecycleElement> destroyMethods) {
 
 			this.targetClass = targetClass;
 			this.initMethods = initMethods;
 			this.destroyMethods = destroyMethods;
 		}
 
+		/**
+		 * <p>
+		 * {@link InitDestroyAnnotationBeanPostProcessor#postProcessMergedBeanDefinition(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class, java.lang.String)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param beanDefinition
+		 */
 		public void checkConfigMembers(RootBeanDefinition beanDefinition) {
 			Set<LifecycleElement> checkedInitMethods = new LinkedHashSet<>(this.initMethods.size());
 			for (LifecycleElement element : this.initMethods) {
 				String methodIdentifier = element.getIdentifier();
 				if (!beanDefinition.isExternallyManagedInitMethod(methodIdentifier)) {
+					/**
+					 * 如果{@link RootBeanDefinition#externallyManagedInitMethods}没有记录,则记录
+					 */
 					beanDefinition.registerExternallyManagedInitMethod(methodIdentifier);
 					checkedInitMethods.add(element);
 					if (logger.isTraceEnabled()) {
@@ -367,8 +447,18 @@ public class InitDestroyAnnotationBeanPostProcessor
 
 		private final String identifier;
 
+		/**
+		 * <p>
+		 * {@link InitDestroyAnnotationBeanPostProcessor#buildLifecycleMetadata(java.lang.Class)}中调用
+		 * </p>
+		 *
+		 * @param method
+		 */
 		public LifecycleElement(Method method) {
 			if (method.getParameterCount() != 0) {
+				/**
+				 * 要求方法必须是无参的
+				 */
 				throw new IllegalStateException("Lifecycle method annotation requires a no-arg method: " + method);
 			}
 			this.method = method;

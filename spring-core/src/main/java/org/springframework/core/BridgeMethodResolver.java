@@ -63,6 +63,8 @@ public final class BridgeMethodResolver {
 	 * Callers are <strong>not</strong> required to check for bridging before calling this method.
 	 * <p>
 	 * {@link LocalVariableTableParameterNameDiscoverer#getParameterNames(java.lang.reflect.Method)}中调用
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#buildResourceMetadata(java.lang.Class)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param bridgeMethod the method to introspect
@@ -73,6 +75,7 @@ public final class BridgeMethodResolver {
 		if (!bridgeMethod.isBridge()) {
 			/**
 			 * 不是桥接方法,直接返回
+			 * 当父类是泛型，而子类不是泛型时，如果子类重写了父类的方法，那么子类实际上会有两个同名的方法，参数为Object的方法则是桥接方法。
 			 */
 			return bridgeMethod;
 		}

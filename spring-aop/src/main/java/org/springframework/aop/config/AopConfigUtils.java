@@ -163,6 +163,11 @@ public abstract class AopConfigUtils {
 	 * {@link AopConfigUtils#registerAspectJAnnotationAutoProxyCreatorIfNecessary(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)}
 	 * 中调用
 	 * </p>
+	 * 向spring中注册id为{@link AopConfigUtils#AUTO_PROXY_CREATOR_BEAN_NAME}的BeanDefinition。
+	 * class按如下顺序，越往下权重越高
+	 * {@link InfrastructureAdvisorAutoProxyCreator}
+	 * {@link AspectJAwareAdvisorAutoProxyCreator}
+	 * {@link AnnotationAwareAspectJAutoProxyCreator}
 	 *
 	 * @param cls
 	 * @param registry

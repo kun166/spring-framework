@@ -2375,7 +2375,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
 			/**
-			 * 方法组合模式,外层类访问内部类私有方法方法和私有属性
+			 * 合成的，spring 应用生成的，非普通定义的bean
 			 */
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);

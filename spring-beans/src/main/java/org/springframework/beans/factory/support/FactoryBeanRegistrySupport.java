@@ -130,9 +130,16 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 					if (alreadyThere != null) {
 						object = alreadyThere;
 					} else {
+						/**
+						 * 如果是从{@link FactoryBeanRegistrySupport#factoryBeanObjectCache}缓存中取的,
+						 * 说明已经执行过下面的代码了,不需要再执行了
+						 */
 						if (shouldPostProcess) {
 							if (isSingletonCurrentlyInCreation(beanName)) {
 								// Temporarily return non-post-processed object, not storing it yet..
+								/**
+								 * 由正在创建bean的线程去执行代码了，这里不需要执行了
+								 */
 								return object;
 							}
 							beforeSingletonCreation(beanName);

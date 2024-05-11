@@ -523,6 +523,10 @@ public abstract class BeanUtils {
 	 * Find a JavaBeans {@code PropertyDescriptor} for the given method,
 	 * with the method either being the read method or the write method for
 	 * that bean property.
+	 * <p>
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#buildResourceMetadata(java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param method the method to find a corresponding PropertyDescriptor for
 	 * @param clazz  the (most specific) class to introspect for descriptors

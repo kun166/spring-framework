@@ -20,8 +20,11 @@ import java.util.List;
 
 import org.springframework.aop.Advisor;
 import org.springframework.aop.TargetSource;
+import org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator;
+import org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.lang.Nullable;
@@ -51,10 +54,21 @@ import org.springframework.util.Assert;
 @SuppressWarnings("serial")
 public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyCreator {
 
+	/**
+	 * {@link AbstractAdvisorAutoProxyCreator#initBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
+	 * 中设置
+	 */
 	@Nullable
 	private BeanFactoryAdvisorRetrievalHelper advisorRetrievalHelper;
 
 
+	/**
+	 * <p>
+	 * 该方法是父类实现了{@link BeanFactoryAware}
+	 * </p>
+	 *
+	 * @param beanFactory
+	 */
 	@Override
 	public void setBeanFactory(BeanFactory beanFactory) {
 		super.setBeanFactory(beanFactory);
@@ -62,9 +76,21 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 			throw new IllegalArgumentException(
 					"AdvisorAutoProxyCreator requires a ConfigurableListableBeanFactory: " + beanFactory);
 		}
+		/**
+		 * 这个方法调用了子类
+		 * {@link {@link AnnotationAwareAspectJAutoProxyCreator#initBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}}
+		 */
 		initBeanFactory((ConfigurableListableBeanFactory) beanFactory);
 	}
 
+	/**
+	 * <p>
+	 * {@link AnnotationAwareAspectJAutoProxyCreator#initBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanFactory
+	 */
 	protected void initBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		this.advisorRetrievalHelper = new BeanFactoryAdvisorRetrievalHelperAdapter(beanFactory);
 	}
@@ -84,8 +110,9 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 
 	/**
 	 * Find all eligible Advisors for auto-proxying this class.
+	 *
 	 * @param beanClass the clazz to find advisors for
-	 * @param beanName the name of the currently proxied bean
+	 * @param beanName  the name of the currently proxied bean
 	 * @return the empty List, not {@code null},
 	 * if there are no pointcuts or interceptors
 	 * @see #findCandidateAdvisors
@@ -104,6 +131,10 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 
 	/**
 	 * Find all candidate Advisors to use in auto-proxying.
+	 * <p>
+	 * {@link AnnotationAwareAspectJAutoProxyCreator#findCandidateAdvisors()}中调用
+	 * </p>
+	 *
 	 * @return the List of candidate Advisors
 	 */
 	protected List<Advisor> findCandidateAdvisors() {
@@ -114,9 +145,10 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	/**
 	 * Search the given candidate Advisors to find all Advisors that
 	 * can apply to the specified bean.
+	 *
 	 * @param candidateAdvisors the candidate Advisors
-	 * @param beanClass the target's bean class
-	 * @param beanName the target's bean name
+	 * @param beanClass         the target's bean class
+	 * @param beanName          the target's bean name
 	 * @return the List of applicable Advisors
 	 * @see ProxyCreationContext#getCurrentProxiedBeanName()
 	 */
@@ -126,8 +158,7 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 		ProxyCreationContext.setCurrentProxiedBeanName(beanName);
 		try {
 			return AopUtils.findAdvisorsThatCanApply(candidateAdvisors, beanClass);
-		}
-		finally {
+		} finally {
 			ProxyCreationContext.setCurrentProxiedBeanName(null);
 		}
 	}
@@ -135,6 +166,7 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	/**
 	 * Return whether the Advisor bean with the given name is eligible
 	 * for proxying in the first place.
+	 *
 	 * @param beanName the name of the Advisor bean
 	 * @return whether the bean is eligible
 	 */
@@ -145,6 +177,7 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	/**
 	 * Sort advisors based on ordering. Subclasses may choose to override this
 	 * method to customize the sorting strategy.
+	 *
 	 * @param advisors the source List of Advisors
 	 * @return the sorted List of Advisors
 	 * @see org.springframework.core.Ordered
@@ -162,8 +195,9 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * <p>The default implementation is empty.
 	 * <p>Typically used to add Advisors that expose contextual information
 	 * required by some of the later advisors.
+	 *
 	 * @param candidateAdvisors the Advisors that have already been identified as
-	 * applying to a given bean
+	 *                          applying to a given bean
 	 */
 	protected void extendAdvisors(List<Advisor> candidateAdvisors) {
 	}

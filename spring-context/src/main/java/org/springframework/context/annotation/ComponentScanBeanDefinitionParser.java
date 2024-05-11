@@ -210,8 +210,9 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	 * @param beanDefinitions
 	 * @param element
 	 */
-	protected void registerComponents(
-			XmlReaderContext readerContext, Set<BeanDefinitionHolder> beanDefinitions, Element element) {
+	protected void registerComponents(XmlReaderContext readerContext,
+									  Set<BeanDefinitionHolder> beanDefinitions,
+									  Element element) {
 		//  null
 		Object source = readerContext.extractSource(element);
 		// Composite /ˈkɒmpəzɪt/ 合成的

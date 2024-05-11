@@ -31,6 +31,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.springframework.core.BridgeMethodResolver;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationTypeMapping.MirrorSets.MirrorSet;
 import org.springframework.core.annotation.MergedAnnotation.Adapt;
 import org.springframework.core.annotation.MergedAnnotations.SearchStrategy;
@@ -120,6 +121,12 @@ public abstract class AnnotationUtils {
 	/**
 	 * Determine whether the given class is a candidate for carrying one of the specified
 	 * annotations (at type, method or field level).
+	 * <p>
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#buildResourceMetadata(java.lang.Class)}
+	 * 中调用
+	 * {@link org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor#buildLifecycleMetadata(java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param clazz           the class to introspect
 	 * @param annotationTypes the searchable annotation types
@@ -142,6 +149,9 @@ public abstract class AnnotationUtils {
 	/**
 	 * Determine whether the given class is a candidate for carrying the specified annotation
 	 * (at type, method or field level).
+	 * <p>
+	 * {@link AnnotationUtils#isCandidateClass(java.lang.Class, java.util.Collection)}中调用
+	 * </p>
 	 *
 	 * @param clazz          the class to introspect
 	 * @param annotationType the searchable annotation type
@@ -158,6 +168,13 @@ public abstract class AnnotationUtils {
 	/**
 	 * Determine whether the given class is a candidate for carrying the specified annotation
 	 * (at type, method or field level).
+	 * 确定给定类是否是承载指定注释的候选类（在类型、方法或字段级别）。
+	 * <p>
+	 * {@link AnnotationUtils#isCandidateClass(java.lang.Class, java.lang.Class)}中调用
+	 * </p>
+	 * 1,如果注解以"java"开头,返回true
+	 * 2,如果clazz以"java"开头,或者是{@link Ordered}接口自身,返回false
+	 * 3,返回true
 	 *
 	 * @param clazz          the class to introspect
 	 * @param annotationName the fully-qualified name of the searchable annotation type
@@ -169,9 +186,15 @@ public abstract class AnnotationUtils {
 	 */
 	public static boolean isCandidateClass(Class<?> clazz, String annotationName) {
 		if (annotationName.startsWith("java.")) {
+			/**
+			 * 如果注解以"java"开头,返回true
+			 */
 			return true;
 		}
 		if (AnnotationsScanner.hasPlainJavaAnnotationsOnly(clazz)) {
+			/**
+			 * clazz以"java"开头,或者是{@link Ordered}接口
+			 */
 			return false;
 		}
 		return true;
