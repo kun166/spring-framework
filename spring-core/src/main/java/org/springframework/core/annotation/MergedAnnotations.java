@@ -321,6 +321,11 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * {@link #from(AnnotatedElement, SearchStrategy)} with an appropriate
 	 * {@link SearchStrategy}.
 	 *
+	 * <p>
+	 * {@link org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor#findAutowiredAnnotation(java.lang.reflect.AccessibleObject)}
+	 * 中调用
+	 * </p>
+	 *
 	 * @param element 目标element，每一个class继承自AnnotatedElement
 	 * @return a {@code MergedAnnotations} instance containing the element's
 	 * annotations

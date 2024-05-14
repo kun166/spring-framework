@@ -154,6 +154,10 @@ public class InjectionMetadata {
 
 	/**
 	 * Clear property skipping for the contained elements.
+	 * <p>
+	 * {@link AutowiredAnnotationBeanPostProcessor#findAutowiringMetadata(java.lang.String, java.lang.Class, org.springframework.beans.PropertyValues)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @since 3.2.13
 	 */
@@ -173,6 +177,8 @@ public class InjectionMetadata {
 	 * Return an {@code InjectionMetadata} instance, possibly for empty elements.
 	 * <p>
 	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#buildResourceMetadata(java.lang.Class)}
+	 * 中调用
+	 * {@link AutowiredAnnotationBeanPostProcessor#buildAutowiringMetadata(java.lang.Class)}
 	 * 中调用
 	 * </p>
 	 *
