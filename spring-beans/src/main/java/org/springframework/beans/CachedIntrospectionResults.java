@@ -107,6 +107,7 @@ public final class CachedIntrospectionResults {
 	 * 具体怎么获取的没有细追,该接口有两个实现:
 	 * {@link SimpleBeanInfoFactory}
 	 * {@link ExtendedBeanInfoFactory}
+	 * 应该是读取的"META-INF/spring.factories"下的配置
 	 */
 	private static final List<BeanInfoFactory> beanInfoFactories = SpringFactoriesLoader.loadFactories(
 			BeanInfoFactory.class, CachedIntrospectionResults.class.getClassLoader());
@@ -174,6 +175,7 @@ public final class CachedIntrospectionResults {
 	 * Create CachedIntrospectionResults for the given bean class.
 	 * <p>
 	 * {@link BeanWrapperImpl#getCachedIntrospectionResults()}中调用
+	 * {@link BeanUtils#getPropertyDescriptors(java.lang.Class)}中调用
 	 * </p>
 	 *
 	 * @param beanClass the bean class to analyze

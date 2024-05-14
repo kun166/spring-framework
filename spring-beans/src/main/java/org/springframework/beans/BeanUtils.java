@@ -482,6 +482,9 @@ public abstract class BeanUtils {
 
 	/**
 	 * Retrieve the JavaBeans {@code PropertyDescriptor}s of a given class.
+	 * <p>
+	 * {@link BeanUtils#findPropertyForMethod(java.lang.reflect.Method, java.lang.Class)}中调用
+	 * </p>
 	 *
 	 * @param clazz the Class to retrieve the PropertyDescriptors for
 	 * @return an array of {@code PropertyDescriptors} for the given class

@@ -110,6 +110,14 @@ public class InjectionMetadata {
 		return this.targetClass != clazz;
 	}
 
+	/**
+	 * <p>
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#postProcessMergedBeanDefinition(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanDefinition
+	 */
 	public void checkConfigMembers(RootBeanDefinition beanDefinition) {
 		Set<InjectedElement> checkedElements = new LinkedHashSet<>(this.injectedElements.size());
 		for (InjectedElement element : this.injectedElements) {
@@ -122,6 +130,17 @@ public class InjectionMetadata {
 		this.checkedElements = checkedElements;
 	}
 
+	/**
+	 * <p>
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#postProcessProperties(org.springframework.beans.PropertyValues, java.lang.Object, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param target
+	 * @param beanName
+	 * @param pvs
+	 * @throws Throwable
+	 */
 	public void inject(Object target, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
 		Collection<InjectedElement> checkedElements = this.checkedElements;
 		Collection<InjectedElement> elementsToIterate =
@@ -152,6 +171,10 @@ public class InjectionMetadata {
 
 	/**
 	 * Return an {@code InjectionMetadata} instance, possibly for empty elements.
+	 * <p>
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#buildResourceMetadata(java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param elements the elements to inject (possibly empty)
 	 * @param clazz    the target class
@@ -246,16 +269,30 @@ public class InjectionMetadata {
 
 		/**
 		 * Either this or {@link #getResourceToInject} needs to be overridden.
+		 * <p>
+		 * {@link InjectionMetadata#inject(java.lang.Object, java.lang.String, org.springframework.beans.PropertyValues)}
+		 * 中调用
+		 * </p>
 		 */
 		protected void inject(Object target, @Nullable String requestingBeanName, @Nullable PropertyValues pvs)
 				throws Throwable {
 
 			if (this.isField) {
+				/**
+				 *  属性赋值
+				 */
 				Field field = (Field) this.member;
 				ReflectionUtils.makeAccessible(field);
+				/**
+				 * 调用的是具体的子类
+				 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor.ResourceElement#getResourceToInject(java.lang.Object, java.lang.String)}
+				 */
 				field.set(target, getResourceToInject(target, requestingBeanName));
 			} else {
 				if (checkPropertySkipping(pvs)) {
+					/**
+					 * 判断是不是已经设置过了
+					 */
 					return;
 				}
 				try {

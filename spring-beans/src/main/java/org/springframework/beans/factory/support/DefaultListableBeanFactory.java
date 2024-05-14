@@ -1509,6 +1509,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * <p>
 	 * {@link ConstructorResolver#resolveAutowiredArgument(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.Class, java.lang.String, java.util.Set, org.springframework.beans.TypeConverter, boolean)}
 	 * 中调用
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#autowireResource}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param descriptor         the descriptor for the dependency (field/method/constructor)
@@ -1566,6 +1568,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 									  @Nullable Set<String> autowiredBeanNames,
 									  @Nullable TypeConverter typeConverter) throws BeansException {
 
+		/**
+		 * 返回ThreadLocal里记录的{@link DependencyDescriptor},并将当前descriptor放到ThreadLocal里，
+		 */
 		InjectionPoint previousInjectionPoint = ConstructorResolver.setCurrentInjectionPoint(descriptor);
 		try {
 			Object shortcut = descriptor.resolveShortcut(this);

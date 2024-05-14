@@ -364,11 +364,33 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		this.injectionMetadataCache.remove(beanName);
 	}
 
+	/**
+	 * <p>
+	 * 实现自
+	 * {@link InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+	 * 的方法
+	 * </p>
+	 *
+	 * @param beanClass the class of the bean to be instantiated
+	 * @param beanName  the name of the bean
+	 * @return
+	 */
 	@Override
 	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
 		return null;
 	}
 
+	/**
+	 * <p>
+	 * 实现自
+	 * {@link InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+	 * 的方法
+	 * </p>
+	 *
+	 * @param bean     the bean instance created, with properties not having been set yet
+	 * @param beanName the name of the bean
+	 * @return
+	 */
 	@Override
 	public boolean postProcessAfterInstantiation(Object bean, String beanName) {
 		return true;
@@ -538,6 +560,9 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			});
 
 			elements.addAll(0, currElements);
+			/**
+			 * 遍历父类
+			 */
 			targetClass = targetClass.getSuperclass();
 		}
 		while (targetClass != null && targetClass != Object.class);
@@ -590,6 +615,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 	/**
 	 * Obtain the resource object for the given name and type.
+	 * <p>
+	 * {@link ResourceElement#getResourceToInject(java.lang.Object, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param element            the descriptor for the annotated field/method
 	 * @param requestingBeanName the name of the requesting bean
@@ -625,6 +654,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	/**
 	 * Obtain a resource object for the given name and type through autowiring
 	 * based on the given factory.
+	 * <p>
+	 * {@link CommonAnnotationBeanPostProcessor#getResource(org.springframework.context.annotation.CommonAnnotationBeanPostProcessor.LookupElement, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param factory            the factory to autowire against
 	 * @param element            the descriptor for the annotated field/method
@@ -640,6 +673,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		String name = element.name;
 
 		if (factory instanceof AutowireCapableBeanFactory) {
+			/**
+			 * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory}
+			 * 走这个分支
+			 */
 			AutowireCapableBeanFactory beanFactory = (AutowireCapableBeanFactory) factory;
 			DependencyDescriptor descriptor = element.getDependencyDescriptor();
 			if (this.fallbackToDefaultTypeMatch && element.isDefaultName && !factory.containsBean(name)) {
@@ -658,6 +695,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		}
 
 		if (factory instanceof ConfigurableBeanFactory) {
+			/**
+			 * 走这个分支
+			 * 建立依赖关系
+			 */
 			ConfigurableBeanFactory beanFactory = (ConfigurableBeanFactory) factory;
 			for (String autowiredBeanName : autowiredBeanNames) {
 				if (requestingBeanName != null && beanFactory.containsBean(autowiredBeanName)) {
@@ -690,6 +731,11 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 		protected String name = "";
 
+		/**
+		 * {@link ResourceElement#ResourceElement(java.lang.reflect.Member, java.lang.reflect.AnnotatedElement, java.beans.PropertyDescriptor)}
+		 * 中设置
+		 * 如果{@link Resource}注解,指定了{@link Resource#name()}属性
+		 */
 		protected boolean isDefaultName = false;
 
 		protected Class<?> lookupType = Object.class;
@@ -717,6 +763,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 
 		/**
 		 * Build a DependencyDescriptor for the underlying field/method.
+		 * <p>
+		 * {@link CommonAnnotationBeanPostProcessor#autowireResource(org.springframework.beans.factory.BeanFactory, org.springframework.context.annotation.CommonAnnotationBeanPostProcessor.LookupElement, java.lang.String)}
+		 * 中调用
+		 * </p>
 		 */
 		public final DependencyDescriptor getDependencyDescriptor() {
 			if (this.isField) {
@@ -793,8 +843,24 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			this.lazyLookup = (lazy != null && lazy.value());
 		}
 
+		/**
+		 * <p>
+		 * {@link InjectionMetadata.InjectedElement#inject(java.lang.Object, java.lang.String, org.springframework.beans.PropertyValues)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param target
+		 * @param requestingBeanName
+		 * @return
+		 */
 		@Override
 		protected Object getResourceToInject(Object target, @Nullable String requestingBeanName) {
+			/**
+			 * 注意:下面的this是
+			 * {@link ResourceElement}
+			 * {@link WebServiceRefElement}
+			 *
+			 */
 			return (this.lazyLookup ? buildLazyResourceProxy(this, requestingBeanName) :
 					getResource(this, requestingBeanName));
 		}

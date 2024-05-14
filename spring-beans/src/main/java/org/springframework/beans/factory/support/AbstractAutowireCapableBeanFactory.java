@@ -537,6 +537,16 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	// Delegate methods for resolving injection points
 	//-------------------------------------------------------------------------
 
+	/**
+	 * <p>
+	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#autowireResource(org.springframework.beans.factory.BeanFactory, org.springframework.context.annotation.CommonAnnotationBeanPostProcessor.LookupElement, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param name       the name of the bean to look up
+	 * @param descriptor the dependency descriptor for the requesting injection point
+	 * @return
+	 */
 	@Override
 	public Object resolveBeanByName(String name, DependencyDescriptor descriptor) {
 		InjectionPoint previousInjectionPoint = ConstructorResolver.setCurrentInjectionPoint(descriptor);

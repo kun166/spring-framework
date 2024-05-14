@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import org.springframework.beans.MutablePropertyValues;
+import org.springframework.beans.factory.annotation.InjectionMetadata;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
@@ -501,6 +502,10 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 
 	/**
 	 * Register an externally managed configuration method or field.
+	 * <p>
+	 * {@link InjectionMetadata#checkConfigMembers(org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
 	 */
 	public void registerExternallyManagedConfigMember(Member configMember) {
 		synchronized (this.postProcessingLock) {

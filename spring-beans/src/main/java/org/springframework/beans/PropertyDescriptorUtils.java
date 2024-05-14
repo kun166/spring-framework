@@ -50,6 +50,8 @@ abstract class PropertyDescriptorUtils {
 	 * <p>
 	 * {@link SimpleBeanInfoFactory#getBeanInfo(java.lang.Class)}中调用
 	 * </p>
+	 * 遍历beanClass的所有方法。
+	 * 根据每一个属性名构造一个{@link BasicPropertyDescriptor},并设置get,set方法
 	 *
 	 * @param beanClass the target class to introspect
 	 * @return a collection of property descriptors
