@@ -268,6 +268,10 @@ public abstract class BeanFactoryUtils {
 	 * <p>
 	 * {@link DefaultListableBeanFactory#findAutowireCandidates(java.lang.String, java.lang.Class, org.springframework.beans.factory.config.DependencyDescriptor)}
 	 * 中调用
+	 * {@link org.springframework.aop.framework.autoproxy.BeanFactoryAdvisorRetrievalHelper#findAdvisorBeans()}
+	 * 中调用
+	 * {@link org.springframework.aop.aspectj.annotation.BeanFactoryAspectJAdvisorsBuilder#buildAspectJAdvisors()}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param lbf                  the bean factory

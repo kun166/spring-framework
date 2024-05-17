@@ -59,11 +59,13 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 
 	private static final String AJC_MAGIC = "ajc$";
 
-	private static final Class<?>[] ASPECTJ_ANNOTATION_CLASSES = new Class<?>[] {
+	private static final Class<?>[] ASPECTJ_ANNOTATION_CLASSES = new Class<?>[]{
 			Pointcut.class, Around.class, Before.class, After.class, AfterReturning.class, AfterThrowing.class};
 
 
-	/** Logger available to subclasses. */
+	/**
+	 * Logger available to subclasses.
+	 */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	protected final ParameterNameDiscoverer parameterNameDiscoverer = new AspectJAnnotationParameterNameDiscoverer();
@@ -74,12 +76,24 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 	 * if it has the @Aspect annotation, and was not compiled by ajc. The reason for this latter test
 	 * is that aspects written in the code-style (AspectJ language) also have the annotation present
 	 * when compiled by ajc with the -1.5 flag, yet they cannot be consumed by Spring AOP.
+	 * <p>
+	 * {@link BeanFactoryAspectJAdvisorsBuilder#buildAspectJAdvisors()}
+	 * 中调用
+	 * </p>
 	 */
 	@Override
 	public boolean isAspect(Class<?> clazz) {
 		return (hasAspectAnnotation(clazz) && !compiledByAjc(clazz));
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAspectJAdvisorFactory#isAspect(java.lang.Class)}中调用
+	 * </p>
+	 *
+	 * @param clazz
+	 * @return
+	 */
 	private boolean hasAspectAnnotation(Class<?> clazz) {
 		return (AnnotationUtils.findAnnotation(clazz, Aspect.class) != null);
 	}
@@ -145,8 +159,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 		A result = AnnotationUtils.findAnnotation(method, toLookFor);
 		if (result != null) {
 			return new AspectJAnnotation<>(result);
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
@@ -154,6 +167,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 
 	/**
 	 * Enum for AspectJ annotation types.
+	 *
 	 * @see AspectJAnnotation#getAnnotationType()
 	 */
 	protected enum AspectJAnnotationType {
@@ -165,11 +179,12 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 	/**
 	 * Class modelling an AspectJ annotation, exposing its type enumeration and
 	 * pointcut String.
+	 *
 	 * @param <A> the annotation type
 	 */
 	protected static class AspectJAnnotation<A extends Annotation> {
 
-		private static final String[] EXPRESSION_ATTRIBUTES = new String[] {"pointcut", "value"};
+		private static final String[] EXPRESSION_ATTRIBUTES = new String[]{"pointcut", "value"};
 
 		private static Map<Class<?>, AspectJAnnotationType> annotationTypeMap = new HashMap<>(8);
 
@@ -197,8 +212,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 				this.pointcutExpression = resolveExpression(annotation);
 				Object argNames = AnnotationUtils.getValue(annotation, "argNames");
 				this.argumentNames = (argNames instanceof String ? (String) argNames : "");
-			}
-			catch (Exception ex) {
+			} catch (Exception ex) {
 				throw new IllegalArgumentException(annotation + " is not a valid AspectJ annotation", ex);
 			}
 		}
@@ -270,8 +284,7 @@ public abstract class AbstractAspectJAdvisorFactory implements AspectJAdvisorFac
 					names[i] = nameTokens.nextToken();
 				}
 				return names;
-			}
-			else {
+			} else {
 				return null;
 			}
 		}

@@ -57,6 +57,7 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	/**
 	 * {@link AbstractAdvisorAutoProxyCreator#initBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
 	 * 中设置
+	 * {@link BeanFactoryAdvisorRetrievalHelperAdapter#BeanFactoryAdvisorRetrievalHelperAdapter(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
 	 */
 	@Nullable
 	private BeanFactoryAdvisorRetrievalHelper advisorRetrievalHelper;
@@ -111,6 +112,11 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	/**
 	 * Find all eligible Advisors for auto-proxying this class.
 	 *
+	 * <p>
+	 * {@link AbstractAdvisorAutoProxyCreator#getAdvicesAndAdvisorsForBean(java.lang.Class, java.lang.String, org.springframework.aop.TargetSource)}
+	 * 中调用
+	 * </p>
+	 *
 	 * @param beanClass the clazz to find advisors for
 	 * @param beanName  the name of the currently proxied bean
 	 * @return the empty List, not {@code null},
@@ -134,6 +140,7 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * <p>
 	 * {@link AnnotationAwareAspectJAutoProxyCreator#findCandidateAdvisors()}中调用
 	 * </p>
+	 * 返回所有实现了{@link Advisor}接口的spring的bean
 	 *
 	 * @return the List of candidate Advisors
 	 */
@@ -145,6 +152,10 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	/**
 	 * Search the given candidate Advisors to find all Advisors that
 	 * can apply to the specified bean.
+	 * <p>
+	 * {@link AbstractAdvisorAutoProxyCreator#findEligibleAdvisors(java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param candidateAdvisors the candidate Advisors
 	 * @param beanClass         the target's bean class
@@ -152,8 +163,9 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * @return the List of applicable Advisors
 	 * @see ProxyCreationContext#getCurrentProxiedBeanName()
 	 */
-	protected List<Advisor> findAdvisorsThatCanApply(
-			List<Advisor> candidateAdvisors, Class<?> beanClass, String beanName) {
+	protected List<Advisor> findAdvisorsThatCanApply(List<Advisor> candidateAdvisors,
+													 Class<?> beanClass,
+													 String beanName) {
 
 		ProxyCreationContext.setCurrentProxiedBeanName(beanName);
 		try {
@@ -221,6 +233,15 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 			super(beanFactory);
 		}
 
+		/**
+		 * <p>
+		 * {@link BeanFactoryAdvisorRetrievalHelper#findAdvisorBeans()}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param beanName the name of the aspect bean
+		 * @return
+		 */
 		@Override
 		protected boolean isEligibleBean(String beanName) {
 			return AbstractAdvisorAutoProxyCreator.this.isEligibleAdvisorBean(beanName);

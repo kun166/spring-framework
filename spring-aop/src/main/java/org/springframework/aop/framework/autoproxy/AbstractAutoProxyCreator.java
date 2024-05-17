@@ -410,6 +410,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * 返回给定的bean类是否表示基础结构类,永远不应该代理。
 	 * {@link AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
 	 * 中调用
+	 * {@link AnnotationAwareAspectJAutoProxyCreator#isInfrastructureClass(java.lang.Class)}
+	 * 中调用
 	 * </p>
 	 * 是否实现了以下四个接口中的一个
 	 * {@link Advice}

@@ -62,7 +62,8 @@ public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorA
 
 	/**
 	 * {@link AnnotationAwareAspectJAutoProxyCreator#initBeanFactory(org.springframework.beans.factory.config.ConfigurableListableBeanFactory)}
-	 * 中设置
+	 * 中设置为
+	 * {@link BeanFactoryAspectJAdvisorsBuilderAdapter#BeanFactoryAspectJAdvisorsBuilderAdapter(org.springframework.beans.factory.ListableBeanFactory, org.springframework.aop.aspectj.annotation.AspectJAdvisorFactory)}
 	 */
 	@Nullable
 	private BeanFactoryAspectJAdvisorsBuilder aspectJAdvisorsBuilder;
@@ -106,12 +107,17 @@ public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorA
 	 * <p>
 	 * {@link AspectJAwareAdvisorAutoProxyCreator#shouldSkip(java.lang.Class, java.lang.String)}中调用
 	 * </p>
+	 * 返回所有实现了{@link Advisor}接口的spring的bean
+	 * 返回标有{@link org.aspectj.lang.annotation.Aspect}注解的bean
 	 *
 	 * @return
 	 */
 	@Override
 	protected List<Advisor> findCandidateAdvisors() {
 		// Add all the Spring advisors found according to superclass rules.
+		/**
+		 * 返回所有实现了{@link Advisor}接口的spring的bean
+		 */
 		List<Advisor> advisors = super.findCandidateAdvisors();
 		// Build Advisors for all AspectJ aspects in the bean factory.
 		if (this.aspectJAdvisorsBuilder != null) {

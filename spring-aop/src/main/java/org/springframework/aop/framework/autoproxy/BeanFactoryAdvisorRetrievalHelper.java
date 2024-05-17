@@ -44,6 +44,10 @@ public class BeanFactoryAdvisorRetrievalHelper {
 
 	private final ConfigurableListableBeanFactory beanFactory;
 
+	/**
+	 * {@link BeanFactoryAdvisorRetrievalHelper#findAdvisorBeans()}中赋值
+	 * 实现了{@link Advisor}接口的bean的name数组
+	 */
 	@Nullable
 	private volatile String[] cachedAdvisorBeanNames;
 
@@ -66,6 +70,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 	 * {@link AbstractAdvisorAutoProxyCreator#findCandidateAdvisors()}
 	 * 中调用
 	 * </p>
+	 * 返回所有实现了{@link Advisor}接口的spring的bean
 	 *
 	 * @return the list of {@link org.springframework.aop.Advisor} beans
 	 * @see #isEligibleBean
@@ -87,6 +92,10 @@ public class BeanFactoryAdvisorRetrievalHelper {
 		List<Advisor> advisors = new ArrayList<>();
 		for (String name : advisorNames) {
 			if (isEligibleBean(name)) {
+				/**
+				 * 这个判断条件走的是子类的实现方法
+				 * {@link AbstractAdvisorAutoProxyCreator.BeanFactoryAdvisorRetrievalHelperAdapter#isEligibleBean(java.lang.String)}
+				 */
 				if (this.beanFactory.isCurrentlyInCreation(name)) {
 					if (logger.isTraceEnabled()) {
 						logger.trace("Skipping currently created advisor '" + name + "'");
