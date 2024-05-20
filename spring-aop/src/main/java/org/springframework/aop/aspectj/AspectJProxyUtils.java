@@ -86,6 +86,15 @@ public abstract class AspectJProxyUtils {
 						((PointcutAdvisor) advisor).getPointcut() instanceof AspectJExpressionPointcut));
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAspectJAdvice#isVariableName(java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param name
+	 * @return
+	 */
 	static boolean isVariableName(@Nullable String name) {
 		if (!StringUtils.hasLength(name)) {
 			return false;

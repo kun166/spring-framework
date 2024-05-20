@@ -436,7 +436,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 		try {
 			Document doc = doLoadDocument(inputSource, resource);
-			int count = registerBeanDefinitions(doc, resource);
+			int count = (doc, resource);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Loaded " + count + " bean definitions from " + resource);
 			}
@@ -564,7 +564,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		 * {@link DefaultBeanDefinitionDocumentReader}
 		 * 注意下面：
 		 * 每一个resource,就创建一个{@link DefaultBeanDefinitionDocumentReader}
-		 * 同时,也会创建一个{@link XmlReaderContext}
+		 * 同时,也会创建一个{@link XmlReaderegisterBeanDefinitionsrContext}
 		 */
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
 		int countBefore = getRegistry().getBeanDefinitionCount();

@@ -118,6 +118,9 @@ public final class BeanDefinitionBuilder {
 
 	/**
 	 * Create a new {@code BeanDefinitionBuilder} used to construct a {@link RootBeanDefinition}.
+	 * <p>
+	 * {@link BeanDefinitionBuilder#rootBeanDefinition(java.lang.Class)}中调用
+	 * </p>
 	 *
 	 * @param beanClass         the {@code Class} of the bean that the definition is being created for
 	 * @param factoryMethodName the name of the method to use to construct the bean instance
@@ -167,6 +170,8 @@ public final class BeanDefinitionBuilder {
 
 	/**
 	 * The {@code BeanDefinition} instance we are creating.
+	 * {@link BeanDefinitionBuilder#BeanDefinitionBuilder(org.springframework.beans.factory.support.AbstractBeanDefinition)}
+	 * 中设置值
 	 */
 	private final AbstractBeanDefinition beanDefinition;
 
@@ -178,6 +183,10 @@ public final class BeanDefinitionBuilder {
 
 	/**
 	 * Enforce the use of factory methods.
+	 * <p>
+	 * {@link BeanDefinitionBuilder#rootBeanDefinition(java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 */
 	private BeanDefinitionBuilder(AbstractBeanDefinition beanDefinition) {
 		this.beanDefinition = beanDefinition;

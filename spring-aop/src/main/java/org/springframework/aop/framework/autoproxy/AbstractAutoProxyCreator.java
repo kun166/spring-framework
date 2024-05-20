@@ -151,10 +151,20 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 	private final Set<String> targetSourcedBeans = Collections.newSetFromMap(new ConcurrentHashMap<>(16));
 
+	/**
+	 * {@link AbstractAutoProxyCreator#getEarlyBeanReference(java.lang.Object, java.lang.String)}
+	 * 中添加值
+	 */
 	private final Map<Object, Object> earlyProxyReferences = new ConcurrentHashMap<>(16);
 
 	private final Map<Object, Class<?>> proxyTypes = new ConcurrentHashMap<>(16);
 
+	/**
+	 * {@link AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+	 * 添加值
+	 * {@link AbstractAutoProxyCreator#wrapIfNecessary(java.lang.Object, java.lang.String, java.lang.Object)}
+	 * 中添加值
+	 */
 	private final Map<Object, Boolean> advisedBeans = new ConcurrentHashMap<>(256);
 
 
@@ -262,6 +272,16 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		return null;
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#getEarlyBeanReference(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param bean     the raw bean instance
+	 * @param beanName the name of the bean
+	 * @return
+	 */
 	@Override
 	public Object getEarlyBeanReference(Object bean, String beanName) {
 		Object cacheKey = getCacheKey(bean.getClass(), beanName);
@@ -284,7 +304,18 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		Object cacheKey = getCacheKey(beanClass, beanName);
 
 		if (!StringUtils.hasLength(beanName) || !this.targetSourcedBeans.contains(beanName)) {
+			/**
+			 * 如果beanName不为空(null或者空字符串),
+			 * 或者{@link AbstractAutoProxyCreator#targetSourcedBeans}中不含有beanName
+			 */
 			if (this.advisedBeans.containsKey(cacheKey)) {
+				/**
+				 * 已经处理过了
+				 * 注意下面的缓存,只缓存了false
+				 * 在方法{@link AbstractAutoProxyCreator#wrapIfNecessary(java.lang.Object, java.lang.String, java.lang.Object)}
+				 * 有缓存true
+				 * 不管缓存值是啥，说明都处理过了,不需要再处理了
+				 */
 				return null;
 			}
 			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
@@ -292,6 +323,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 				 * 注意:if的两个条件,{@link AnnotationAwareAspectJAutoProxyCreator#isInfrastructureClass(java.lang.Class)}
 				 * {@link AspectJAwareAdvisorAutoProxyCreator#shouldSkip(java.lang.Class, java.lang.String)}
 				 * 都走了子类的方法……
+				 *
+				 * 1,返回给定的bean类是否表示基础结构类,永远不应该代理。
+				 * 2,返回beanName是否为{@link Class#getName()} + ".ORIGINAL"。是的话，也不能被代理
 				 */
 				this.advisedBeans.put(cacheKey, Boolean.FALSE);
 				return null;
@@ -350,6 +384,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * {@link AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
 	 * 中调用
 	 * </p>
+	 * 获取一个缓存key
+	 * 如果beanClass是一个{@link FactoryBean},且beanName不为空或者空字符串,则返回"&"+beanName,
+	 * 否则返回beanName
 	 *
 	 * @param beanClass the bean class
 	 * @param beanName  the bean name
@@ -367,6 +404,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	/**
 	 * Wrap the given bean if necessary, i.e. if it is eligible for being proxied.
 	 *
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#getEarlyBeanReference(java.lang.Object, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
 	 * @param bean     the raw bean instance
 	 * @param beanName the name of the bean
 	 * @param cacheKey the cache key for metadata access
@@ -374,6 +416,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 */
 	protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
 		if (StringUtils.hasLength(beanName) && this.targetSourcedBeans.contains(beanName)) {
+			/**
+			 * 已经代理过了?
+			 */
 			return bean;
 		}
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
@@ -389,6 +434,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		// Create proxy if we have advice.
+		/**
+		 * 调用了子类方法
+		 * {@link AbstractAdvisorAutoProxyCreator#getAdvicesAndAdvisorsForBean(java.lang.Class, java.lang.String, org.springframework.aop.TargetSource)}
+		 */
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
@@ -447,6 +496,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * <p>
 	 * {@link AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}中调用
 	 * </p>
+	 * 返回beanName是否为{@link Class#getName()} + ".ORIGINAL"
 	 *
 	 * @param beanClass the class of the bean
 	 * @param beanName  the name of the bean
@@ -462,6 +512,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * Returns {@code null} if no custom TargetSource should be used.
 	 * <p>This implementation uses the "customTargetSourceCreators" property.
 	 * Subclasses can override this method to use a different mechanism.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanClass the class of the bean to create a TargetSource for
 	 * @param beanName  the name of the bean

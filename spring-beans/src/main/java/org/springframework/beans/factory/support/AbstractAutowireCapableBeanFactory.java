@@ -722,6 +722,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			/**
 			 * 只有满足earlySingletonExposure为true,才会添加
 			 * 向{@link DefaultSingletonBeanRegistry#singletonFactories}中添加{@link ObjectFactory}
+			 *
+			 * 第三层缓存,这层解决的是aop问题,先提前暴漏一个封装后的对象,一定要懂
 			 */
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
@@ -1142,6 +1144,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Object exposedObject = bean;
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			for (SmartInstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().smartInstantiationAware) {
+				/**
+				 * 下面这个厉害了,aop来了
+				 * {@link org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#getEarlyBeanReference(java.lang.Object, java.lang.String)}
+				 *
+				 * 这个实际上运行的是{@link org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator}
+				 */
 				exposedObject = bp.getEarlyBeanReference(exposedObject, beanName);
 			}
 		}
@@ -1339,6 +1347,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * {@link AbstractAutowireCapableBeanFactory#resolveBeforeInstantiation(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition)}
 	 * 中调用
 	 * </p>
+	 * 对注册的beanDefinition中,所有实现了{@link InstantiationAwareBeanPostProcessor}接口的bean,
+	 * 依次调用{@link InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation(java.lang.Class, java.lang.String)}
+	 * 方法
 	 *
 	 * @param beanClass the class of the bean to be instantiated
 	 * @param beanName  the name of the bean

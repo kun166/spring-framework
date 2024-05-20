@@ -227,6 +227,10 @@ public abstract class AopUtils {
 	 * Can the given pointcut apply at all on the given class?
 	 * <p>This is an important test as it can be used to optimize
 	 * out a pointcut for a class.
+	 * <p>
+	 * {@link AopUtils#canApply(org.springframework.aop.Advisor, java.lang.Class, boolean)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param pc               the static or dynamic pointcut to check
 	 * @param targetClass      the class to test
@@ -305,12 +309,21 @@ public abstract class AopUtils {
 	 */
 	public static boolean canApply(Advisor advisor, Class<?> targetClass, boolean hasIntroductions) {
 		if (advisor instanceof IntroductionAdvisor) {
+			/**
+			 *
+			 */
 			return ((IntroductionAdvisor) advisor).getClassFilter().matches(targetClass);
 		} else if (advisor instanceof PointcutAdvisor) {
 			PointcutAdvisor pca = (PointcutAdvisor) advisor;
+			/**
+			 * 如果是{@link PointcutAdvisor},获取{@link Pointcut}
+			 */
 			return canApply(pca.getPointcut(), targetClass, hasIntroductions);
 		} else {
 			// It doesn't have a pointcut so we assume it applies.
+			/**
+			 * 宁可错杀一千,不可错过一个
+			 */
 			return true;
 		}
 	}

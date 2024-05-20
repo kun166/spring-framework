@@ -1300,6 +1300,16 @@ public abstract class ClassUtils {
 	/**
 	 * Return the number of methods with a given name (with any argument types),
 	 * for the given class and/or its superclasses. Includes non-public methods.
+	 * <p>
+	 * {@link org.springframework.beans.factory.support.AbstractBeanDefinition#prepareMethodOverride}
+	 * 中调用
+	 * </p>
+	 * 返回给定方法的定义数量(不管参数类型,只要方法名称相同就算):
+	 * 1,当前类定义的方法和该方法名称相匹配的数量,包括私有方法
+	 * 2,当前类实现的所有接口,定义的和methodName相同的方法
+	 * 3,递归父类,定义的和methodName相同的方法
+	 * <p>
+	 * 其中2和3,是通过递归调用本方法实现的
 	 *
 	 * @param clazz      the clazz to check
 	 * @param methodName the name of the method
@@ -1309,12 +1319,18 @@ public abstract class ClassUtils {
 		Assert.notNull(clazz, "Class must not be null");
 		Assert.notNull(methodName, "Method name must not be null");
 		int count = 0;
+		/**
+		 *查询clazz定义的所有方法,包括private的
+		 */
 		Method[] declaredMethods = clazz.getDeclaredMethods();
 		for (Method method : declaredMethods) {
 			if (methodName.equals(method.getName())) {
 				count++;
 			}
 		}
+		/**
+		 *
+		 */
 		Class<?>[] ifcs = clazz.getInterfaces();
 		for (Class<?> ifc : ifcs) {
 			count += getMethodCountForName(ifc, methodName);

@@ -33,12 +33,24 @@ import org.springframework.util.StringUtils;
  */
 public class MethodLocatingFactoryBean implements FactoryBean<Method>, BeanFactoryAware {
 
+	/**
+	 * {@link ConfigBeanDefinitionParser#parseAdvice(java.lang.String, int, org.w3c.dom.Element, org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext, java.util.List, java.util.List)}
+	 * 中赋值
+	 */
 	@Nullable
 	private String targetBeanName;
 
+	/**
+	 * {@link ConfigBeanDefinitionParser#parseAdvice(java.lang.String, int, org.w3c.dom.Element, org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext, java.util.List, java.util.List)}
+	 * 中赋值
+	 */
 	@Nullable
 	private String methodName;
 
+	/**
+	 * {@link MethodLocatingFactoryBean#setBeanFactory(org.springframework.beans.factory.BeanFactory)}
+	 * 中赋值
+	 */
 	@Nullable
 	private Method method;
 
@@ -46,6 +58,11 @@ public class MethodLocatingFactoryBean implements FactoryBean<Method>, BeanFacto
 	/**
 	 * Set the name of the bean to locate the {@link Method} on.
 	 * <p>This property is required.
+	 * <p>
+	 * {@link ConfigBeanDefinitionParser#parseAdvice(java.lang.String, int, org.w3c.dom.Element, org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext, java.util.List, java.util.List)}
+	 * 中赋值
+	 * </p>
+	 *
 	 * @param targetBeanName the name of the bean to locate the {@link Method} on
 	 */
 	public void setTargetBeanName(String targetBeanName) {
@@ -55,6 +72,11 @@ public class MethodLocatingFactoryBean implements FactoryBean<Method>, BeanFacto
 	/**
 	 * Set the name of the {@link Method} to locate.
 	 * <p>This property is required.
+	 * <p>
+	 * {@link ConfigBeanDefinitionParser#parseAdvice(java.lang.String, int, org.w3c.dom.Element, org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext, java.util.List, java.util.List)}
+	 * 中赋值
+	 * </p>
+	 *
 	 * @param methodName the name of the {@link Method} to locate
 	 */
 	public void setMethodName(String methodName) {
@@ -70,6 +92,9 @@ public class MethodLocatingFactoryBean implements FactoryBean<Method>, BeanFacto
 			throw new IllegalArgumentException("Property 'methodName' is required");
 		}
 
+		/**
+		 * 根据beanName获取bean的Class
+		 */
 		Class<?> beanClass = beanFactory.getType(this.targetBeanName);
 		if (beanClass == null) {
 			throw new IllegalArgumentException("Can't determine type of bean with name '" + this.targetBeanName + "'");

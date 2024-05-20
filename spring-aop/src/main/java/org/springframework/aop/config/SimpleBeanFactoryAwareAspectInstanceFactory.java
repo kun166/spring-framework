@@ -35,6 +35,10 @@ import org.springframework.util.ClassUtils;
  */
 public class SimpleBeanFactoryAwareAspectInstanceFactory implements AspectInstanceFactory, BeanFactoryAware {
 
+	/**
+	 * {@link ConfigBeanDefinitionParser#parseAdvice(java.lang.String, int, org.w3c.dom.Element, org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext, java.util.List, java.util.List)}
+	 * 中赋值
+	 */
 	@Nullable
 	private String aspectBeanName;
 
@@ -45,6 +49,8 @@ public class SimpleBeanFactoryAwareAspectInstanceFactory implements AspectInstan
 	/**
 	 * Set the name of the aspect bean. This is the bean that is returned when calling
 	 * {@link #getAspectInstance()}.
+	 * {@link ConfigBeanDefinitionParser#parseAdvice(java.lang.String, int, org.w3c.dom.Element, org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext, java.util.List, java.util.List)}
+	 * 中调用
 	 */
 	public void setAspectBeanName(String aspectBeanName) {
 		this.aspectBeanName = aspectBeanName;
@@ -59,6 +65,7 @@ public class SimpleBeanFactoryAwareAspectInstanceFactory implements AspectInstan
 
 	/**
 	 * Look up the aspect bean from the {@link BeanFactory} and returns it.
+	 *
 	 * @see #setAspectBeanName
 	 */
 	@Override
@@ -73,8 +80,7 @@ public class SimpleBeanFactoryAwareAspectInstanceFactory implements AspectInstan
 	public ClassLoader getAspectClassLoader() {
 		if (this.beanFactory instanceof ConfigurableBeanFactory) {
 			return ((ConfigurableBeanFactory) this.beanFactory).getBeanClassLoader();
-		}
-		else {
+		} else {
 			return ClassUtils.getDefaultClassLoader();
 		}
 	}
