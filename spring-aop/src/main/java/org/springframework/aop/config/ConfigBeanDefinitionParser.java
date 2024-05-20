@@ -146,6 +146,23 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 				/**
 				 * <aop:aspect>标签
 				 *
+				 * <p>
+				 * 下面的每一个标签,都被解析成一个{@link MethodLocatingFactoryBean},
+				 * 作为第一个构造器参数,构建其中一个:
+				 * {@link AspectJMethodBeforeAdvice}
+				 * {@link AspectJAfterAdvice}
+				 * {@link AspectJAfterReturningAdvice}
+				 * {@link AspectJAfterThrowingAdvice}
+				 * {@link AspectJAroundAdvice}
+				 *
+				 * 然后作为构造器,解析成一个{@link AspectJPointcutAdvisor}
+				 *
+				 * <aop:before method="" pointcut="" arg-names="" pointcut-ref=""/>
+				 * <aop:after method="" arg-names="" pointcut="" pointcut-ref=""/>
+				 * <aop:after-returning method="" pointcut="" arg-names="" pointcut-ref="" returning=""/>
+				 * <aop:after-throwing method="" pointcut-ref="" arg-names="" pointcut="" throwing=""/>
+				 * <aop:around method="" pointcut="" arg-names="" pointcut-ref=""/>
+				 *
 				 */
 				parseAspect(elt, parserContext);
 			}
@@ -318,6 +335,9 @@ class ConfigBeanDefinitionParser implements BeanDefinitionParser {
 					aspectElement, aspectId, beanDefinitions, beanReferences, parserContext);
 			parserContext.pushContainingComponent(aspectComponentDefinition);
 
+			/**
+			 * <aop:pointcut id="" expression=""/> 在这里解析了
+			 */
 			List<Element> pointcuts = DomUtils.getChildElementsByTagName(aspectElement, POINTCUT);
 			for (Element pointcutElement : pointcuts) {
 				parsePointcut(pointcutElement, parserContext);

@@ -278,7 +278,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * 中调用
 	 * </p>
 	 *
-	 * @param bean     the raw bean instance
+	 * @param bean     the raw bean instance。天然的，未经加工的bean
 	 * @param beanName the name of the bean
 	 * @return
 	 */
