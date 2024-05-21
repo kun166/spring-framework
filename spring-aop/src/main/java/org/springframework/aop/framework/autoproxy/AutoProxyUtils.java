@@ -72,8 +72,8 @@ public abstract class AutoProxyUtils {
 	 * @param beanName    the name of the bean
 	 * @return whether the given bean should be proxied with its target class
 	 */
-	public static boolean shouldProxyTargetClass(
-			ConfigurableListableBeanFactory beanFactory, @Nullable String beanName) {
+	public static boolean shouldProxyTargetClass(ConfigurableListableBeanFactory beanFactory,
+												 @Nullable String beanName) {
 
 		if (beanName != null && beanFactory.containsBeanDefinition(beanName)) {
 			BeanDefinition bd = beanFactory.getBeanDefinition(beanName);
@@ -111,14 +111,19 @@ public abstract class AutoProxyUtils {
 
 	/**
 	 * Expose the given target class for the specified bean, if possible.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#createProxy(java.lang.Class, java.lang.String, java.lang.Object[], org.springframework.aop.TargetSource)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanFactory the containing ConfigurableListableBeanFactory
 	 * @param beanName    the name of the bean
 	 * @param targetClass the corresponding target class
 	 * @since 4.2.3
 	 */
-	static void exposeTargetClass(
-			ConfigurableListableBeanFactory beanFactory, @Nullable String beanName, Class<?> targetClass) {
+	static void exposeTargetClass(ConfigurableListableBeanFactory beanFactory,
+								  @Nullable String beanName,
+								  Class<?> targetClass) {
 
 		if (beanName != null && beanFactory.containsBeanDefinition(beanName)) {
 			beanFactory.getMergedBeanDefinition(beanName).setAttribute(ORIGINAL_TARGET_CLASS_ATTRIBUTE, targetClass);

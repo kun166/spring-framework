@@ -22,6 +22,8 @@ import org.springframework.aop.Advisor;
 import org.springframework.aop.TargetSource;
 import org.springframework.aop.aspectj.annotation.AnnotationAwareAspectJAutoProxyCreator;
 import org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator;
+import org.springframework.aop.config.ConfigBeanDefinitionParser;
+import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -113,6 +115,9 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	protected Object[] getAdvicesAndAdvisorsForBean(
 			Class<?> beanClass, String beanName, @Nullable TargetSource targetSource) {
 
+		/**
+		 * 多一个{@link ExposeInvocationInterceptor#ADVISOR}
+		 */
 		List<Advisor> advisors = findEligibleAdvisors(beanClass, beanName);
 		if (advisors.isEmpty()) {
 			return DO_NOT_PROXY;
@@ -139,9 +144,16 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
 		/**
 		 * 返回所有实现了{@link Advisor}接口的spring的bean
+		 * 这个地方可以参考下{@link ConfigBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+		 * 这个方法里面注册了{@link Advisor}
 		 */
 		List<Advisor> candidateAdvisors = findCandidateAdvisors();
 		List<Advisor> eligibleAdvisors = findAdvisorsThatCanApply(candidateAdvisors, beanClass, beanName);
+
+		/**
+		 * 调用了子方法{@link AspectJAwareAdvisorAutoProxyCreator#extendAdvisors(java.util.List)}
+		 * 多加一个Advisor:{@link ExposeInvocationInterceptor#ADVISOR}
+		 */
 		extendAdvisors(eligibleAdvisors);
 		if (!eligibleAdvisors.isEmpty()) {
 			eligibleAdvisors = sortAdvisors(eligibleAdvisors);
@@ -203,6 +215,10 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	/**
 	 * Sort advisors based on ordering. Subclasses may choose to override this
 	 * method to customize the sorting strategy.
+	 * <p>
+	 * {@link AbstractAdvisorAutoProxyCreator#findEligibleAdvisors(java.lang.Class, java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param advisors the source List of Advisors
 	 * @return the sorted List of Advisors

@@ -80,8 +80,19 @@ public abstract class AspectJProxyUtils {
 	 * @param advisor the Advisor to check
 	 */
 	private static boolean isAspectJAdvice(Advisor advisor) {
+		/**
+		 * <aop:advisor />创建的是{@link org.springframework.aop.support.DefaultBeanFactoryPointcutAdvisor}
+		 * <aop:aspect />创建的是{@link org.springframework.aop.aspectj.AspectJPointcutAdvisor}
+		 */
 		return (advisor instanceof InstantiationModelAwarePointcutAdvisor ||
+				/**
+				 * <aop:aspect />创建的是{@link org.springframework.aop.aspectj.AspectJPointcutAdvisor}
+				 * 构造器传参就是这个了
+				 */
 				advisor.getAdvice() instanceof AbstractAspectJAdvice ||
+				/**
+				 * 下面这个更广泛了,好像都符合?
+				 */
 				(advisor instanceof PointcutAdvisor &&
 						((PointcutAdvisor) advisor).getPointcut() instanceof AspectJExpressionPointcut));
 	}

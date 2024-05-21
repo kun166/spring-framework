@@ -39,7 +39,9 @@ import org.springframework.aop.framework.AopInfrastructureBean;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.framework.ProxyProcessorSupport;
 import org.springframework.aop.framework.adapter.AdvisorAdapterRegistry;
+import org.springframework.aop.framework.adapter.DefaultAdvisorAdapterRegistry;
 import org.springframework.aop.framework.adapter.GlobalAdvisorAdapterRegistry;
+import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 import org.springframework.aop.target.SingletonTargetSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValues;
@@ -437,6 +439,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		/**
 		 * 调用了子类方法
 		 * {@link AbstractAdvisorAutoProxyCreator#getAdvicesAndAdvisorsForBean(java.lang.Class, java.lang.String, org.springframework.aop.TargetSource)}
+		 *
+		 * 除了定义的之外，还多一个系统的{@link ExposeInvocationInterceptor#ADVISOR}
 		 */
 		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
 		if (specificInterceptors != DO_NOT_PROXY) {
@@ -549,6 +553,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 	/**
 	 * Create an AOP proxy for the given bean.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#wrapIfNecessary(java.lang.Object, java.lang.String, java.lang.Object)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanClass            the class of the bean
 	 * @param beanName             the name of the bean
@@ -559,8 +567,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @return the AOP proxy for the bean
 	 * @see #buildAdvisors
 	 */
-	protected Object createProxy(Class<?> beanClass, @Nullable String beanName,
-								 @Nullable Object[] specificInterceptors, TargetSource targetSource) {
+	protected Object createProxy(Class<?> beanClass,
+								 @Nullable String beanName,
+								 @Nullable Object[] specificInterceptors,
+								 TargetSource targetSource) {
 
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
 			AutoProxyUtils.exposeTargetClass((ConfigurableListableBeanFactory) this.beanFactory, beanName, beanClass);
@@ -570,10 +580,20 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		proxyFactory.copyFrom(this);
 
 		if (proxyFactory.isProxyTargetClass()) {
+			/**
+			 * 强制cglib代理
+			 */
 			// Explicit handling of JDK proxy targets and lambdas (for introduction advice scenarios)
 			if (Proxy.isProxyClass(beanClass) || ClassUtils.isLambdaClass(beanClass)) {
 				// Must allow for introductions; can't just set interfaces to the proxy's interfaces only.
+				/**
+				 * 1,beanClass 继承了{@link Proxy}
+				 * 2,beanClass是一个Lambda表达式?
+				 */
 				for (Class<?> ifc : beanClass.getInterfaces()) {
+					/**
+					 * 设置实现的接口
+					 */
 					proxyFactory.addInterface(ifc);
 				}
 			}
@@ -608,6 +628,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * Determine whether the given bean should be proxied with its target class rather than its interfaces.
 	 * <p>Checks the {@link AutoProxyUtils#PRESERVE_TARGET_CLASS_ATTRIBUTE "preserveTargetClass" attribute}
 	 * of the corresponding bean definition.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#createProxy(java.lang.Class, java.lang.String, java.lang.Object[], org.springframework.aop.TargetSource)}
+	 * 中调用
+	 * </p>
+	 * 是否需要强制代理
 	 *
 	 * @param beanClass the class of the bean
 	 * @param beanName  the name of the bean
@@ -637,6 +662,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	/**
 	 * Determine the advisors for the given bean, including the specific interceptors
 	 * as well as the common interceptor, all adapted to the Advisor interface.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#createProxy(java.lang.Class, java.lang.String, java.lang.Object[], org.springframework.aop.TargetSource)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName             the name of the bean
 	 * @param specificInterceptors the set of interceptors that is
@@ -670,6 +699,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 		Advisor[] advisors = new Advisor[allInterceptors.size()];
 		for (int i = 0; i < allInterceptors.size(); i++) {
+			/**
+			 * {@link DefaultAdvisorAdapterRegistry#wrap(java.lang.Object)}
+			 */
 			advisors[i] = this.advisorAdapterRegistry.wrap(allInterceptors.get(i));
 		}
 		return advisors;
@@ -677,6 +709,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 	/**
 	 * Resolves the specified interceptor names to Advisor objects.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#buildAdvisors(java.lang.String, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @see #setInterceptorNames
 	 */

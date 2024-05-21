@@ -24,6 +24,7 @@ import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInterceptor;
 
 import org.springframework.aop.Advisor;
+import org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 
 /**
@@ -40,6 +41,12 @@ import org.springframework.aop.support.DefaultPointcutAdvisor;
 @SuppressWarnings("serial")
 public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Serializable {
 
+	/**
+	 * 构造函数里初始化的:
+	 * {@link MethodBeforeAdviceAdapter}
+	 * {@link AfterReturningAdviceAdapter}
+	 * {@link ThrowsAdviceAdapter}
+	 */
 	private final List<AdvisorAdapter> adapters = new ArrayList<>(3);
 
 
@@ -53,6 +60,16 @@ public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Se
 	}
 
 
+	/**
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#buildAdvisors(java.lang.String, java.lang.Object[])}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param adviceObject
+	 * @return
+	 * @throws UnknownAdviceTypeException
+	 */
 	@Override
 	public Advisor wrap(Object adviceObject) throws UnknownAdviceTypeException {
 		if (adviceObject instanceof Advisor) {

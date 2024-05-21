@@ -42,16 +42,26 @@ import org.springframework.util.ClassUtils;
  * @author Juergen Hoeller
  * @author Sebastien Deleuze
  * @author Sam Brannen
- * @since 12.03.2004
  * @see AdvisedSupport#setOptimize
  * @see AdvisedSupport#setProxyTargetClass
  * @see AdvisedSupport#setInterfaces
+ * @since 12.03.2004
  */
 public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 
 	private static final long serialVersionUID = 7930414337282325166L;
 
 
+	/**
+	 * <p>
+	 * {@link ProxyCreatorSupport#createAopProxy()}中调用
+	 * </p>
+	 *
+	 * @param config the AOP configuration in the form of an
+	 *               AdvisedSupport object
+	 * @return
+	 * @throws AopConfigException
+	 */
 	@Override
 	public AopProxy createAopProxy(AdvisedSupport config) throws AopConfigException {
 		if (!NativeDetector.inNativeImage() &&
@@ -65,8 +75,7 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 				return new JdkDynamicAopProxy(config);
 			}
 			return new ObjenesisCglibAopProxy(config);
-		}
-		else {
+		} else {
 			return new JdkDynamicAopProxy(config);
 		}
 	}

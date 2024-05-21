@@ -26,17 +26,22 @@ import org.springframework.util.Assert;
  * Provides convenient access to a configurable AopProxyFactory.
  *
  * @author Juergen Hoeller
- * @since 2.0.3
  * @see #createAopProxy()
+ * @since 2.0.3
  */
 @SuppressWarnings("serial")
 public class ProxyCreatorSupport extends AdvisedSupport {
 
+	/**
+	 * 构造器中初始化为{@link DefaultAopProxyFactory}
+	 */
 	private AopProxyFactory aopProxyFactory;
 
 	private final List<AdvisedSupportListener> listeners = new ArrayList<>();
 
-	/** Set to true when the first AOP proxy has been created. */
+	/**
+	 * Set to true when the first AOP proxy has been created.
+	 */
 	private boolean active = false;
 
 
@@ -49,6 +54,7 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 
 	/**
 	 * Create a new ProxyCreatorSupport instance.
+	 *
 	 * @param aopProxyFactory the AopProxyFactory to use
 	 */
 	public ProxyCreatorSupport(AopProxyFactory aopProxyFactory) {
@@ -70,6 +76,10 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 
 	/**
 	 * Return the AopProxyFactory that this ProxyConfig uses.
+	 * <p>
+	 * {@link ProxyCreatorSupport#createAopProxy()}
+	 * 中调用
+	 * </p>
 	 */
 	public AopProxyFactory getAopProxyFactory() {
 		return this.aopProxyFactory;
@@ -77,6 +87,7 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 
 	/**
 	 * Add the given AdvisedSupportListener to this proxy configuration.
+	 *
 	 * @param listener the listener to register
 	 */
 	public void addListener(AdvisedSupportListener listener) {
@@ -86,6 +97,7 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 
 	/**
 	 * Remove the given AdvisedSupportListener from this proxy configuration.
+	 *
 	 * @param listener the listener to deregister
 	 */
 	public void removeListener(AdvisedSupportListener listener) {
@@ -97,6 +109,10 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 	/**
 	 * Subclasses should call this to get a new AOP proxy. They should <b>not</b>
 	 * create an AOP proxy with {@code this} as an argument.
+	 * <p>
+	 * {@link ProxyFactory#getProxy(java.lang.ClassLoader)}
+	 * 中调用
+	 * </p>
 	 */
 	protected final synchronized AopProxy createAopProxy() {
 		if (!this.active) {
@@ -107,6 +123,10 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 
 	/**
 	 * Activate this proxy configuration.
+	 * <p>
+	 * {@link ProxyCreatorSupport#createAopProxy()}中调用
+	 * </p>
+	 *
 	 * @see AdvisedSupportListener#activated
 	 */
 	private void activate() {
@@ -118,6 +138,7 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 
 	/**
 	 * Propagate advice change event to all AdvisedSupportListeners.
+	 *
 	 * @see AdvisedSupportListener#adviceChanged
 	 */
 	@Override

@@ -18,6 +18,7 @@ package org.springframework.aop.framework;
 
 import java.io.Closeable;
 
+import org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator;
 import org.springframework.beans.factory.Aware;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.DisposableBean;
@@ -32,9 +33,9 @@ import org.springframework.util.ObjectUtils;
  * ClassLoader management and the {@link #evaluateProxyInterfaces} algorithm.
  *
  * @author Juergen Hoeller
- * @since 4.1
  * @see AbstractAdvisingBeanPostProcessor
  * @see org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator
+ * @since 4.1
  */
 @SuppressWarnings("serial")
 public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanClassLoaderAware, AopInfrastructureBean {
@@ -55,6 +56,7 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	 * Set the ordering which will apply to this processor's implementation
 	 * of {@link Ordered}, used when applying multiple processors.
 	 * <p>The default value is {@code Ordered.LOWEST_PRECEDENCE}, meaning non-ordered.
+	 *
 	 * @param order the ordering value
 	 */
 	public void setOrder(int order) {
@@ -98,15 +100,21 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	 * if appropriate.
 	 * <p>Calls {@link #isConfigurationCallbackInterface} and {@link #isInternalLanguageInterface}
 	 * to filter for reasonable proxy interfaces, falling back to a target-class proxy otherwise.
-	 * @param beanClass the class of the bean
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#createProxy(java.lang.Class, java.lang.String, java.lang.Object[], org.springframework.aop.TargetSource)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanClass    the class of the bean
 	 * @param proxyFactory the ProxyFactory for the bean
 	 */
 	protected void evaluateProxyInterfaces(Class<?> beanClass, ProxyFactory proxyFactory) {
 		Class<?>[] targetInterfaces = ClassUtils.getAllInterfacesForClass(beanClass, getProxyClassLoader());
 		boolean hasReasonableProxyInterface = false;
 		for (Class<?> ifc : targetInterfaces) {
-			if (!isConfigurationCallbackInterface(ifc) && !isInternalLanguageInterface(ifc) &&
-					ifc.getMethods().length > 0) {
+			if (!isConfigurationCallbackInterface(ifc)
+					&& !isInternalLanguageInterface(ifc)
+					&& ifc.getMethods().length > 0) {
 				hasReasonableProxyInterface = true;
 				break;
 			}
@@ -116,8 +124,7 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 			for (Class<?> ifc : targetInterfaces) {
 				proxyFactory.addInterface(ifc);
 			}
-		}
-		else {
+		} else {
 			proxyFactory.setProxyTargetClass(true);
 		}
 	}
@@ -127,6 +134,18 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	 * therefore not to be considered as a reasonable proxy interface.
 	 * <p>If no reasonable proxy interface is found for a given bean, it will get
 	 * proxied with its full target class, assuming that as the user's intention.
+	 *
+	 * <p>
+	 * {@link ProxyProcessorSupport#evaluateProxyInterfaces(java.lang.Class, org.springframework.aop.framework.ProxyFactory)}
+	 * 中调用
+	 * </p>
+	 * 接口是否为下面接口之一(用的==地址比较):
+	 * {@link InitializingBean}
+	 * {@link DisposableBean}
+	 * {@link Closeable}
+	 * {@link AutoCloseable}
+	 * 或者最终实现了接口{@link Aware}
+	 *
 	 * @param ifc the interface to check
 	 * @return whether the given interface is just a container callback
 	 */
@@ -140,6 +159,13 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	 * and therefore not to be considered as a reasonable proxy interface.
 	 * <p>If no reasonable proxy interface is found for a given bean, it will get
 	 * proxied with its full target class, assuming that as the user's intention.
+	 * <p>
+	 * {@link ProxyProcessorSupport#evaluateProxyInterfaces(java.lang.Class, org.springframework.aop.framework.ProxyFactory)}
+	 * 中调用
+	 * </p>
+	 * 接口名为："groovy.lang.GroovyObject"
+	 * 或者以".cglib.proxy.Factory"或者".bytebuddy.MockAccess"结尾
+	 *
 	 * @param ifc the interface to check
 	 * @return whether the given interface is an internal language interface
 	 */
