@@ -56,12 +56,13 @@ public abstract class AopProxyUtils {
 
 	/**
 	 * Obtain the singleton target object behind the given proxy, if any.
+	 *
 	 * @param candidate the (potential) proxy to check
 	 * @return the singleton target object managed in a {@link SingletonTargetSource},
 	 * or {@code null} in any other case (not a proxy, not an existing singleton target)
-	 * @since 4.3.8
 	 * @see Advised#getTargetSource()
 	 * @see SingletonTargetSource#getTarget()
+	 * @since 4.3.8
 	 */
 	@Nullable
 	public static Object getSingletonTarget(Object candidate) {
@@ -78,6 +79,7 @@ public abstract class AopProxyUtils {
 	 * Determine the ultimate target class of the given bean instance, traversing
 	 * not only a top-level proxy but any number of nested proxies as well &mdash;
 	 * as long as possible without side effects, that is, just for singleton targets.
+	 *
 	 * @param candidate the instance to check (might be an AOP proxy)
 	 * @return the ultimate target class (or the plain class of the given
 	 * object as fallback; never {@code null})
@@ -103,6 +105,7 @@ public abstract class AopProxyUtils {
 	 * <p>This will always add the {@link Advised} interface unless the AdvisedSupport's
 	 * {@link AdvisedSupport#setOpaque "opaque"} flag is on. Always adds the
 	 * {@link org.springframework.aop.SpringProxy} marker interface.
+	 *
 	 * @param advised the proxy config
 	 * @return the complete set of interfaces to proxy
 	 * @see SpringProxy
@@ -117,24 +120,31 @@ public abstract class AopProxyUtils {
 	 * <p>This will always add the {@link Advised} interface unless the AdvisedSupport's
 	 * {@link AdvisedSupport#setOpaque "opaque"} flag is on. Always adds the
 	 * {@link org.springframework.aop.SpringProxy} marker interface.
-	 * @param advised the proxy config
+	 * <p>
+	 * {@link JdkDynamicAopProxy#JdkDynamicAopProxy(org.springframework.aop.framework.AdvisedSupport)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param advised         the proxy config {@link ProxyFactory}
 	 * @param decoratingProxy whether to expose the {@link DecoratingProxy} interface
-	 * @return the complete set of interfaces to proxy
-	 * @since 4.3
+	 * @return the complete set of interfaces to proxy 传入了true
 	 * @see SpringProxy
 	 * @see Advised
 	 * @see DecoratingProxy
+	 * @since 4.3
 	 */
 	static Class<?>[] completeProxiedInterfaces(AdvisedSupport advised, boolean decoratingProxy) {
 		Class<?>[] specifiedInterfaces = advised.getProxiedInterfaces();
 		if (specifiedInterfaces.length == 0) {
 			// No user-specified interfaces: check whether target class is an interface.
+			/**
+			 * bean class实现的接口为0,也就是没有实现接口
+			 */
 			Class<?> targetClass = advised.getTargetClass();
 			if (targetClass != null) {
 				if (targetClass.isInterface()) {
 					advised.setInterfaces(targetClass);
-				}
-				else if (Proxy.isProxyClass(targetClass) || ClassUtils.isLambdaClass(targetClass)) {
+				} else if (Proxy.isProxyClass(targetClass) || ClassUtils.isLambdaClass(targetClass)) {
 					advised.setInterfaces(targetClass.getInterfaces());
 				}
 				specifiedInterfaces = advised.getProxiedInterfaces();
@@ -148,12 +158,22 @@ public abstract class AopProxyUtils {
 			}
 		}
 		if (!advised.isInterfaceProxied(SpringProxy.class)) {
+			/**
+			 * 如果bean class 没有实现{@link SpringProxy}接口,
+			 * 则添加{@link SpringProxy}接口
+			 */
 			proxiedInterfaces.add(SpringProxy.class);
 		}
 		if (!advised.isOpaque() && !advised.isInterfaceProxied(Advised.class)) {
+			/**
+			 * 添加{@link Advised}接口
+			 */
 			proxiedInterfaces.add(Advised.class);
 		}
 		if (decoratingProxy && !advised.isInterfaceProxied(DecoratingProxy.class)) {
+			/**
+			 * 添加{@link DecoratingProxy}接口
+			 */
 			proxiedInterfaces.add(DecoratingProxy.class);
 		}
 		return ClassUtils.toClassArray(proxiedInterfaces);
@@ -162,6 +182,7 @@ public abstract class AopProxyUtils {
 	/**
 	 * Extract the user-specified interfaces that the given proxy implements,
 	 * i.e. all non-Advised interfaces that the proxy implements.
+	 *
 	 * @param proxy the proxy to analyze (usually a JDK dynamic proxy)
 	 * @return all user-specified interfaces that the proxy implements,
 	 * in the original order (never {@code null} or empty)
@@ -213,16 +234,27 @@ public abstract class AopProxyUtils {
 	 * Adapt the given arguments to the target signature in the given method,
 	 * if necessary: in particular, if a given vararg argument array does not
 	 * match the array type of the declared vararg parameter in the method.
-	 * @param method the target method
-	 * @param arguments the given arguments
+	 * <p>
+	 * {@link JdkDynamicAopProxy#invoke(java.lang.Object, java.lang.reflect.Method, java.lang.Object[])}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param method    the target method 目标方法
+	 * @param arguments the given arguments 目标传参
 	 * @return a cloned argument array, or the original if no adaptation is needed
 	 * @since 4.2.3
 	 */
 	static Object[] adaptArgumentsIfNecessary(Method method, @Nullable Object[] arguments) {
 		if (ObjectUtils.isEmpty(arguments)) {
+			/**
+			 * 无参方法
+			 */
 			return new Object[0];
 		}
 		if (method.isVarArgs()) {
+			/**
+			 * 方法为可变参数方法
+			 */
 			if (method.getParameterCount() == arguments.length) {
 				Class<?>[] paramTypes = method.getParameterTypes();
 				int varargIndex = paramTypes.length - 1;

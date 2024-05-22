@@ -34,6 +34,7 @@ import org.springframework.aop.Pointcut;
 import org.springframework.aop.PointcutAdvisor;
 import org.springframework.aop.SpringProxy;
 import org.springframework.aop.TargetClassAware;
+import org.springframework.aop.framework.JdkDynamicAopProxy;
 import org.springframework.aop.framework.autoproxy.AbstractAdvisorAutoProxyCreator;
 import org.springframework.core.BridgeMethodResolver;
 import org.springframework.core.MethodIntrospector;
@@ -366,6 +367,10 @@ public abstract class AopUtils {
 
 	/**
 	 * Invoke the given target via reflection, as part of an AOP method invocation.
+	 * <p>
+	 * {@link JdkDynamicAopProxy#invoke(java.lang.Object, java.lang.reflect.Method, java.lang.Object[])}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param target the target object
 	 * @param method the method to invoke

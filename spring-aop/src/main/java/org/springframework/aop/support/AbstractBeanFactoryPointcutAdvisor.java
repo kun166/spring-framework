@@ -21,7 +21,10 @@ import java.io.ObjectInputStream;
 
 import org.aopalliance.aop.Advice;
 
+import org.springframework.aop.AfterReturningAdvice;
+import org.springframework.aop.MethodBeforeAdvice;
 import org.springframework.aop.config.ConfigBeanDefinitionParser;
+import org.springframework.aop.framework.adapter.DefaultAdvisorAdapterRegistry;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -111,6 +114,15 @@ public abstract class AbstractBeanFactoryPointcutAdvisor extends AbstractPointcu
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultAdvisorAdapterRegistry#getInterceptors(org.springframework.aop.Advisor)}
+	 * 中调用
+	 * </p>
+	 * 调用的地方太多了，这个就不细致列举了
+	 *
+	 * @return
+	 */
 	@Override
 	public Advice getAdvice() {
 		Advice advice = this.advice;
@@ -123,6 +135,12 @@ public abstract class AbstractBeanFactoryPointcutAdvisor extends AbstractPointcu
 
 		if (this.beanFactory.isSingleton(this.adviceBeanName)) {
 			// Rely on singleton semantics provided by the factory.
+			/**
+			 * 对于一个{@link DefaultBeanFactoryPointcutAdvisor}来说：
+			 * "advice-ref"指向的bean,不论实现了{@link AfterReturningAdvice},{@link MethodBeforeAdvice}一个还是多个接口,
+			 * 其实都是一个对象
+			 *
+			 */
 			advice = this.beanFactory.getBean(this.adviceBeanName, Advice.class);
 			this.advice = advice;
 			return advice;

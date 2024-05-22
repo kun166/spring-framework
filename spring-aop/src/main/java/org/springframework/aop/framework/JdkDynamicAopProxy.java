@@ -22,12 +22,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
 
+import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.springframework.aop.AopInvocationException;
 import org.springframework.aop.RawTargetAccess;
+import org.springframework.aop.SpringProxy;
 import org.springframework.aop.TargetSource;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.core.DecoratingProxy;
@@ -86,18 +88,29 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 	/**
 	 * Config used to configure this proxy.
+	 * {@link ProxyFactory}
 	 */
 	private final AdvisedSupport advised;
 
+	/**
+	 * 代理接口
+	 * 构造器中初始化
+	 * bean class实现的接口,外加
+	 * {@link SpringProxy}
+	 * {@link Advised}
+	 * {@link DecoratingProxy}
+	 */
 	private final Class<?>[] proxiedInterfaces;
 
 	/**
 	 * Is the {@link #equals} method defined on the proxied interfaces?
+	 * 代理接口中是否定义了equals方法
 	 */
 	private boolean equalsDefined;
 
 	/**
 	 * Is the {@link #hashCode} method defined on the proxied interfaces?
+	 * 代理接口中是否定义了hashCode方法
 	 */
 	private boolean hashCodeDefined;
 
@@ -109,7 +122,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 	 * 中调用
 	 * </p>
 	 *
-	 * @param config the AOP configuration as AdvisedSupport object
+	 * @param config the AOP configuration as AdvisedSupport object {@link ProxyFactory}
 	 * @throws AopConfigException if the config is invalid. We try to throw an informative
 	 *                            exception in this case, rather than let a mysterious failure happen later.
 	 */
@@ -129,6 +142,15 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		return getProxy(ClassUtils.getDefaultClassLoader());
 	}
 
+	/**
+	 * <p>
+	 * {@link ProxyFactory#getProxy(java.lang.ClassLoader)}中调用
+	 * </p>
+	 *
+	 * @param classLoader the class loader to create the proxy with
+	 *                    (or {@code null} for the low-level proxy facility's default)
+	 * @return
+	 */
 	@Override
 	public Object getProxy(@Nullable ClassLoader classLoader) {
 		if (logger.isTraceEnabled()) {
@@ -166,6 +188,10 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 	/**
 	 * Finds any {@link #equals} or {@link #hashCode} method that may be defined
 	 * on the supplied set of interfaces.
+	 * <p>
+	 * {@link JdkDynamicAopProxy#JdkDynamicAopProxy(org.springframework.aop.framework.AdvisedSupport)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param proxiedInterfaces the interfaces to introspect
 	 */
@@ -191,6 +217,8 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 	 * Implementation of {@code InvocationHandler.invoke}.
 	 * <p>Callers will see exactly the exception thrown by the target,
 	 * unless a hook method throws an exception.
+	 * <p>
+	 * jdk代理需要实现的方法
 	 */
 	@Override
 	@Nullable
@@ -204,16 +232,28 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		try {
 			if (!this.equalsDefined && AopUtils.isEqualsMethod(method)) {
 				// The target does not implement the equals(Object) method itself.
+				/**
+				 * 接口中未定义equals接口,但是方法是equals,代理吧
+				 */
 				return equals(args[0]);
 			} else if (!this.hashCodeDefined && AopUtils.isHashCodeMethod(method)) {
 				// The target does not implement the hashCode() method itself.
+				/**
+				 * 代理hashCode方法
+				 */
 				return hashCode();
 			} else if (method.getDeclaringClass() == DecoratingProxy.class) {
 				// There is only getDecoratedClass() declared -> dispatch to proxy config.
+				/**
+				 * 代理{@link DecoratingProxy}的方法
+				 */
 				return AopProxyUtils.ultimateTargetClass(this.advised);
 			} else if (!this.advised.opaque && method.getDeclaringClass().isInterface() &&
 					method.getDeclaringClass().isAssignableFrom(Advised.class)) {
 				// Service invocations on ProxyConfig with the proxy config...
+				/**
+				 * 代理{@link Advised}的方法
+				 */
 				return AopUtils.invokeJoinpointUsingReflection(this.advised, method, args);
 			}
 
@@ -221,16 +261,25 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 			if (this.advised.exposeProxy) {
 				// Make invocation available if necessary.
+				/**
+				 * 如果是强制代理
+				 */
 				oldProxy = AopContext.setCurrentProxy(proxy);
 				setProxyContext = true;
 			}
 
 			// Get as late as possible to minimize the time we "own" the target,
 			// in case it comes from a pool.
+			/**
+			 * 原始对象,代理前对象
+			 */
 			target = targetSource.getTarget();
 			Class<?> targetClass = (target != null ? target.getClass() : null);
 
 			// Get the interception chain for this method.
+			/**
+			 * 其实返回的是一个{@link MethodInterceptor}列表
+			 */
 			List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 
 			// Check whether we have any advice. If we don't, we can fall back on direct
@@ -239,6 +288,9 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 				// We can skip creating a MethodInvocation: just invoke the target directly
 				// Note that the final invoker must be an InvokerInterceptor so we know it does
 				// nothing but a reflective operation on the target, and no hot swapping or fancy proxying.
+				/**
+				 * 说明方法未命中aop规则
+				 */
 				Object[] argsToUse = AopProxyUtils.adaptArgumentsIfNecessary(method, args);
 				retVal = AopUtils.invokeJoinpointUsingReflection(target, method, argsToUse);
 			} else {

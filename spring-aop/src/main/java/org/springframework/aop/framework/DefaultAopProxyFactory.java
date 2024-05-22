@@ -59,6 +59,7 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 	 *
 	 * @param config the AOP configuration in the form of an
 	 *               AdvisedSupport object
+	 *               {@link ProxyFactory}
 	 * @return
 	 * @throws AopConfigException
 	 */

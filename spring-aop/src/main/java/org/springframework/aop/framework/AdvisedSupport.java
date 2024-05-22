@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.aopalliance.aop.Advice;
 
+import org.aopalliance.intercept.MethodInterceptor;
 import org.springframework.aop.Advisor;
 import org.springframework.aop.DynamicIntroductionAdvice;
 import org.springframework.aop.IntroductionAdvisor;
@@ -76,6 +77,11 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 
 	/**
 	 * Package-protected to allow direct access for efficiency.
+	 * <p>
+	 * {@link AdvisedSupport#setTargetSource(org.springframework.aop.TargetSource)}
+	 * 中调用
+	 * </p>
+	 * {@link {@link SingletonTargetSource#SingletonTargetSource(java.lang.Object)}}
 	 */
 	TargetSource targetSource = EMPTY_TARGET_SOURCE;
 
@@ -97,12 +103,20 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	/**
 	 * Interfaces to be implemented by the proxy. Held in List to keep the order
 	 * of registration, to create JDK proxy with specified order of interfaces.
+	 * <p>
+	 * {@link AdvisedSupport#addInterface(java.lang.Class)}添加
+	 * </p>
+	 * bean class实现的接口
 	 */
 	private List<Class<?>> interfaces = new ArrayList<>();
 
 	/**
 	 * List of Advisors. If an Advice is added, it will be wrapped
 	 * in an Advisor before being added to this List.
+	 * <p>
+	 * {@link AdvisedSupport#addAdvisors(java.util.Collection)}中赋值
+	 * </p>
+	 * aop
 	 */
 	private List<Advisor> advisors = new ArrayList<>();
 
@@ -136,6 +150,14 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		setTargetSource(new SingletonTargetSource(target));
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#createProxy(java.lang.Class, java.lang.String, java.lang.Object[], org.springframework.aop.TargetSource)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param targetSource new TargetSource to use {@link SingletonTargetSource#SingletonTargetSource(java.lang.Object)}
+	 */
 	@Override
 	public void setTargetSource(@Nullable TargetSource targetSource) {
 		this.targetSource = (targetSource != null ? targetSource : EMPTY_TARGET_SOURCE);
@@ -215,7 +237,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * 中调用
 	 * </p>
 	 *
-	 * @param intf the additional interface to proxy
+	 * @param intf the additional interface to proxy bean class 实现的接口
 	 */
 	public void addInterface(Class<?> intf) {
 		Assert.notNull(intf, "Interface must not be null");
@@ -245,6 +267,15 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 		return ClassUtils.toClassArray(this.interfaces);
 	}
 
+	/**
+	 * <p>
+	 * {@link AopProxyUtils#completeProxiedInterfaces(org.springframework.aop.framework.AdvisedSupport, boolean)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param intf the interface to check
+	 * @return
+	 */
 	@Override
 	public boolean isInterfaceProxied(Class<?> intf) {
 		for (Class<?> proxyIntf : this.interfaces) {
@@ -334,6 +365,10 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 
 	/**
 	 * Add all the given advisors to this proxy configuration.
+	 * <p>
+	 * {@link AbstractAutoProxyCreator#createProxy(java.lang.Class, java.lang.String, java.lang.Object[], org.springframework.aop.TargetSource)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param advisors the advisors to register
 	 */
@@ -343,6 +378,10 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 
 	/**
 	 * Add all the given advisors to this proxy configuration.
+	 * <p>
+	 * {@link AdvisedSupport#addAdvisors(org.springframework.aop.Advisor...)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param advisors the advisors to register
 	 */
@@ -479,6 +518,11 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	/**
 	 * Determine a list of {@link org.aopalliance.intercept.MethodInterceptor} objects
 	 * for the given method, based on this configuration.
+	 * <p>
+	 * {@link JdkDynamicAopProxy#invoke(java.lang.Object, java.lang.reflect.Method, java.lang.Object[])}
+	 * 中调用
+	 * </p>
+	 * 其实返回的是一个{@link MethodInterceptor}列表
 	 *
 	 * @param method      the proxied method
 	 * @param targetClass the target class

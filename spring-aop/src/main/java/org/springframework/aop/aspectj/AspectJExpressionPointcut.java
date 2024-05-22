@@ -47,6 +47,7 @@ import org.springframework.aop.ClassFilter;
 import org.springframework.aop.IntroductionAwareMethodMatcher;
 import org.springframework.aop.MethodMatcher;
 import org.springframework.aop.ProxyMethodInvocation;
+import org.springframework.aop.framework.DefaultAdvisorChainFactory;
 import org.springframework.aop.framework.autoproxy.ProxyCreationContext;
 import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 import org.springframework.aop.support.AbstractExpressionPointcut;
@@ -187,6 +188,14 @@ public class AspectJExpressionPointcut extends AbstractExpressionPointcut
 		return this;
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultAdvisorChainFactory#getInterceptorsAndDynamicInterceptionAdvice(org.springframework.aop.framework.Advised, java.lang.reflect.Method, java.lang.Class)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @return
+	 */
 	@Override
 	public MethodMatcher getMethodMatcher() {
 		obtainPointcutExpression();

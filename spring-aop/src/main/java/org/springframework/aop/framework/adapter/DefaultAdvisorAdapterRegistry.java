@@ -24,6 +24,10 @@ import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInterceptor;
 
 import org.springframework.aop.Advisor;
+import org.springframework.aop.AfterReturningAdvice;
+import org.springframework.aop.MethodBeforeAdvice;
+import org.springframework.aop.ThrowsAdvice;
+import org.springframework.aop.framework.DefaultAdvisorChainFactory;
 import org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 
@@ -92,15 +96,43 @@ public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Se
 		throw new UnknownAdviceTypeException(advice);
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultAdvisorChainFactory#getInterceptorsAndDynamicInterceptionAdvice(org.springframework.aop.framework.Advised, java.lang.reflect.Method, java.lang.Class)}
+	 * 中调用
+	 * </p>
+	 * 根据传入对象advisor的{@link Advisor#getAdvice()},包装成{@link MethodInterceptor}数组。
+	 * 一个{@link Advice}对象,可能实现了多个接口,每一个接口都会包装成{@link MethodInterceptor}。
+	 * 实现了{@link MethodInterceptor}接口,则不需要包装,直接使用
+	 * 实现了{@link AfterReturningAdvice},则适配包装成{@link AfterReturningAdviceInterceptor}
+	 * 实现了{@link MethodBeforeAdvice},则适配包装成{@link MethodBeforeAdviceInterceptor}
+	 * 实现了{@link ThrowsAdvice},则适配包装成{@link ThrowsAdviceInterceptor}
+	 *
+	 * @param advisor the Advisor to find an interceptor for
+	 * @return
+	 * @throws UnknownAdviceTypeException
+	 */
 	@Override
 	public MethodInterceptor[] getInterceptors(Advisor advisor) throws UnknownAdviceTypeException {
 		List<MethodInterceptor> interceptors = new ArrayList<>(3);
 		Advice advice = advisor.getAdvice();
+		/**
+		 * 一个对象可能实现了{@link Advice}的多个接口
+		 */
 		if (advice instanceof MethodInterceptor) {
+			/**
+			 * 实现了{@link MethodInterceptor}接口,添加
+			 */
 			interceptors.add((MethodInterceptor) advice);
 		}
 		for (AdvisorAdapter adapter : this.adapters) {
 			if (adapter.supportsAdvice(advice)) {
+				/**
+				 * 适配器模式:
+				 * 如果是{@link AfterReturningAdvice},则适配{@link AfterReturningAdviceInterceptor}
+				 * 如果是{@link MethodBeforeAdvice},则适配{@link MethodBeforeAdviceInterceptor}
+				 * 如果是{@link ThrowsAdvice},则适配{@link ThrowsAdviceInterceptor}
+				 */
 				interceptors.add(adapter.getInterceptor(advisor));
 			}
 		}

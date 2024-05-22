@@ -37,6 +37,7 @@ import org.springframework.aop.MethodMatcher;
 import org.springframework.aop.Pointcut;
 import org.springframework.aop.ProxyMethodInvocation;
 import org.springframework.aop.config.ConfigBeanDefinitionParser;
+import org.springframework.aop.framework.DefaultAdvisorChainFactory;
 import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 import org.springframework.aop.support.ComposablePointcut;
 import org.springframework.aop.support.MethodMatchers;
@@ -204,6 +205,9 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 
 	/**
 	 * Return the AspectJ expression pointcut.
+	 * <p>
+	 * {@link AbstractAspectJAdvice#buildSafePointcut()}中调用
+	 * </p>
 	 */
 	public final AspectJExpressionPointcut getPointcut() {
 		calculateArgumentBindings();
@@ -212,6 +216,10 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 
 	/**
 	 * Build a 'safe' pointcut that excludes the AspectJ advice method itself.
+	 * <p>
+	 * {@link DefaultAdvisorChainFactory#getInterceptorsAndDynamicInterceptionAdvice(org.springframework.aop.framework.Advised, java.lang.reflect.Method, java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @return a composable pointcut that builds on the original AspectJ expression pointcut
 	 * @see #getPointcut()
@@ -404,6 +412,9 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 	 * value. We need to calculate which advice parameter needs to be bound
 	 * to which argument name. There are multiple strategies for determining
 	 * this binding, which are arranged in a ChainOfResponsibility.
+	 * <p>
+	 * {@link AbstractAspectJAdvice#getPointcut()}中调用
+	 * </p>
 	 */
 	public final void calculateArgumentBindings() {
 		// The simple case... nothing to bind.
