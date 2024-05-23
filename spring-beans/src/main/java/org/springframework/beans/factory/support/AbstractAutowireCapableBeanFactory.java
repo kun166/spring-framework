@@ -1681,6 +1681,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		/**
 		 * 属性注入
+		 * BeanDefinition定义的属性
 		 */
 		PropertyValues pvs = (mbd.hasPropertyValues() ? mbd.getPropertyValues() : null);
 		/**
@@ -1760,8 +1761,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param bw       the BeanWrapper from which we can obtain information about the bean
 	 * @param pvs      the PropertyValues to register wired objects with
 	 */
-	protected void autowireByName(
-			String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
+	protected void autowireByName(String beanName,
+								  AbstractBeanDefinition mbd,
+								  BeanWrapper bw,
+								  MutablePropertyValues pvs) {
 
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		for (String propertyName : propertyNames) {

@@ -230,6 +230,15 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 		return this.wrappedObject;
 	}
 
+	/**
+	 * <p>
+	 * {@link BeanWrapperImpl#getCachedIntrospectionResults()}
+	 * 中调用
+	 * </p>
+	 * 获取bean的class
+	 *
+	 * @return
+	 */
 	public final Class<?> getWrappedClass() {
 		return getWrappedInstance().getClass();
 	}

@@ -33,9 +33,9 @@ import org.springframework.lang.Nullable;
  * {@link BeanInfoFactory} types to take precedence.
  *
  * @author Chris Beams
- * @since 3.2
  * @see BeanInfoFactory
  * @see CachedIntrospectionResults
+ * @since 3.2
  */
 public class ExtendedBeanInfoFactory implements BeanInfoFactory, Ordered {
 
@@ -51,6 +51,9 @@ public class ExtendedBeanInfoFactory implements BeanInfoFactory, Ordered {
 	/**
 	 * Return whether the given bean class declares or inherits any non-void
 	 * returning bean property or indexed property setter methods.
+	 * <p>
+	 * {@link ExtendedBeanInfoFactory#getBeanInfo(java.lang.Class)}中调用
+	 * </p>
 	 */
 	private boolean supports(Class<?> beanClass) {
 		for (Method method : beanClass.getMethods()) {

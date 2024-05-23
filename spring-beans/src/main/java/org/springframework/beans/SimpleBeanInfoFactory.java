@@ -57,6 +57,9 @@ public class SimpleBeanInfoFactory implements BeanInfoFactory, Ordered {
 	@Override
 	@NonNull
 	public BeanInfo getBeanInfo(Class<?> beanClass) throws IntrospectionException {
+		/**
+		 * 遍历所有方法,通过getXX,setXX等方法封装成每一个XX的{@link PropertyDescriptor}
+		 */
 		Collection<? extends PropertyDescriptor> pds =
 				PropertyDescriptorUtils.determineBasicProperties(beanClass);
 

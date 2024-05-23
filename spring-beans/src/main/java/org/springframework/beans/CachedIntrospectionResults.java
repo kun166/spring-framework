@@ -293,6 +293,10 @@ public final class CachedIntrospectionResults {
 
 	/**
 	 * PropertyDescriptor objects keyed by property name String.
+	 * <p>
+	 * {@link CachedIntrospectionResults#CachedIntrospectionResults(java.lang.Class)}
+	 * 构造器中添加值
+	 * </p>
 	 */
 	private final Map<String, PropertyDescriptor> propertyDescriptors;
 
@@ -307,6 +311,7 @@ public final class CachedIntrospectionResults {
 	 * <p>
 	 * {@link CachedIntrospectionResults#forClass(java.lang.Class)}中调用
 	 * </p>
+	 * 注意,构造方法是私有的。
 	 *
 	 * @param beanClass the bean class to analyze
 	 * @throws BeansException in case of introspection failure
@@ -323,22 +328,46 @@ public final class CachedIntrospectionResults {
 			}
 			this.propertyDescriptors = new LinkedHashMap<>();
 
+			/**
+			 * 有read方法的属性集合
+			 */
 			Set<String> readMethodNames = new HashSet<>();
 
 			// This call is slow so we do it once.
+			/**
+			 * getXX,setXX的属性方法。
+			 * 可能只有getXX或者只有setXX。
+			 * 每一个XX都会封装成一个{@link PropertyDescriptor}
+			 */
 			PropertyDescriptor[] pds = this.beanInfo.getPropertyDescriptors();
 			for (PropertyDescriptor pd : pds) {
-				if (Class.class == beanClass && !("name".equals(pd.getName()) ||
-						(pd.getName().endsWith("Name") && String.class == pd.getPropertyType()))) {
+				if (Class.class == beanClass
+						&& !("name".equals(pd.getName())
+						|| (pd.getName().endsWith("Name") && String.class == pd.getPropertyType()))) {
 					// Only allow all name variants of Class properties
+					/**
+					 * 如果传入的beanClass是{@link Class}
+					 * 且属性即不为"name",也不为xxName(属性的Java类型为String)
+					 * 则忽略。
+					 * 意思也就是,如果传入的beanClass是{@link Class},
+					 * 只处理那些属性名称为"name","xxName"且是String类型的属性
+					 */
 					continue;
 				}
 				if (URL.class == beanClass && "content".equals(pd.getName())) {
 					// Only allow URL attribute introspection, not content resolution
+					/**
+					 * 如果传入的beanClass是{@link URL},
+					 * 不处理"content"属性
+					 */
 					continue;
 				}
 				if (pd.getWriteMethod() == null && isInvalidReadOnlyPropertyType(pd.getPropertyType(), beanClass)) {
 					// Ignore read-only properties such as ClassLoader - no need to bind to those
+					/**
+					 * 没有write方法(那就只有read方法了……)
+					 * 且满足方法条件,看注释吧
+					 */
 					continue;
 				}
 				if (logger.isTraceEnabled()) {
@@ -360,6 +389,9 @@ public final class CachedIntrospectionResults {
 			Class<?> currClass = beanClass;
 			while (currClass != null && currClass != Object.class) {
 				introspectInterfaces(beanClass, currClass, readMethodNames);
+				/**
+				 * 递归遍历父类
+				 */
 				currClass = currClass.getSuperclass();
 			}
 
@@ -374,10 +406,24 @@ public final class CachedIntrospectionResults {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link CachedIntrospectionResults#CachedIntrospectionResults(java.lang.Class)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param beanClass
+	 * @param currClass
+	 * @param readMethodNames
+	 * @throws IntrospectionException
+	 */
 	private void introspectInterfaces(Class<?> beanClass, Class<?> currClass, Set<String> readMethodNames)
 			throws IntrospectionException {
 
 		for (Class<?> ifc : currClass.getInterfaces()) {
+			/**
+			 *  获取所有实现的接口
+			 */
 			if (!ClassUtils.isJavaLanguageInterface(ifc)) {
 				for (PropertyDescriptor pd : getBeanInfo(ifc).getPropertyDescriptors()) {
 					PropertyDescriptor existingPd = this.propertyDescriptors.get(pd.getName());
@@ -432,6 +478,21 @@ public final class CachedIntrospectionResults {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link CachedIntrospectionResults#CachedIntrospectionResults(java.lang.Class)}
+	 * 中调用
+	 * </p>
+	 * 满足以下条件
+	 * 1,returnType不为null
+	 * 2,returnType要么是{@link ClassLoader}的实现类
+	 * 3,returnType要么是{@link ProtectionDomain}的实现类
+	 * 4,returnType要么是{@link AutoCloseable}的实现类,且beanClass不是{@link AutoCloseable}的实现类
+	 *
+	 * @param returnType
+	 * @param beanClass
+	 * @return
+	 */
 	private boolean isInvalidReadOnlyPropertyType(@Nullable Class<?> returnType, Class<?> beanClass) {
 		return (returnType != null && (ClassLoader.class.isAssignableFrom(returnType) ||
 				ProtectionDomain.class.isAssignableFrom(returnType) ||
