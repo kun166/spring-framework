@@ -1511,13 +1511,19 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * 中调用
 	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#autowireResource}
 	 * 中调用
+	 * {@link AbstractAutowireCapableBeanFactory#autowireByType(java.lang.String, org.springframework.beans.factory.support.AbstractBeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.MutablePropertyValues)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param descriptor         the descriptor for the dependency (field/method/constructor)
+	 *                           属性,方法或者构造器包装对象吧
 	 * @param requestingBeanName the name of the bean which declares the given dependency
+	 *                           声明依赖的bean的名字,其实就是这个依赖归属的那个bean
 	 * @param autowiredBeanNames a Set that all names of autowired beans (used for
 	 *                           resolving the given dependency) are supposed to be added to
+	 *                           这个应该是依赖链条上的bean集合
 	 * @param typeConverter      the TypeConverter to use for populating arrays and collections
+	 *                           类型转换器
 	 * @return
 	 * @throws BeansException
 	 */
@@ -1628,6 +1634,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				autowiredBeanName = determineAutowireCandidate(matchingBeans, descriptor);
 				if (autowiredBeanName == null) {
 					if (isRequired(descriptor) || !indicatesMultipleBeans(type)) {
+						/**
+						 * 抛异常了
+						 */
 						return descriptor.resolveNotUnique(descriptor.getResolvableType(), matchingBeans);
 					} else {
 						// In case of an optional Collection/Map, silently ignore a non-unique case:

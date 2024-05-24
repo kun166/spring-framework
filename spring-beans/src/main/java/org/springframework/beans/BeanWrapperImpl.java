@@ -182,6 +182,7 @@ public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements
 	 * for the wrapped object.
 	 * <p>
 	 * {@link BeanWrapperImpl#getPropertyDescriptors()}中调用
+	 * {@link BeanWrapperImpl#getPropertyDescriptor(java.lang.String)}中调用
 	 * </p>
 	 */
 	private CachedIntrospectionResults getCachedIntrospectionResults() {
@@ -272,6 +273,17 @@ public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements
 		return getCachedIntrospectionResults().getPropertyDescriptors();
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#autowireByType(java.lang.String, org.springframework.beans.factory.support.AbstractBeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.MutablePropertyValues)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param propertyName the property to obtain the descriptor for
+	 *                     (may be a nested path, but not an indexed/mapped property)
+	 * @return
+	 * @throws InvalidPropertyException
+	 */
 	@Override
 	public PropertyDescriptor getPropertyDescriptor(String propertyName) throws InvalidPropertyException {
 		BeanWrapperImpl nestedBw = (BeanWrapperImpl) getPropertyAccessorForPropertyPath(propertyName);

@@ -95,6 +95,12 @@ abstract class AutowireUtils {
 	 * {@link AbstractAutowireCapableBeanFactory#isExcludedFromDependencyCheck(java.beans.PropertyDescriptor)}
 	 * 中调用
 	 * </p>
+	 * 1,如果该pd没有write方法,返回false
+	 * 2,如果该write方法的声明类不是CGLIB类,返回false
+	 * 3,如果该write方法没有声明在原始的beanClass上,返回true
+	 * <p>
+	 * 通过以上分析,可以得出:
+	 * 该属性有write方法,且是CGLIB扩展出来的,原有的beanClass未定义,才会返回true
 	 *
 	 * @param pd the PropertyDescriptor of the bean property
 	 * @return whether the bean property is excluded
@@ -118,6 +124,11 @@ abstract class AutowireUtils {
 	/**
 	 * Return whether the setter method of the given bean property is defined
 	 * in any of the given interfaces.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#isExcludedFromDependencyCheck(java.beans.PropertyDescriptor)}
+	 * 中调用
+	 * </p>
+	 * 如果pd有write方法,且write方法的声明类是interfaces里某个接口的实现类,且该接口也定义了该write方法,就返回true
 	 *
 	 * @param pd         the PropertyDescriptor of the bean property
 	 * @param interfaces the Set of interfaces (Class objects)

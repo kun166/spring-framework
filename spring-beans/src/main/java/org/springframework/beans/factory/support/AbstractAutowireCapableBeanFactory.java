@@ -1769,6 +1769,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		for (String propertyName : propertyNames) {
 			if (containsBean(propertyName)) {
+				/**
+				 * 从这里能看出来,
+				 * 如果一个beanClass上定义了某个属性名字,为{@link DefaultListableBeanFactory}中含有的bean的名字,
+				 * 哪怕该BeanDefinition没有指明属性,且也没有注解,也会注入……
+				 *
+				 * 前提当然就是{@link AbstractBeanDefinition#getResolvedAutowireMode()}
+				 * 为{@link AutowireCapableBeanFactory#AUTOWIRE_BY_NAME}
+				 */
 				Object bean = getBean(propertyName);
 				pvs.add(propertyName, bean);
 				registerDependentBean(propertyName, beanName);
@@ -1801,14 +1809,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param bw       the BeanWrapper from which we can obtain information about the bean
 	 * @param pvs      the PropertyValues to register wired objects with
 	 */
-	protected void autowireByType(
-			String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
+	protected void autowireByType(String beanName,
+								  AbstractBeanDefinition mbd,
+								  BeanWrapper bw,
+								  MutablePropertyValues pvs) {
 
 		TypeConverter converter = getCustomTypeConverter();
 		if (converter == null) {
 			converter = bw;
 		}
 
+		/**
+		 * 这个和autowireByName方法一致
+		 */
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
 		Set<String> autowiredBeanNames = new LinkedHashSet<>(propertyNames.length * 2);
 		for (String propertyName : propertyNames) {
@@ -1817,10 +1830,21 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				// Don't try autowiring by type for type Object: never makes sense,
 				// even if it technically is an unsatisfied, non-simple property.
 				if (Object.class != pd.getPropertyType()) {
+					/**
+					 * 如果属性的类型是{@link Object},就不处理了
+					 */
 					MethodParameter methodParam = BeanUtils.getWriteMethodParameter(pd);
 					// Do not allow eager init for type matching in case of a prioritized post-processor.
+					/**
+					 * 如果实现了{@link PriorityOrdered}接口就是false
+					 * 否则是true
+					 */
 					boolean eager = !(bw.getWrappedInstance() instanceof PriorityOrdered);
 					DependencyDescriptor desc = new AutowireByTypeDependencyDescriptor(methodParam, eager);
+					/**
+					 * 调用的是子类的方法
+					 * {@link DefaultListableBeanFactory#resolveDependency(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String, java.util.Set, org.springframework.beans.TypeConverter)}
+					 */
 					Object autowiredArgument = resolveDependency(desc, beanName, autowiredBeanNames, converter);
 					if (autowiredArgument != null) {
 						pvs.add(propertyName, autowiredArgument);
@@ -1849,6 +1873,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * {@link AbstractAutowireCapableBeanFactory#autowireByName(java.lang.String, org.springframework.beans.factory.support.AbstractBeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.MutablePropertyValues)}
 	 * 中调用
 	 * </p>
+	 * 满足以下条件:
+	 * 1,有write方法
+	 * 2,该write方法是原始beanClass定义的,而不是CGLIB扩展出来的;不是{@link AbstractAutowireCapableBeanFactory#ignoredDependencyInterfaces}这些接口定义的方法
+	 * 3,BeanDefinition中未设置该属性
+	 * 4,属性类型不是{@link BeanUtils#isSimpleValueType(java.lang.Class)}的属性
 	 *
 	 * @param mbd the merged bean definition the bean was created with
 	 * @param bw  the BeanWrapper the bean was created with
@@ -1859,10 +1888,23 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Set<String> result = new TreeSet<>();
 		// 获取PropertyValues，里面记录需要该bean注入的所有属性
 		PropertyValues pvs = mbd.getPropertyValues();
+		/**
+		 * 这个方法,会根据实际生成的bean的class,遍历所有方法,
+		 * 根据setXx,getXx方法，根据xx属性组装成{@link PropertyDescriptor}
+		 */
 		PropertyDescriptor[] pds = bw.getPropertyDescriptors();
 		for (PropertyDescriptor pd : pds) {
-			if (pd.getWriteMethod() != null && !isExcludedFromDependencyCheck(pd) && !pvs.contains(pd.getName()) &&
-					!BeanUtils.isSimpleProperty(pd.getPropertyType())) {
+			if (pd.getWriteMethod() != null
+					&& !isExcludedFromDependencyCheck(pd)
+					&& !pvs.contains(pd.getName())
+					&& !BeanUtils.isSimpleProperty(pd.getPropertyType())) {
+				/**
+				 * 满足以下条件:
+				 * 1,有write方法
+				 * 2,一,该write方法是原始beanClass定义的,而不是CGLIB扩展出来的;二,不是{@link AbstractAutowireCapableBeanFactory#ignoredDependencyInterfaces}这些接口定义的方法
+				 * 3,BeanDefinition中未设置该属性
+				 * 4,属性类型不是{@link BeanUtils#isSimpleValueType(java.lang.Class)}的属性
+				 */
 				result.add(pd.getName());
 			}
 		}
@@ -2317,6 +2359,15 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	@SuppressWarnings("serial")
 	private static class AutowireByTypeDependencyDescriptor extends DependencyDescriptor {
 
+		/**
+		 * <p>
+		 * {@link AbstractAutowireCapableBeanFactory#autowireByType(java.lang.String, org.springframework.beans.factory.support.AbstractBeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.MutablePropertyValues)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param methodParameter
+		 * @param eager
+		 */
 		public AutowireByTypeDependencyDescriptor(MethodParameter methodParameter, boolean eager) {
 			super(methodParameter, false, eager);
 		}

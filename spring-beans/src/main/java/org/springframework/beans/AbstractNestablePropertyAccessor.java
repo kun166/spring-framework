@@ -792,6 +792,9 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 
 	/**
 	 * Get the last component of the path. Also works if not nested.
+	 * <p>
+	 * {@link BeanWrapperImpl#getPropertyDescriptor(java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param pa         property accessor to work on
 	 * @param nestedPath property path we know is nested
@@ -806,6 +809,9 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 
 	/**
 	 * Recursively navigate to return a property accessor for the nested property path.
+	 * <p>
+	 * {@link BeanWrapperImpl#getPropertyDescriptor(java.lang.String)}中调用
+	 * </p>
 	 *
 	 * @param propertyPath property path, which may be nested
 	 * @return a property accessor for the target bean

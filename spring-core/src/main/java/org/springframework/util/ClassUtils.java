@@ -1201,6 +1201,8 @@ public abstract class ClassUtils {
 	 * {@link org.springframework.beans.factory.support.AutowireUtils#isExcludedFromDependencyCheck(java.beans.PropertyDescriptor)}
 	 * 中调用
 	 * </p>
+	 * 1,如果该method是该clazz中定义的,返回true
+	 * 2,如果该clazz有该method同名,且同参数的方法,也返回true
 	 *
 	 * @param clazz  the clazz to analyze
 	 * @param method the method to look for

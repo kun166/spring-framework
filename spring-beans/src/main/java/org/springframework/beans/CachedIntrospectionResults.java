@@ -297,6 +297,8 @@ public final class CachedIntrospectionResults {
 	 * {@link CachedIntrospectionResults#CachedIntrospectionResults(java.lang.Class)}
 	 * 构造器中添加值
 	 * </p>
+	 * key为属性名称
+	 * value为get,set方法的组装对象
 	 */
 	private final Map<String, PropertyDescriptor> propertyDescriptors;
 
@@ -509,6 +511,15 @@ public final class CachedIntrospectionResults {
 		return this.beanInfo.getBeanDescriptor().getBeanClass();
 	}
 
+	/**
+	 * <p>
+	 * {@link BeanWrapperImpl#getPropertyDescriptor(java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param name
+	 * @return
+	 */
 	@Nullable
 	PropertyDescriptor getPropertyDescriptor(String name) {
 		PropertyDescriptor pd = this.propertyDescriptors.get(name);
