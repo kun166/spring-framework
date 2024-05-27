@@ -463,6 +463,8 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 	 * <p>
 	 * {@link AutowiredAnnotationBeanPostProcessor#postProcessMergedBeanDefinition(org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Class, java.lang.String)}
 	 * 中调用
+	 * {@link AutowiredAnnotationBeanPostProcessor#postProcessProperties(org.springframework.beans.PropertyValues, java.lang.Object, java.lang.String)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param beanName
@@ -527,6 +529,10 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 						}
 						return;
 					}
+					/**
+					 * 查看直接上的属性"required"是否为true。
+					 * 没有该属性,比如{@link Value},也视为true
+					 */
 					boolean required = determineRequiredStatus(ann);
 					fieldElements.add(new AutowiredFieldElement(field, required));
 				}
@@ -624,6 +630,11 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 	 * <p>A 'required' dependency means that autowiring should fail when no beans
 	 * are found. Otherwise, the autowiring process will simply bypass the field
 	 * or method when no beans are found.
+	 * <p>
+	 * {@link AutowiredAnnotationBeanPostProcessor#determineRequiredStatus(org.springframework.core.annotation.MergedAnnotation)}
+	 * 中调用
+	 * </p>
+	 * 查看注解上的属性"required"是否为true,没有该属性也视为true
 	 *
 	 * @param ann the Autowired annotation
 	 * @return whether the annotation indicates that a dependency is required
@@ -741,6 +752,17 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			this.required = required;
 		}
 
+		/**
+		 * <p>
+		 * {@link InjectionMetadata#inject(java.lang.Object, java.lang.String, org.springframework.beans.PropertyValues)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param bean
+		 * @param beanName
+		 * @param pvs
+		 * @throws Throwable
+		 */
 		@Override
 		protected void inject(Object bean, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
 			Field field = (Field) this.member;
@@ -763,6 +785,17 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			}
 		}
 
+		/**
+		 * <p>
+		 * {@link AutowiredFieldElement#inject(java.lang.Object, java.lang.String, org.springframework.beans.PropertyValues)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param field
+		 * @param bean
+		 * @param beanName
+		 * @return
+		 */
 		@Nullable
 		private Object resolveFieldValue(Field field, Object bean, @Nullable String beanName) {
 			DependencyDescriptor desc = new DependencyDescriptor(field, this.required);
@@ -818,9 +851,23 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			this.required = required;
 		}
 
+		/**
+		 * <p>
+		 * {@link InjectionMetadata#inject(java.lang.Object, java.lang.String, org.springframework.beans.PropertyValues)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param bean
+		 * @param beanName
+		 * @param pvs
+		 * @throws Throwable
+		 */
 		@Override
 		protected void inject(Object bean, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
 			if (checkPropertySkipping(pvs)) {
+				/**
+				 * 如果pvs中已经设定该值了,则略过
+				 */
 				return;
 			}
 			Method method = (Method) this.member;
@@ -859,8 +906,24 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			return arguments;
 		}
 
+		/**
+		 * <p>
+		 * {@link AutowiredMethodElement#inject(java.lang.Object, java.lang.String, org.springframework.beans.PropertyValues)}
+		 * 中调用
+		 * </p>
+		 * 处理标注{@link Autowired}标签的方法的参数
+		 *
+		 * @param method
+		 * @param bean
+		 * @param beanName
+		 * @return
+		 */
 		@Nullable
 		private Object[] resolveMethodArguments(Method method, Object bean, @Nullable String beanName) {
+			/**
+			 * {@link javax.annotation.Resource}只能一个参数,
+			 * 这个注解可以多个参数,从这里可以看出来两者的区别
+			 */
 			int argumentCount = method.getParameterCount();
 			Object[] arguments = new Object[argumentCount];
 			DependencyDescriptor[] descriptors = new DependencyDescriptor[argumentCount];

@@ -72,8 +72,16 @@ public class InjectionMetadata {
 	};
 
 
+	/**
+	 * {@link InjectionMetadata#InjectionMetadata(java.lang.Class, java.util.Collection)}
+	 * 中赋值
+	 */
 	private final Class<?> targetClass;
 
+	/**
+	 * {@link InjectionMetadata#InjectionMetadata(java.lang.Class, java.util.Collection)}
+	 * 中赋值
+	 */
 	private final Collection<InjectedElement> injectedElements;
 
 	@Nullable
@@ -84,6 +92,11 @@ public class InjectionMetadata {
 	 * Create a new {@code InjectionMetadata instance}.
 	 * <p>Preferably use {@link #forElements} for reusing the {@link #EMPTY}
 	 * instance in case of no elements.
+	 *
+	 * <p>
+	 * {@link InjectionMetadata#forElements(java.util.Collection, java.lang.Class)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param targetClass the target class
 	 * @param elements    the associated elements to inject
@@ -134,6 +147,8 @@ public class InjectionMetadata {
 	 * <p>
 	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#postProcessProperties(org.springframework.beans.PropertyValues, java.lang.Object, java.lang.String)}
 	 * 中调用
+	 * {@link AutowiredAnnotationBeanPostProcessor#postProcessProperties(org.springframework.beans.PropertyValues, java.lang.Object, java.lang.String)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param target
@@ -147,6 +162,13 @@ public class InjectionMetadata {
 				(checkedElements != null ? checkedElements : this.injectedElements);
 		if (!elementsToIterate.isEmpty()) {
 			for (InjectedElement element : elementsToIterate) {
+				/**
+				 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor.ResourceElement}
+				 * 注意:
+				 * {@link AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#inject(java.lang.Object, java.lang.String, org.springframework.beans.PropertyValues)}
+				 * {@link AutowiredAnnotationBeanPostProcessor.AutowiredMethodElement#inject(java.lang.Object, java.lang.String, org.springframework.beans.PropertyValues)}
+				 * 两个子类,把该方法覆盖了
+				 */
 				element.inject(target, beanName, pvs);
 			}
 		}

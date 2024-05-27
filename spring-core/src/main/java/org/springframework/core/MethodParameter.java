@@ -663,6 +663,10 @@ public class MethodParameter {
 
 	/**
 	 * Return the annotations associated with the specific method/constructor parameter.
+	 * <p>
+	 * {@link org.springframework.beans.factory.InjectionPoint#getAnnotations()}
+	 * 中调用
+	 * </p>
 	 */
 	public Annotation[] getParameterAnnotations() {
 		Annotation[] paramAnns = this.parameterAnnotations;

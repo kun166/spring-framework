@@ -50,6 +50,11 @@ public class InjectionPoint {
 	@Nullable
 	protected Field field;
 
+	/**
+	 * {@link InjectionPoint#getAnnotations()}
+	 * 中初始化值
+	 * 缓存的是{@link InjectionPoint#field}上的注解数组
+	 */
 	@Nullable
 	private volatile Annotation[] fieldAnnotations;
 
@@ -121,6 +126,9 @@ public class InjectionPoint {
 
 	/**
 	 * Return the wrapped MethodParameter, assuming it is present.
+	 * <p>
+	 * {@link InjectionPoint#getAnnotations()}中调用
+	 * </p>
 	 *
 	 * @return the MethodParameter (never {@code null})
 	 * @throws IllegalStateException if no MethodParameter is available
@@ -133,6 +141,11 @@ public class InjectionPoint {
 
 	/**
 	 * Obtain the annotations associated with the wrapped field or method/constructor parameter.
+	 * <p>
+	 * {@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver#isLazy(org.springframework.beans.factory.config.DependencyDescriptor)}
+	 * 中调用
+	 * </p>
+	 * 呃，不强调了，这个方法在好多地方都会调用
 	 */
 	public Annotation[] getAnnotations() {
 		if (this.field != null) {

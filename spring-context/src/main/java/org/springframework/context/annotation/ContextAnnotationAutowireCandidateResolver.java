@@ -54,6 +54,15 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 		return (isLazy(descriptor) ? buildLazyResolutionProxy(descriptor, beanName) : null);
 	}
 
+	/**
+	 * <p>
+	 * {@link ContextAnnotationAutowireCandidateResolver#getLazyResolutionProxyIfNecessary(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String)}
+	 * 中效用
+	 * </p>
+	 *
+	 * @param descriptor
+	 * @return
+	 */
 	protected boolean isLazy(DependencyDescriptor descriptor) {
 		for (Annotation ann : descriptor.getAnnotations()) {
 			Lazy lazy = AnnotationUtils.getAnnotation(ann, Lazy.class);
@@ -85,10 +94,12 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 			public Class<?> getTargetClass() {
 				return descriptor.getDependencyType();
 			}
+
 			@Override
 			public boolean isStatic() {
 				return false;
 			}
+
 			@Override
 			public Object getTarget() {
 				Set<String> autowiredBeanNames = (beanName != null ? new LinkedHashSet<>(1) : null);
@@ -97,11 +108,9 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 					Class<?> type = getTargetClass();
 					if (Map.class == type) {
 						return Collections.emptyMap();
-					}
-					else if (List.class == type) {
+					} else if (List.class == type) {
 						return Collections.emptyList();
-					}
-					else if (Set.class == type || Collection.class == type) {
+					} else if (Set.class == type || Collection.class == type) {
 						return Collections.emptySet();
 					}
 					throw new NoSuchBeanDefinitionException(descriptor.getResolvableType(),
@@ -116,6 +125,7 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 				}
 				return target;
 			}
+
 			@Override
 			public void releaseTarget(Object target) {
 			}

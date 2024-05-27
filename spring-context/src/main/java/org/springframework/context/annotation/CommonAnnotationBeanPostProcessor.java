@@ -729,6 +729,11 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 */
 	protected abstract static class LookupElement extends InjectionMetadata.InjectedElement {
 
+		/**
+		 * {@link ResourceElement#ResourceElement(java.lang.reflect.Member, java.lang.reflect.AnnotatedElement, java.beans.PropertyDescriptor)}
+		 * 中赋值,
+		 * {@link Resource#name()}
+		 */
 		protected String name = "";
 
 		/**
@@ -738,8 +743,17 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		 */
 		protected boolean isDefaultName = false;
 
+		/**
+		 * 构造方法中赋值,这个是要绑定的那个bean的class
+		 */
 		protected Class<?> lookupType = Object.class;
 
+		/**
+		 * 构造函数中初始化
+		 * {@link Resource#lookup()}
+		 * 如果上述为空,则赋值
+		 * {@link Resource#mappedName()}
+		 */
 		@Nullable
 		protected String mappedName;
 
@@ -784,6 +798,10 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 */
 	private class ResourceElement extends LookupElement {
 
+		/**
+		 * 属性或者方法上,如果有{@link Lazy}注解,
+		 * {@link Lazy#value()}
+		 */
 		private final boolean lazyLookup;
 
 		/**
@@ -830,9 +848,15 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 				resourceName = embeddedValueResolver.resolveStringValue(resourceName);
 			}
 			if (Object.class != resourceType) {
+				/**
+				 * 说明不是默认值,指定了type
+				 */
 				checkResourceType(resourceType);
 			} else {
 				// No resource type specified... check field/method.
+				/**
+				 * 默认值,未指明type,获取
+				 */
 				resourceType = getResourceType();
 			}
 			this.name = (resourceName != null ? resourceName : "");

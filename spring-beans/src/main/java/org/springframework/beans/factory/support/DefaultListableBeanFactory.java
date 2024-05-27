@@ -63,6 +63,7 @@ import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.SmartFactoryBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
@@ -170,7 +171,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * Resolver to use for checking if a bean definition is an autowire candidate.
 	 * 如果是{@link org.springframework.context.annotation.AnnotationConfigApplicationContext}
 	 * 创建的,
-	 * 这个赋值为{@link {@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver}}
+	 * 这个赋值为{@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver}
+	 * <p>
+	 * {@link org.springframework.context.annotation.AnnotationConfigUtils#registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)}
+	 * 如果开启了注解模式,这个会被替换成{@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver}
+	 * </p>
+	 * 非常重要:
+	 * {@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver}
+	 * 是解决注解{@link org.springframework.beans.factory.annotation.Qualifier}的关键
 	 */
 	private AutowireCandidateResolver autowireCandidateResolver = SimpleAutowireCandidateResolver.INSTANCE;
 
@@ -1512,6 +1520,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * {@link org.springframework.context.annotation.CommonAnnotationBeanPostProcessor#autowireResource}
 	 * 中调用
 	 * {@link AbstractAutowireCapableBeanFactory#autowireByType(java.lang.String, org.springframework.beans.factory.support.AbstractBeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.MutablePropertyValues)}
+	 * 中调用
+	 * {@link AutowiredAnnotationBeanPostProcessor.AutowiredFieldElement#resolveFieldValue(java.lang.reflect.Field, java.lang.Object, java.lang.String)}
 	 * 中调用
 	 * </p>
 	 *
