@@ -262,6 +262,10 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 
 	/**
 	 * Overridden to clear the FactoryBean object cache as well.
+	 * <p>
+	 * {@link AbstractBeanFactory#removeSingletonIfCreatedForTypeCheckOnly(java.lang.String)}
+	 * 中调用
+	 * </p>
 	 */
 	@Override
 	protected void removeSingleton(String beanName) {

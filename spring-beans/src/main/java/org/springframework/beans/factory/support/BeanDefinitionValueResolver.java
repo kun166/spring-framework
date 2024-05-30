@@ -74,6 +74,8 @@ class BeanDefinitionValueResolver {
 	 * <p>
 	 * {@link ConstructorResolver#resolvePreparedArguments(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.BeanWrapper, java.lang.reflect.Executable, java.lang.Object[])}
 	 * 中调用
+	 * {@link AbstractAutowireCapableBeanFactory#applyPropertyValues(java.lang.String, org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.PropertyValues)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param beanFactory    the BeanFactory to resolve against
@@ -111,6 +113,8 @@ class BeanDefinitionValueResolver {
 	 * 中调用
 	 * {@link ConstructorResolver#resolveConstructorArguments(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.factory.config.ConstructorArgumentValues, org.springframework.beans.factory.config.ConstructorArgumentValues)}
 	 * 中调用
+	 * {@link AbstractAutowireCapableBeanFactory#applyPropertyValues(java.lang.String, org.springframework.beans.factory.config.BeanDefinition, org.springframework.beans.BeanWrapper, org.springframework.beans.PropertyValues)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param argName the name of the argument that the value is defined for
@@ -140,10 +144,16 @@ class BeanDefinitionValueResolver {
 			return refName;
 		} else if (value instanceof BeanDefinitionHolder) {
 			// Resolve BeanDefinitionHolder: contains BeanDefinition with name and aliases.
+			/**
+			 * 关于内部bean:https://blog.csdn.net/a772304419/article/details/134544586
+			 */
 			BeanDefinitionHolder bdHolder = (BeanDefinitionHolder) value;
 			return resolveInnerBean(argName, bdHolder.getBeanName(), bdHolder.getBeanDefinition());
 		} else if (value instanceof BeanDefinition) {
 			// Resolve plain BeanDefinition, without contained name: use dummy name.
+			/**
+			 * 呃，这也是一个内部bean……
+			 */
 			BeanDefinition bd = (BeanDefinition) value;
 			String innerBeanName = "(inner bean)" + BeanFactoryUtils.GENERATED_BEAN_NAME_SEPARATOR +
 					ObjectUtils.getIdentityHexString(bd);
@@ -306,6 +316,16 @@ class BeanDefinitionValueResolver {
 	 * {@link BeanDefinitionValueResolver#resolveValueIfNecessary(java.lang.Object, java.lang.Object)}
 	 * 中调用
 	 * </p>
+	 * 从{@link RuntimeBeanReference}的构造函数来看,
+	 * 1,如果指定了beanType,则一定未指定beanName,不过beanName会赋值beanType的className
+	 * 2,如果beanName不为空,则beanType一定为空。
+	 * 因此可以根据beanType是否为空,获取转换后的bean
+	 * 如果是1,根据类型查找
+	 * 如果是2,根据name查找
+	 *
+	 * @param argName 只在日志中用到
+	 * @param ref
+	 * @return
 	 */
 	@Nullable
 	private Object resolveReference(Object argName, RuntimeBeanReference ref) {
@@ -329,12 +349,22 @@ class BeanDefinitionValueResolver {
 					bean = parent.getBean(String.valueOf(doEvaluate(ref.getBeanName())));
 				}
 			} else {
+				/**
+				 * 一般走这个分支
+				 */
 				String resolvedName;
 				if (beanType != null) {
+					/**
+					 * {@link RuntimeBeanReference#getBeanType()}不为空
+					 * 从构造函数来看，如果传了beanType,则不会传name
+					 */
 					NamedBeanHolder<?> namedBean = this.beanFactory.resolveNamedBean(beanType);
 					bean = namedBean.getBeanInstance();
 					resolvedName = namedBean.getBeanName();
 				} else {
+					/**
+					 * 从构造函数来看，传递了beanName,则不再传beanType
+					 */
 					resolvedName = String.valueOf(doEvaluate(ref.getBeanName()));
 					bean = this.beanFactory.getBean(resolvedName);
 				}
@@ -357,6 +387,8 @@ class BeanDefinitionValueResolver {
 	 * <p>
 	 * {@link BeanDefinitionValueResolver#resolveValueIfNecessary(java.lang.Object, java.lang.Object)}中调用
 	 * </p>
+	 * 处理内部bean
+	 * 关于内部bean:https://blog.csdn.net/a772304419/article/details/134544586
 	 *
 	 * @param argName       the name of the argument that the inner bean is defined for
 	 * @param innerBeanName the name of the inner bean

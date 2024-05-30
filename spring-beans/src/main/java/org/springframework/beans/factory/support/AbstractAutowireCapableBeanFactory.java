@@ -130,6 +130,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	/**
 	 * Whether to resort to injecting a raw bean instance in case of circular reference,
 	 * even if the injected bean eventually got wrapped.
+	 * 在循环引用的情况下是否采用注入原始bean实例，
+	 * 即使注入的bean最终被包裹起来。
 	 */
 	private boolean allowRawInjectionDespiteWrapping = false;
 
@@ -470,6 +472,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * {@link AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)}
 	 * 中调用
 	 * </p>
+	 * 执行{@link BeanPostProcessor#postProcessBeforeInitialization(java.lang.Object, java.lang.String)}
 	 *
 	 * @param existingBean the existing bean instance
 	 * @param beanName     the name of the bean, to be passed to it if necessary
@@ -485,10 +488,20 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		Object result = existingBean;
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
+			/**
+			 * {@link org.springframework.context.support.ApplicationContextAwareProcessor#postProcessBeforeInitialization(java.lang.Object, java.lang.String)}
+			 *
+			 */
 			Object current = processor.postProcessBeforeInitialization(result, beanName);
 			if (current == null) {
+				/**
+				 * 从这里可以看到,如果中间有一个返回了null,则任务链就会中断了
+				 */
 				return result;
 			}
+			/**
+			 * 不返回null,一直向下执行
+			 */
 			result = current;
 		}
 		return result;
@@ -498,7 +511,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * <p>
 	 * {@link AbstractAutowireCapableBeanFactory#postProcessObjectFromFactoryBean(java.lang.Object, java.lang.String)}
 	 * 中调用
+	 * {@link AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
 	 * </p>
+	 * 调用{@link BeanPostProcessor#postProcessAfterInitialization(java.lang.Object, java.lang.String)}
+	 * 方法
 	 *
 	 * @param existingBean the existing bean instance
 	 * @param beanName     the name of the bean, to be passed to it if necessary
@@ -743,6 +760,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		if (earlySingletonExposure) {
+			/**
+			 * 这个地方传入的false,
+			 * 如果获取的bean不为null,
+			 * 说明有循环依赖,调用该方法传入了true
+			 */
 			Object earlySingletonReference = getSingleton(beanName, false);
 			if (earlySingletonReference != null) {
 				if (exposedObject == bean) {
@@ -2020,6 +2042,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * {@link AbstractAutowireCapableBeanFactory#populateBean(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.BeanWrapper)}
 	 * 中调用
 	 * </p>
+	 * 这个方法，感觉只是解决依赖的值啊，并没有设置到bean上
 	 *
 	 * @param beanName the bean name passed for better exception information
 	 * @param mbd      the merged bean definition
@@ -2042,6 +2065,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			mpvs = (MutablePropertyValues) pvs;
 			if (mpvs.isConverted()) {
 				// Shortcut: use the pre-converted values as-is.
+				/**
+				 * 这个值在下面会设置为true。所以开始的时候，不走这个分支
+				 */
 				try {
 					bw.setPropertyValues(mpvs);
 					return;
@@ -2059,6 +2085,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		if (converter == null) {
 			converter = bw;
 		}
+
+		/**
+		 * 注意这个{@link BeanDefinitionValueResolver}
+		 * 是在方法里面new出来的,也就是说它和线程是绑定的,和当前处理的bean是绑定的
+		 */
 		BeanDefinitionValueResolver valueResolver = new BeanDefinitionValueResolver(this, beanName, mbd, converter);
 
 		// Create a deep copy, resolving any references for values.
@@ -2066,11 +2097,23 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		boolean resolveNecessary = false;
 		for (PropertyValue pv : original) {
 			if (pv.isConverted()) {
+				/**
+				 * 转化过,应该不走这个分支
+				 */
 				deepCopy.add(pv);
 			} else {
+				/**
+				 * 属性名
+				 */
 				String propertyName = pv.getName();
+				/**
+				 * 属性值
+				 */
 				Object originalValue = pv.getValue();
 				if (originalValue == AutowiredPropertyMarker.INSTANCE) {
+					/**
+					 * 这个分支没碰到过……
+					 */
 					Method writeMethod = bw.getPropertyDescriptor(propertyName).getWriteMethod();
 					if (writeMethod == null) {
 						throw new IllegalArgumentException("Autowire marker for property without write method: " + pv);
@@ -2183,6 +2226,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		return wrappedBean;
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
+	 * 调用以下接口:
+	 * 如果实现了{@link BeanNameAware},调用{@link BeanNameAware#setBeanName(java.lang.String)}
+	 * 如果实现了{@link BeanClassLoaderAware},调用{@link BeanClassLoaderAware#setBeanClassLoader(java.lang.ClassLoader)}
+	 * 如果实现了{@link BeanFactoryAware},调用{@link BeanFactoryAware#setBeanFactory(org.springframework.beans.factory.BeanFactory)}
+	 *
+	 * @param beanName
+	 * @param bean
+	 */
 	private void invokeAwareMethods(String beanName, Object bean) {
 		if (bean instanceof Aware) {
 			if (bean instanceof BeanNameAware) {
@@ -2205,6 +2261,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * and a chance to know about its owning bean factory (this object).
 	 * This means checking whether the bean implements InitializingBean or defines
 	 * a custom init method, and invoking the necessary callback(s) if it does.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#initializeBean(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
+	 * 1,执行{@link InitializingBean#afterPropertiesSet()}
+	 * 2,执行{@link AbstractBeanDefinition#getInitMethodName()}方法
 	 *
 	 * @param beanName the bean name in the factory (for debugging purposes)
 	 * @param bean     the new bean instance we may need to initialize
@@ -2250,6 +2312,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * Called by invokeInitMethods.
 	 * <p>Can be overridden in subclasses for custom resolution of init
 	 * methods with arguments.
+	 * <p>
+	 * {@link AbstractAutowireCapableBeanFactory#invokeInitMethods(java.lang.String, java.lang.Object, org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中调用
+	 * </p>
+	 * 执行{@link AbstractBeanDefinition#getInitMethodName()}
 	 *
 	 * @see #invokeInitMethods
 	 */

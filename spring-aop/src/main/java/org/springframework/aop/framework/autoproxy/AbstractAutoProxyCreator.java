@@ -279,6 +279,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * {@link AbstractAutowireCapableBeanFactory#getEarlyBeanReference(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object)}
 	 * 中调用
 	 * </p>
+	 * 非常重要:
+	 * 这个方法是为了解决循环依赖而存在的,如果不存在循环依赖就不会调用这个方法。
+	 * 如果不存在循环依赖,怎么切入aop呢?
+	 * {@link AbstractAutoProxyCreator#postProcessAfterInitialization(java.lang.Object, java.lang.String)}
 	 *
 	 * @param bean     the raw bean instance。天然的，未经加工的bean
 	 * @param beanName the name of the bean
@@ -359,6 +363,10 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	/**
 	 * Create a proxy with the configured interceptors if the bean is
 	 * identified as one to proxy by the subclass.
+	 * <p>
+	 * 如果  {@link AbstractAutoProxyCreator#getEarlyBeanReference(java.lang.Object, java.lang.String)}
+	 * 已经调用了，则这个方法就进不再进行二次aop了
+	 * </p>
 	 *
 	 * @see #getAdvicesAndAdvisorsForBean
 	 */

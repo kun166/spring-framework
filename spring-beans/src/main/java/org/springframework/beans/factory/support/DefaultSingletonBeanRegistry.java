@@ -441,6 +441,10 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	/**
 	 * Remove the bean with the given name from the singleton cache of this factory,
 	 * to be able to clean up eager registration of a singleton if creation failed.
+	 * <p>
+	 * {@link FactoryBeanRegistrySupport#removeSingleton(java.lang.String)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param beanName the name of the bean
 	 * @see #getSingletonMutex()
