@@ -420,11 +420,32 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	// Implementation of remaining BeanFactory methods
 	//---------------------------------------------------------------------
 
+	/**
+	 * 这个根据class获取bean的方法,也经常用到
+	 *
+	 * @param requiredType type the bean must match; can be an interface or superclass
+	 * @param <T>
+	 * @return
+	 * @throws BeansException
+	 */
 	@Override
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		return getBean(requiredType, (Object[]) null);
 	}
 
+	/**
+	 * <p>
+	 * {@link DefaultListableBeanFactory#getBean(java.lang.Class)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param requiredType type the bean must match; can be an interface or superclass
+	 * @param args         arguments to use when creating a bean instance using explicit arguments
+	 *                     (only applied when creating a new instance as opposed to retrieving an existing one)
+	 * @param <T>
+	 * @return
+	 * @throws BeansException
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getBean(Class<T> requiredType, @Nullable Object... args) throws BeansException {
@@ -574,6 +595,19 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		};
 	}
 
+
+	/**
+	 * <p>
+	 * {@link DefaultListableBeanFactory#getBean(java.lang.Class, java.lang.Object...)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param requiredType    要查询的bean的class类型
+	 * @param args            方法参数,有可能是构造函数,有可能是方法函数
+	 * @param nonUniqueAsNull 这个参数暂时看不出来
+	 * @param <T>             泛型
+	 * @return
+	 */
 	@Nullable
 	private <T> T resolveBean(ResolvableType requiredType, @Nullable Object[] args, boolean nonUniqueAsNull) {
 		NamedBeanHolder<T> namedBean = resolveNamedBean(requiredType, args, nonUniqueAsNull);
@@ -635,7 +669,15 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 */
 	@Override
 	public String[] getBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit) {
+		/**
+		 * 查询的bean的class
+		 */
 		Class<?> resolved = type.resolve();
+		/**
+		 * 从{@link DefaultListableBeanFactory#getBean(java.lang.Class, java.lang.Object...)}
+		 * 调用的{@link ResolvableType#forRawClass(java.lang.Class)}来看
+		 * 第二个判断就不符合
+		 */
 		if (resolved != null && !type.hasGenerics()) {
 			/**
 			 * 没有泛型
@@ -703,6 +745,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			// Only consider bean as eligible if the bean name is not defined as alias for some other bean.
 			/**
 			 * 呃,遍历整个{@link DefaultListableBeanFactory#beanDefinitionNames}……
+			 * 从这点来说,尽量别用class,尽量用beanName查询
 			 */
 			if (!isAlias(beanName)) {
 				try {
@@ -711,10 +754,22 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					if (!mbd.isAbstract() && (allowEagerInit ||
 							(mbd.hasBeanClass() || !mbd.isLazyInit() || isAllowEagerClassLoading()) &&
 									!requiresEagerInitForType(mbd.getFactoryBeanName()))) {
+						/**
+						 * {@link FactoryBean}?
+						 */
 						boolean isFactoryBean = isFactoryBean(beanName, mbd);
+						/**
+						 * 装饰beanDefinition?
+						 */
 						BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 						boolean matchFound = false;
+						/**
+						 * 允许先创建bean,或者是bean已经创建好了
+						 */
 						boolean allowFactoryBeanInit = (allowEagerInit || containsSingleton(beanName));
+						/**
+						 * 非延迟加载bean
+						 */
 						boolean isNonLazyDecorated = (dbd != null && !mbd.isLazyInit());
 						if (!isFactoryBean) {
 							if (includeNonSingletons || isSingleton(beanName, mbd, dbd)) {
@@ -788,6 +843,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * Check whether the specified bean would need to be eagerly initialized
 	 * in order to determine its type.
+	 * <p>
+	 * {@link DefaultListableBeanFactory#doGetBeanNamesForType(org.springframework.core.ResolvableType, boolean, boolean)}
+	 * 中调用
+	 * </p>
+	 * factoryBeanName不为空,
+	 * 且是一个{@link FactoryBean}
+	 * 且这个factoryBeanName尚未在{@link DefaultSingletonBeanRegistry#singletonObjects}中生成
 	 *
 	 * @param factoryBeanName a factory-bean reference that the bean definition
 	 *                        defines a factory method for
@@ -1434,14 +1496,16 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/**
 	 * <p>
 	 * {@link DefaultListableBeanFactory#resolveNamedBean(java.lang.Class)}中调用
+	 * {@link DefaultListableBeanFactory#resolveBean(org.springframework.core.ResolvableType, java.lang.Object[], boolean)}
+	 * 中调用
 	 * </p>
 	 * 大体上的思路就是:
 	 * 1,根据requiredType查询beanName的集合
 	 * 2,如果只有一个,就包装后返回
 	 * 3,如果有多个,筛选那个{@link AbstractBeanDefinition#primary}为true的bean name
 	 *
-	 * @param requiredType
-	 * @param args
+	 * @param requiredType    查询bean的class类型
+	 * @param args            方法构造参数
 	 * @param nonUniqueAsNull
 	 * @param <T>
 	 * @return
@@ -1453,6 +1517,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 													@Nullable Object[] args,
 													boolean nonUniqueAsNull) throws BeansException {
 
+		/**
+		 * bean的class类型不能为空
+		 */
 		Assert.notNull(requiredType, "Required type must not be null");
 		String[] candidateNames = getBeanNamesForType(requiredType);
 

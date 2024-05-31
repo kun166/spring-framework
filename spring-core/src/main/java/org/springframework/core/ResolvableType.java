@@ -1080,6 +1080,8 @@ public class ResolvableType implements Serializable {
 	 * <p>
 	 * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory#resolveNamedBean(java.lang.Class)}
 	 * 中调用
+	 * {@link org.springframework.beans.factory.support.DefaultListableBeanFactory#getBean(java.lang.Class, java.lang.Object...)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param clazz the class to introspect ({@code null} is semantically
@@ -1090,7 +1092,20 @@ public class ResolvableType implements Serializable {
 	 * @since 4.2
 	 */
 	public static ResolvableType forRawClass(@Nullable Class<?> clazz) {
+
+		/**
+		 * 注意,这个返回的是一个{@link ResolvableType}的匿名内部类,
+		 * 重写了三个方法:
+		 * {@link ResolvableType#getGenerics()}
+		 * {@link ResolvableType#isAssignableFrom(java.lang.Class)}
+		 * {@link ResolvableType#isAssignableFrom(org.springframework.core.ResolvableType)}
+		 */
 		return new ResolvableType(clazz) {
+
+			/**
+			 * 重写的这个方法,返回了个空的
+			 * @return
+			 */
 			@Override
 			public ResolvableType[] getGenerics() {
 				return EMPTY_TYPES_ARRAY;
@@ -1098,6 +1113,8 @@ public class ResolvableType implements Serializable {
 
 			/**
 			 * 判断{@link clazz}为空，或者是传入的other的超类超级接口或者本身
+			 * 注意,如果clazz为空,也返回true
+			 *
 			 * @param other the type to be checked against (as a {@code Class})
 			 * @return
 			 */
@@ -1106,6 +1123,11 @@ public class ResolvableType implements Serializable {
 				return (clazz == null || ClassUtils.isAssignable(clazz, other));
 			}
 
+			/**
+			 * 逻辑和上面的方法一样
+			 * @param other the type to be checked against (as a {@code ResolvableType})
+			 * @return
+			 */
 			@Override
 			public boolean isAssignableFrom(ResolvableType other) {
 				Class<?> otherClass = other.resolve();

@@ -57,6 +57,8 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * Determine the type for the given FactoryBean.
 	 * <p>
 	 * {@link AbstractBeanFactory#getType(java.lang.String, boolean)}中调用
+	 * {@link AbstractBeanFactory#isTypeMatch(java.lang.String, org.springframework.core.ResolvableType, boolean)}
+	 * 中调用
 	 * </p>
 	 * 通过{@link FactoryBean#getObjectType()}获取bean的class
 	 *

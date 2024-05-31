@@ -461,6 +461,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					 * 方法里面，在调用{@link ObjectFactory#getObject()}前
 					 * 向{@link DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation}中添加数据,
 					 * 在调用后,删除了缓存数据
+					 *
+					 * 注意:对于同一个beanName,传入了不同的构造参数args的单例bean,会如何?
+					 *
 					 */
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
@@ -641,6 +644,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * Internal extended variant of {@link #isTypeMatch(String, ResolvableType)}
 	 * to check whether the bean with the given name matches the specified type. Allow
 	 * additional constraints to be applied to ensure that beans are not created early.
+	 * <p>
+	 * {@link DefaultListableBeanFactory#doGetBeanNamesForType(org.springframework.core.ResolvableType, boolean, boolean)}
+	 * 中创建
+	 * </p>
 	 *
 	 * @param name        the name of the bean to query
 	 * @param typeToMatch the type to match against (as a
@@ -656,12 +663,21 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws NoSuchBeanDefinitionException {
 
 		String beanName = transformedBeanName(name);
-		// 该name是否以"&"开头
+
+		/**
+		 * 该name是否以"&"开头
+		 * 区别:
+		 * 如果以"&"开头,则测试的是该{@link FactoryBean}的class类型是否和typeToMatch匹配
+		 * 否则,测试该bean的class是否和typeToMatch匹配
+		 */
 		boolean isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name);
 
 		// Check manually registered singletons.
 		Object beanInstance = getSingleton(beanName, false);
 		if (beanInstance != null && beanInstance.getClass() != NullBean.class) {
+			/**
+			 * 呃,最少已经提前曝光了……
+			 */
 			if (beanInstance instanceof FactoryBean) {
 				if (!isFactoryDereference) {
 					Class<?> type = getTypeForFactoryBean((FactoryBean<?>) beanInstance);

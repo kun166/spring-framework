@@ -118,12 +118,18 @@ public abstract class ClassUtils {
 	/**
 	 * Map with primitive wrapper type as key and corresponding primitive
 	 * type as value, for example: Integer.class -> int.class.
+	 * <p>
+	 * 静态代码块中初始化,存放的是8中基本数据类型的包装类和非包装类的对应关系。比如Boolean.class:boolean.class
+	 * </p>
 	 */
 	private static final Map<Class<?>, Class<?>> primitiveWrapperTypeMap = new IdentityHashMap<>(9);
 
 	/**
 	 * Map with primitive type as key and corresponding wrapper
 	 * type as value, for example: int.class -> Integer.class.
+	 * <p>
+	 * 静态代码块中初始化,存放的是8中基本数据类型的非包装类和包装类的对应关系。比如boolean.class:Boolean.class
+	 * </p>
 	 */
 	private static final Map<Class<?>, Class<?>> primitiveTypeToWrapperMap = new IdentityHashMap<>(9);
 
