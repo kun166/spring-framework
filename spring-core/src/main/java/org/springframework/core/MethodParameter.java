@@ -667,10 +667,18 @@ public class MethodParameter {
 	 * {@link org.springframework.beans.factory.InjectionPoint#getAnnotations()}
 	 * 中调用
 	 * </p>
+	 * {@link MethodParameter}记录了{@link Method}及参数的位置i
+	 * 这个方法就是返回方法中第i个位置上的参数前面加的注解
+	 * 注意:
+	 * 这个不是参数类上加的注解,而是参数前面加的注解
+	 * public void getParam(@NotNull @Lazy String str, @NotNull Integer i)
 	 */
 	public Annotation[] getParameterAnnotations() {
 		Annotation[] paramAnns = this.parameterAnnotations;
 		if (paramAnns == null) {
+			/**
+			 * 获取方法上参数的注解数组
+			 */
 			Annotation[][] annotationArray = this.executable.getParameterAnnotations();
 			int index = this.parameterIndex;
 			if (this.executable instanceof Constructor &&
@@ -680,6 +688,9 @@ public class MethodParameter {
 				// for inner classes, so access it with the actual parameter index lowered by 1
 				index = this.parameterIndex - 1;
 			}
+			/**
+			 * 根据参数的位置,返回该位置上的参数的注解数组
+			 */
 			paramAnns = (index >= 0 && index < annotationArray.length ?
 					adaptAnnotationArray(annotationArray[index]) : EMPTY_ANNOTATION_ARRAY);
 			this.parameterAnnotations = paramAnns;

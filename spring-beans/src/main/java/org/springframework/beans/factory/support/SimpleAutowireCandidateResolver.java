@@ -42,6 +42,8 @@ public class SimpleAutowireCandidateResolver implements AutowireCandidateResolve
 	 * <p>
 	 * {@link DefaultListableBeanFactory#isAutowireCandidate(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.DependencyDescriptor, org.springframework.beans.factory.support.AutowireCandidateResolver)}
 	 * 中调用
+	 * {@link GenericTypeAwareAutowireCandidateResolver#isAutowireCandidate(org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.config.DependencyDescriptor)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param bdHolder   the bean definition including bean name and aliases
@@ -50,6 +52,9 @@ public class SimpleAutowireCandidateResolver implements AutowireCandidateResolve
 	 */
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+		/**
+		 * {@link AbstractBeanDefinition#autowireCandidate},默认是true
+		 */
 		return bdHolder.getBeanDefinition().isAutowireCandidate();
 	}
 

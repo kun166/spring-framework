@@ -22,6 +22,7 @@ import java.util.Properties;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -60,6 +61,16 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 	}
 
 
+	/**
+	 * <p>
+	 * {@link QualifierAnnotationAutowireCandidateResolver#isAutowireCandidate(org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.config.DependencyDescriptor)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param bdHolder   the bean definition including bean name and aliases
+	 * @param descriptor the descriptor for the target method parameter or field
+	 * @return
+	 */
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		if (!super.isAutowireCandidate(bdHolder, descriptor)) {
@@ -72,6 +83,10 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 	/**
 	 * Match the given dependency type with its generic type information against the given
 	 * candidate bean definition.
+	 * <p>
+	 * {@link GenericTypeAwareAutowireCandidateResolver#isAutowireCandidate(org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.config.DependencyDescriptor)}
+	 * 中调用
+	 * </p>
 	 */
 	protected boolean checkGenericTypeMatch(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		ResolvableType dependencyType = descriptor.getResolvableType();
@@ -182,14 +197,14 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 	 * This implementation clones all instance fields through standard
 	 * {@link Cloneable} support, allowing for subsequent reconfiguration
 	 * of the cloned instance through a fresh {@link #setBeanFactory} call.
+	 *
 	 * @see #clone()
 	 */
 	@Override
 	public AutowireCandidateResolver cloneIfNecessary() {
 		try {
 			return (AutowireCandidateResolver) clone();
-		}
-		catch (CloneNotSupportedException ex) {
+		} catch (CloneNotSupportedException ex) {
 			throw new IllegalStateException(ex);
 		}
 	}

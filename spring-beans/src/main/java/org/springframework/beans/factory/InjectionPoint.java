@@ -146,6 +146,8 @@ public class InjectionPoint {
 	 * 中调用
 	 * </p>
 	 * 呃，不强调了，这个方法在好多地方都会调用
+	 * 1,如果是属性,则获取属性上的注解数组
+	 * 2,如果是方法,则获取方法上的注解
 	 */
 	public Annotation[] getAnnotations() {
 		if (this.field != null) {

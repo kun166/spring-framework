@@ -59,6 +59,9 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 	 * {@link ContextAnnotationAutowireCandidateResolver#getLazyResolutionProxyIfNecessary(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String)}
 	 * 中效用
 	 * </p>
+	 * 1,如果有属性,则取属性上的{@link Lazy}注解的值
+	 * 2,如果有方法,获取方法上的{@link Lazy}
+	 * 3,如果有方法,获取方法上该位置的参数前面加的{@link Lazy}注解
 	 *
 	 * @param descriptor
 	 * @return
@@ -83,12 +86,25 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 		return false;
 	}
 
+	/**
+	 * <p>
+	 * {@link ContextAnnotationAutowireCandidateResolver#getLazyResolutionProxyIfNecessary(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param descriptor
+	 * @param beanName
+	 * @return
+	 */
 	protected Object buildLazyResolutionProxy(final DependencyDescriptor descriptor, final @Nullable String beanName) {
 		BeanFactory beanFactory = getBeanFactory();
 		Assert.state(beanFactory instanceof DefaultListableBeanFactory,
 				"BeanFactory needs to be a DefaultListableBeanFactory");
 		final DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) beanFactory;
 
+		/**
+		 * 匿名内部类
+		 */
 		TargetSource ts = new TargetSource() {
 			@Override
 			public Class<?> getTargetClass() {
@@ -102,6 +118,9 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 
 			@Override
 			public Object getTarget() {
+				/**
+				 * 如果beanName不为空,创建一个set,否则不创建
+				 */
 				Set<String> autowiredBeanNames = (beanName != null ? new LinkedHashSet<>(1) : null);
 				Object target = dlbf.doResolveDependency(descriptor, beanName, autowiredBeanNames, null);
 				if (target == null) {

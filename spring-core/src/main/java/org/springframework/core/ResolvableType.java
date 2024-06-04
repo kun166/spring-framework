@@ -66,6 +66,8 @@ import org.springframework.util.StringUtils;
  *     t.resolveGeneric(1, 0); // String
  * }
  * </pre>
+ * <p>
+ * 可分解的类型?
  *
  * @author Phillip Webb
  * @author Juergen Hoeller
@@ -118,6 +120,9 @@ public class ResolvableType implements Serializable {
 	@Nullable
 	private final ResolvableType componentType;
 
+	/**
+	 * 重写了hash值,构造器中重写
+	 */
 	@Nullable
 	private final Integer hash;
 
@@ -140,9 +145,13 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Private constructor used to create a new {@code ResolvableType} for cache key purposes,
 	 * with no upfront resolution.
+	 * 私有构造器
+	 * 呃,好吧,这是一个解决泛型的工具类……
+	 * https://blog.csdn.net/zzuhkp/article/details/107749148
 	 */
-	private ResolvableType(
-			Type type, @Nullable TypeProvider typeProvider, @Nullable VariableResolver variableResolver) {
+	private ResolvableType(Type type,
+						   @Nullable TypeProvider typeProvider,
+						   @Nullable VariableResolver variableResolver) {
 
 		this.type = type;
 		this.typeProvider = typeProvider;
@@ -155,11 +164,16 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Private constructor used to create a new {@code ResolvableType} for cache value purposes,
 	 * with upfront resolution and a pre-calculated hash.
+	 * 私有构造器
+	 * 呃,好吧,这是一个解决泛型的工具类……
+	 * https://blog.csdn.net/zzuhkp/article/details/107749148
 	 *
 	 * @since 4.2
 	 */
-	private ResolvableType(Type type, @Nullable TypeProvider typeProvider,
-						   @Nullable VariableResolver variableResolver, @Nullable Integer hash) {
+	private ResolvableType(Type type,
+						   @Nullable TypeProvider typeProvider,
+						   @Nullable VariableResolver variableResolver,
+						   @Nullable Integer hash) {
 
 		this.type = type;
 		this.typeProvider = typeProvider;
@@ -401,17 +415,32 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Return the ResolvableType representing the component type of the array or
 	 * {@link #NONE} if this type does not represent an array.
+	 * <p>
+	 * {@link ResolvableType#resolveClass()
+	 * 中调用
+	 * </p>
 	 *
 	 * @see #isArray()
 	 */
 	public ResolvableType getComponentType() {
 		if (this == NONE) {
+			/**
+			 * 如果是{@link ResolvableType#NONE},直接返回
+			 */
 			return NONE;
 		}
 		if (this.componentType != null) {
+			/**
+			 * {@link ResolvableType#componentType}不为空,返回
+			 * 好像构造器中都设置的是null……
+			 */
 			return this.componentType;
 		}
 		if (this.type instanceof Class) {
+			/**
+			 * java.lang.Class#getComponentType 方法是Java反射API的一部分，它用于获取数组类的组件类型。
+			 * 如果调用该方法的Class对象不表示数组类，则返回null。
+			 */
 			Class<?> componentType = ((Class<?>) this.type).getComponentType();
 			return forType(componentType, this.variableResolver);
 		}
@@ -869,15 +898,29 @@ public class ResolvableType implements Serializable {
 		return (this.resolved != null ? this.resolved : fallback);
 	}
 
+	/**
+	 * <p>
+	 * {@link ResolvableType#ResolvableType(java.lang.reflect.Type, org.springframework.core.SerializableTypeWrapper.TypeProvider, org.springframework.core.ResolvableType.VariableResolver, java.lang.Integer)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @return
+	 */
 	@Nullable
 	private Class<?> resolveClass() {
 		if (this.type == EmptyType.INSTANCE) {
 			return null;
 		}
 		if (this.type instanceof Class) {
+			/**
+			 * 如果{@link ResolvableType#type}是class,直接返回该type
+			 */
 			return (Class<?>) this.type;
 		}
 		if (this.type instanceof GenericArrayType) {
+			/**
+			 * 如果是{@link GenericArrayType}
+			 */
 			Class<?> resolvedComponent = getComponentType().resolve();
 			return (resolvedComponent != null ? Array.newInstance(resolvedComponent, 0).getClass() : null);
 		}
@@ -1527,6 +1570,9 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Return a {@code ResolvableType} for the specified {@link Type} backed by a given
 	 * {@link VariableResolver}.
+	 * <p>
+	 * {@link ResolvableType#getComponentType()}中调用
+	 * </p>
 	 *
 	 * @param type             the source type or {@code null}
 	 * @param variableResolver the variable resolver or {@code null}
@@ -1539,16 +1585,24 @@ public class ResolvableType implements Serializable {
 	/**
 	 * Return a {@code ResolvableType} for the specified {@link Type} backed by a given
 	 * {@link VariableResolver}.
+	 * <p>
+	 * {@link ResolvableType#forType(java.lang.reflect.Type, org.springframework.core.ResolvableType.VariableResolver)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param type             the source type or {@code null}
 	 * @param typeProvider     the type provider or {@code null}
 	 * @param variableResolver the variable resolver or {@code null}
 	 * @return a {@code ResolvableType} for the specified {@link Type} and {@link VariableResolver}
 	 */
-	static ResolvableType forType(
-			@Nullable Type type, @Nullable TypeProvider typeProvider, @Nullable VariableResolver variableResolver) {
+	static ResolvableType forType(@Nullable Type type,
+								  @Nullable TypeProvider typeProvider,
+								  @Nullable VariableResolver variableResolver) {
 
 		if (type == null && typeProvider != null) {
+			/**
+			 * 用typeProvider来决定type
+			 */
 			type = SerializableTypeWrapper.forTypeProvider(typeProvider);
 		}
 		if (type == null) {

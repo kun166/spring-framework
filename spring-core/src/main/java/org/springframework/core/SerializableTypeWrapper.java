@@ -84,6 +84,7 @@ final class SerializableTypeWrapper {
 
 	/**
 	 * Unwrap the given type, effectively returning the original non-serializable type.
+	 *
 	 * @param type the type to unwrap
 	 * @return the original non-serializable type
 	 */
@@ -100,17 +101,28 @@ final class SerializableTypeWrapper {
 	 * Return a {@link Serializable} {@link Type} backed by a {@link TypeProvider} .
 	 * <p>If type artifacts are generally not serializable in the current runtime
 	 * environment, this delegate will simply return the original {@code Type} as-is.
+	 * <p>
+	 * {@link ResolvableType#forType(java.lang.reflect.Type, org.springframework.core.SerializableTypeWrapper.TypeProvider, org.springframework.core.ResolvableType.VariableResolver)}
+	 * 中调用
+	 * </p>
 	 */
 	@Nullable
 	static Type forTypeProvider(TypeProvider provider) {
 		Type providedType = provider.getType();
 		if (providedType == null || providedType instanceof Serializable) {
 			// No serializable type wrapping necessary (e.g. for java.lang.Class)
+			/**
+			 * 如果为null,或者是实现了{@link Serializable}接口,直接返回
+			 */
 			return providedType;
 		}
 		if (NativeDetector.inNativeImage() || !Serializable.class.isAssignableFrom(Class.class)) {
 			// Let's skip any wrapping attempts if types are generally not serializable in
 			// the current runtime environment (even java.lang.Class itself, e.g. on GraalVM native images)
+			/**
+			 * 如果是GraalVM?
+			 * jvm的话,Class.class确实是实现了{@link Serializable}接口
+			 */
 			return providedType;
 		}
 
@@ -121,8 +133,11 @@ final class SerializableTypeWrapper {
 		}
 		for (Class<?> type : SUPPORTED_SERIALIZABLE_TYPES) {
 			if (type.isInstance(providedType)) {
+				/**
+				 * 检测providedType是不是type接口的的实现
+				 */
 				ClassLoader classLoader = provider.getClass().getClassLoader();
-				Class<?>[] interfaces = new Class<?>[] {type, SerializableTypeProxy.class, Serializable.class};
+				Class<?>[] interfaces = new Class<?>[]{type, SerializableTypeProxy.class, Serializable.class};
 				InvocationHandler handler = new TypeProxyInvocationHandler(provider);
 				cached = (Type) Proxy.newProxyInstance(classLoader, interfaces, handler);
 				cache.put(providedType, cached);
@@ -201,8 +216,7 @@ final class SerializableTypeWrapper {
 
 			if (Type.class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
 				return forTypeProvider(new MethodInvokeTypeProvider(this.provider, method, -1));
-			}
-			else if (Type[].class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
+			} else if (Type[].class == method.getReturnType() && ObjectUtils.isEmpty(args)) {
 				Object returnValue = ReflectionUtils.invokeMethod(method, this.provider.getType());
 				if (returnValue == null) {
 					return null;
@@ -251,8 +265,7 @@ final class SerializableTypeWrapper {
 			inputStream.defaultReadObject();
 			try {
 				this.field = this.declaringClass.getDeclaredField(this.fieldName);
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				throw new IllegalStateException("Could not find original class structure", ex);
 			}
 		}
@@ -300,13 +313,11 @@ final class SerializableTypeWrapper {
 				if (this.methodName != null) {
 					this.methodParameter = new MethodParameter(
 							this.declaringClass.getDeclaredMethod(this.methodName, this.parameterTypes), this.parameterIndex);
-				}
-				else {
+				} else {
 					this.methodParameter = new MethodParameter(
 							this.declaringClass.getDeclaredConstructor(this.parameterTypes), this.parameterIndex);
 				}
-			}
-			catch (Throwable ex) {
+			} catch (Throwable ex) {
 				throw new IllegalStateException("Could not find original class structure", ex);
 			}
 		}
