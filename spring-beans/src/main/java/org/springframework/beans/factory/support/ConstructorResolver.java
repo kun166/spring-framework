@@ -408,29 +408,61 @@ class ConstructorResolver {
 	 * {@link DefaultListableBeanFactory#isAutowireCandidate(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, org.springframework.beans.factory.config.DependencyDescriptor, org.springframework.beans.factory.support.AutowireCandidateResolver)}
 	 * 中调用
 	 * </p>
+	 * 判断类中是否仅有一个和{@link AbstractBeanDefinition#factoryBeanName}相符的方法。
+	 * 如果是，则设置{@link RootBeanDefinition#factoryMethodToIntrospect}为该方法
 	 *
 	 * @param mbd the bean definition to check
 	 */
 	public void resolveFactoryMethodIfPossible(RootBeanDefinition mbd) {
+		/**
+		 * bean的class
+		 */
 		Class<?> factoryClass;
+		/**
+		 * 是否是静态方法?
+		 */
 		boolean isStatic;
 		if (mbd.getFactoryBeanName() != null) {
+			/**
+			 * 如果配置了factoryBeanName,即有{@link org.springframework.beans.factory.FactoryBean}生成
+			 */
 			factoryClass = this.beanFactory.getType(mbd.getFactoryBeanName());
+			/**
+			 * 方法不为static
+			 */
 			isStatic = false;
 		} else {
 			factoryClass = mbd.getBeanClass();
+			/**
+			 * 不是{@link org.springframework.beans.factory.FactoryBean},
+			 * 则只能通过静态方法生成
+			 */
 			isStatic = true;
 		}
 		Assert.state(factoryClass != null, "Unresolvable factory class");
+		/**
+		 * 如果是cglib生成的类,取真实的父类
+		 */
 		factoryClass = ClassUtils.getUserClass(factoryClass);
 
 		Method[] candidates = getCandidateMethods(factoryClass, mbd);
 		Method uniqueCandidate = null;
 		for (Method candidate : candidates) {
 			if (Modifier.isStatic(candidate.getModifiers()) == isStatic && mbd.isFactoryMethod(candidate)) {
+				/**
+				 * 1,static权限一致,即要么都是static的,要么都不是。
+				 * 2,方法名称和{@link AbstractBeanDefinition#factoryMethodName}一致
+				 */
 				if (uniqueCandidate == null) {
+					/**
+					 * 第一个找到的
+					 */
 					uniqueCandidate = candidate;
 				} else if (isParamMismatch(uniqueCandidate, candidate)) {
+					/**
+					 * 找到了两个同名的方法,且方法参数长度不一致,或者方法参数不一致。
+					 * 意思就方法不唯一了
+					 */
 					uniqueCandidate = null;
 					break;
 				}
@@ -465,6 +497,8 @@ class ConstructorResolver {
 	 * Called as the starting point for factory method determination.
 	 * <p>
 	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
+	 * 中调用
+	 * {@link ConstructorResolver#resolveFactoryMethodIfPossible(org.springframework.beans.factory.support.RootBeanDefinition)}
 	 * 中调用
 	 * </p>
 	 */

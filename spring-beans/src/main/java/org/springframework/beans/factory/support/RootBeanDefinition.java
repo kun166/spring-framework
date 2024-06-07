@@ -101,6 +101,8 @@ public class RootBeanDefinition extends AbstractBeanDefinition {
 	 * <p>
 	 * {@link ConstructorResolver#instantiateUsingFactoryMethod(java.lang.String, org.springframework.beans.factory.support.RootBeanDefinition, java.lang.Object[])}
 	 * 中赋值
+	 * {@link ConstructorResolver#resolveFactoryMethodIfPossible(org.springframework.beans.factory.support.RootBeanDefinition)}
+	 * 中赋值
 	 * </p>
 	 */
 	@Nullable

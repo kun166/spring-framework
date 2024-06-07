@@ -1020,8 +1020,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * 中调用
 	 * </p>
 	 *
-	 * @param beanName   the name of the bean to check
-	 * @param descriptor the descriptor of the dependency to resolve
+	 * @param beanName   the name of the bean to check 候选者bean的名字
+	 * @param descriptor the descriptor of the dependency to resolve 依赖定义
 	 * @return
 	 * @throws NoSuchBeanDefinitionException
 	 */
@@ -1061,6 +1061,12 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			return isAutowireCandidate(beanName, new RootBeanDefinition(getType(beanName)), descriptor, resolver);
 		}
 
+		/**
+		 * 如果从{@link DefaultListableBeanFactory#beanDefinitionMap}
+		 * 和{@link DefaultSingletonBeanRegistry#singletonObjects}中都找不到该bean,
+		 * 则去父BeanFactory里取。
+		 * 如果没有父BeanFactory,则默认返回true
+		 */
 		BeanFactory parent = getParentBeanFactory();
 		if (parent instanceof DefaultListableBeanFactory) {
 			// No bean definition found in this factory -> delegate to parent.
@@ -1081,9 +1087,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * 中调用
 	 * </p>
 	 *
-	 * @param beanName   the name of the bean definition to check
-	 * @param mbd        the merged bean definition to check
-	 * @param descriptor the descriptor of the dependency to resolve
+	 * @param beanName   the name of the bean definition to check ,检测bean的名字,即检测该bean是否符合descriptor参数要求
+	 * @param mbd        the merged bean definition to check ,beanName的mbd
+	 * @param descriptor the descriptor of the dependency to resolve,检测规则
 	 * @param resolver   the AutowireCandidateResolver to use for the actual resolution algorithm
 	 * @return whether the bean should be considered as autowire candidate
 	 */
@@ -1097,6 +1103,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		if (mbd.isFactoryMethodUnique && mbd.factoryMethodToIntrospect == null) {
 			new ConstructorResolver(this).resolveFactoryMethodIfPossible(mbd);
 		}
+		/**
+		 * 如果beanName没变,就试图放进{@link DefaultListableBeanFactory#mergedBeanDefinitionHolders}里,
+		 * 否则就不放
+		 */
 		BeanDefinitionHolder holder = (beanName.equals(bdName) ?
 				this.mergedBeanDefinitionHolders.computeIfAbsent(beanName, key -> new BeanDefinitionHolder(mbd, beanName, getAliases(bdName)))
 				: new BeanDefinitionHolder(mbd, beanName, getAliases(bdName)));

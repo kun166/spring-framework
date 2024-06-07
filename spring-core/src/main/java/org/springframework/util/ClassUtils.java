@@ -1061,6 +1061,11 @@ public abstract class ClassUtils {
 
 	/**
 	 * Get the class name without the qualified package name.
+	 * <p>
+	 * {@link org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver#checkQualifier(org.springframework.beans.factory.config.BeanDefinitionHolder, java.lang.annotation.Annotation, org.springframework.beans.TypeConverter)}
+	 * 中调用
+	 * </p>
+	 * 返回不带包名的类名
 	 *
 	 * @param clazz the class to get the short name for
 	 * @return the class name of the class without the package name

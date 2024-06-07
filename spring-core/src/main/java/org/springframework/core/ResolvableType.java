@@ -1328,6 +1328,10 @@ public class ResolvableType implements Serializable {
 	 * implementation and the given nesting level.
 	 * <p>Use this variant when the class that declares the field includes generic
 	 * parameter variables that are satisfied by the implementation class.
+	 * <p>
+	 * {@link org.springframework.beans.factory.config.DependencyDescriptor#getResolvableType()}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param field               the source field
 	 * @param nestingLevel        the nesting level (1 for the outer level; 2 for a nested

@@ -171,17 +171,30 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 
 	/**
 	 * Match the given qualifier annotations against the candidate bean definition.
+	 * <p>
+	 * {@link QualifierAnnotationAutowireCandidateResolver#isAutowireCandidate(org.springframework.beans.factory.config.BeanDefinitionHolder, org.springframework.beans.factory.config.DependencyDescriptor)}
+	 * 中调用
+	 * </p>
 	 */
 	protected boolean checkQualifiers(BeanDefinitionHolder bdHolder, Annotation[] annotationsToSearch) {
 		if (ObjectUtils.isEmpty(annotationsToSearch)) {
+			/**
+			 * 如果未定义注解,返回true
+			 */
 			return true;
 		}
 		SimpleTypeConverter typeConverter = new SimpleTypeConverter();
 		for (Annotation annotation : annotationsToSearch) {
+			/**
+			 * 遍历每一个注解
+			 */
 			Class<? extends Annotation> type = annotation.annotationType();
 			boolean checkMeta = true;
 			boolean fallbackToMeta = false;
 			if (isQualifier(type)) {
+				/**
+				 * 注解是{@link Qualifier}
+				 */
 				if (!checkQualifier(bdHolder, annotation, typeConverter)) {
 					fallbackToMeta = true;
 				} else {
@@ -212,10 +225,18 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 
 	/**
 	 * Checks whether the given annotation type is a recognized qualifier type.
+	 * <p>
+	 * {@link QualifierAnnotationAutowireCandidateResolver#checkQualifiers(org.springframework.beans.factory.config.BeanDefinitionHolder, java.lang.annotation.Annotation[])}
+	 * 中调用
+	 * </p>
 	 */
 	protected boolean isQualifier(Class<? extends Annotation> annotationType) {
 		for (Class<? extends Annotation> qualifierType : this.qualifierTypes) {
 			if (annotationType.equals(qualifierType) || annotationType.isAnnotationPresent(qualifierType)) {
+				/**
+				 * 如果annotationType是{@link Qualifier},
+				 * 或者annotationType注解上有{@link Qualifier}注解,就返回true
+				 */
 				return true;
 			}
 		}
@@ -224,25 +245,51 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 
 	/**
 	 * Match the given qualifier annotation against the candidate bean definition.
+	 * <p>
+	 * {@link QualifierAnnotationAutowireCandidateResolver#checkQualifiers(org.springframework.beans.factory.config.BeanDefinitionHolder, java.lang.annotation.Annotation[])}
+	 * 中调用
+	 * </p>
 	 */
-	protected boolean checkQualifier(
-			BeanDefinitionHolder bdHolder, Annotation annotation, TypeConverter typeConverter) {
-
+	protected boolean checkQualifier(BeanDefinitionHolder bdHolder,
+									 Annotation annotation,
+									 TypeConverter typeConverter) {
+		/**
+		 * 注解class
+		 */
 		Class<? extends Annotation> type = annotation.annotationType();
+		/**
+		 * 被检测的bean的rbd
+		 */
 		RootBeanDefinition bd = (RootBeanDefinition) bdHolder.getBeanDefinition();
 
+		/**
+		 * 被检测的bean的rbd上的{@link Qualifier}
+		 */
 		AutowireCandidateQualifier qualifier = bd.getQualifier(type.getName());
 		if (qualifier == null) {
+			/**
+			 * 如果全包名查找不到,就查找不带包名的
+			 */
 			qualifier = bd.getQualifier(ClassUtils.getShortName(type));
 		}
 		if (qualifier == null) {
+			// 还是没找到注解
 			// First, check annotation on qualified element, if any
+			/**
+			 * 1,检测{@link RootBeanDefinition#qualifiedElement}是否有值,如果有值是否有type注解
+			 */
 			Annotation targetAnnotation = getQualifiedElementAnnotation(bd, type);
 			// Then, check annotation on factory method, if applicable
 			if (targetAnnotation == null) {
+				/**
+				 * 2,检测{@link RootBeanDefinition#factoryMethodToIntrospect}是否有值,如果有值是否有type注解
+				 */
 				targetAnnotation = getFactoryMethodAnnotation(bd, type);
 			}
 			if (targetAnnotation == null) {
+				/**
+				 * 3,检测是否是装饰bd
+				 */
 				RootBeanDefinition dbd = getResolvedDecoratedDefinition(bd);
 				if (dbd != null) {
 					targetAnnotation = getFactoryMethodAnnotation(dbd, type);
@@ -306,6 +353,18 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 		return true;
 	}
 
+	/**
+	 * <p>
+	 * {@link QualifierAnnotationAutowireCandidateResolver#checkQualifier(org.springframework.beans.factory.config.BeanDefinitionHolder, java.lang.annotation.Annotation, org.springframework.beans.TypeConverter)}
+	 * 中调用
+	 * </p>
+	 * 检测{@link RootBeanDefinition#qualifiedElement}上是否有type注解,
+	 * 有就返回,没有就返回null
+	 *
+	 * @param bd
+	 * @param type
+	 * @return
+	 */
 	@Nullable
 	protected Annotation getQualifiedElementAnnotation(RootBeanDefinition bd, Class<? extends Annotation> type) {
 		AnnotatedElement qualifiedElement = bd.getQualifiedElement();
