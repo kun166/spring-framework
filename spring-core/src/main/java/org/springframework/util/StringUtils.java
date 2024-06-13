@@ -412,6 +412,10 @@ public abstract class StringUtils {
 	/**
 	 * Test whether the given string matches the given substring
 	 * at the given index.
+	 * <p>
+	 * {@link PropertyPlaceholderHelper#findPlaceholderEndIndex(java.lang.CharSequence, int)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param str       the original string (or StringBuilder)
 	 * @param index     the index in the original string to start matching against

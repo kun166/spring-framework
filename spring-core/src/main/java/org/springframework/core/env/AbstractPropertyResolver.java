@@ -207,6 +207,15 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 		return value;
 	}
 
+	/**
+	 * <p>
+	 * {@link AbstractEnvironment#resolvePlaceholders(java.lang.String)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param text the String to resolve
+	 * @return
+	 */
 	@Override
 	public String resolvePlaceholders(String text) {
 		if (this.nonStrictHelper == null) {
@@ -315,6 +324,10 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 	/**
 	 * Retrieve the specified property as a raw String,
 	 * i.e. without resolution of nested placeholders.
+	 * <p>
+	 * {@link AbstractPropertyResolver#doResolvePlaceholders(java.lang.String, org.springframework.util.PropertyPlaceholderHelper)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param key the property name to resolve
 	 * @return the property value or {@code null} if none found

@@ -659,6 +659,15 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 		return this.propertyResolver.getRequiredProperty(key, targetType);
 	}
 
+	/**
+	 * <p>
+	 * {@link org.springframework.context.annotation.ComponentScanBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param text the String to resolve
+	 * @return
+	 */
 	@Override
 	public String resolvePlaceholders(String text) {
 		return this.propertyResolver.resolvePlaceholders(text);

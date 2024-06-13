@@ -159,12 +159,25 @@ public class PropertyPlaceholderHelper {
 		return parseStringValue(value, placeholderResolver, null);
 	}
 
-	protected String parseStringValue(
-			String value,
-			PlaceholderResolver placeholderResolver,
-			@Nullable Set<String> visitedPlaceholders) {
+	/**
+	 * <p>
+	 * {@link PropertyPlaceholderHelper#replacePlaceholders(java.lang.String, org.springframework.util.PropertyPlaceholderHelper.PlaceholderResolver)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param value
+	 * @param placeholderResolver
+	 * @param visitedPlaceholders
+	 * @return
+	 */
+	protected String parseStringValue(String value,
+									  PlaceholderResolver placeholderResolver,
+									  @Nullable Set<String> visitedPlaceholders) {
 
 		int startIndex = value.indexOf(this.placeholderPrefix);
+		/**
+		 * 如果不含"${",则直接返回
+		 */
 		if (startIndex == -1) {
 			return value;
 		}
@@ -173,6 +186,10 @@ public class PropertyPlaceholderHelper {
 		while (startIndex != -1) {
 			int endIndex = findPlaceholderEndIndex(result, startIndex);
 			if (endIndex != -1) {
+				/**
+				 * 查找到了与之匹配的"}"字符串
+				 * 截取需要处理的配置字符串
+				 */
 				String placeholder = result.substring(startIndex + this.placeholderPrefix.length(), endIndex);
 				String originalPlaceholder = placeholder;
 				if (visitedPlaceholders == null) {
@@ -183,13 +200,25 @@ public class PropertyPlaceholderHelper {
 							"Circular placeholder reference '" + originalPlaceholder + "' in property definitions");
 				}
 				// Recursive invocation, parsing placeholders contained in the placeholder key.
+				/**
+				 * 递归继续处理
+				 */
 				placeholder = parseStringValue(placeholder, placeholderResolver, visitedPlaceholders);
 				// Now obtain the value for the fully resolved key...
+				/**
+				 * 转换
+				 */
 				String propVal = placeholderResolver.resolvePlaceholder(placeholder);
 				if (propVal == null && this.valueSeparator != null) {
 					int separatorIndex = placeholder.indexOf(this.valueSeparator);
 					if (separatorIndex != -1) {
+						/**
+						 * 取":"之前的key
+						 */
 						String actualPlaceholder = placeholder.substring(0, separatorIndex);
+						/**
+						 * ":"后的是默认值?
+						 */
 						String defaultValue = placeholder.substring(separatorIndex + this.valueSeparator.length());
 						propVal = placeholderResolver.resolvePlaceholder(actualPlaceholder);
 						if (propVal == null) {
@@ -221,11 +250,29 @@ public class PropertyPlaceholderHelper {
 		return result.toString();
 	}
 
+	/**
+	 * <p>
+	 * {@link PropertyPlaceholderHelper#parseStringValue(java.lang.String, org.springframework.util.PropertyPlaceholderHelper.PlaceholderResolver, java.util.Set)}
+	 * 中调用
+	 * </p>
+	 * 从startIndex后面寻找"}"字符位置
+	 *
+	 * @param buf
+	 * @param startIndex
+	 * @return
+	 */
 	private int findPlaceholderEndIndex(CharSequence buf, int startIndex) {
+		/**
+		 * 从"${"的位置向后找
+		 */
 		int index = startIndex + this.placeholderPrefix.length();
 		int withinNestedPlaceholder = 0;
 		while (index < buf.length()) {
 			if (StringUtils.substringMatch(buf, index, this.placeholderSuffix)) {
+				/**
+				 * 寻找匹配的"}"
+				 * 呃,这个还支持"{}"镶套?
+				 */
 				if (withinNestedPlaceholder > 0) {
 					withinNestedPlaceholder--;
 					index = index + this.placeholderSuffix.length();
