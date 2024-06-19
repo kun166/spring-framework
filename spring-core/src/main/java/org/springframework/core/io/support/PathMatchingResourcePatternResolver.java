@@ -222,7 +222,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
 	/**
 	 * Create a new PathMatchingResourcePatternResolver with a DefaultResourceLoader.
 	 * <p>ClassLoader access will happen via the thread context class loader.
-	 * 在{@link org.springframework.beans.factory.support.AbstractBeanDefinitionReader#AbstractBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
+	 * 在{@link org.springframework.beans.factory.support.AbstractBeanDefinitionReader#AbstractBeanDefinitionReader}
 	 * 中被调用
 	 *
 	 * @see org.springframework.core.io.DefaultResourceLoader

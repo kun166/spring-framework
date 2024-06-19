@@ -197,8 +197,10 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 *                          {@link AnnotationConfigApplicationContext}
 	 * @since 4.3.6
 	 */
-	public ClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry, boolean useDefaultFilters,
-										  Environment environment, @Nullable ResourceLoader resourceLoader) {
+	public ClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry,
+										  boolean useDefaultFilters,
+										  Environment environment,
+										  @Nullable ResourceLoader resourceLoader) {
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 		this.registry = registry;

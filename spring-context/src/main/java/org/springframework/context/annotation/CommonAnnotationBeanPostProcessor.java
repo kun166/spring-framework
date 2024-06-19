@@ -665,8 +665,9 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * @return the resource object (never {@code null})
 	 * @throws NoSuchBeanDefinitionException if no corresponding target resource found
 	 */
-	protected Object autowireResource(BeanFactory factory, LookupElement element, @Nullable String requestingBeanName)
-			throws NoSuchBeanDefinitionException {
+	protected Object autowireResource(BeanFactory factory,
+									  LookupElement element,
+									  @Nullable String requestingBeanName) throws NoSuchBeanDefinitionException {
 
 		Object resource;
 		Set<String> autowiredBeanNames;
@@ -680,12 +681,14 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			AutowireCapableBeanFactory beanFactory = (AutowireCapableBeanFactory) factory;
 			DependencyDescriptor descriptor = element.getDependencyDescriptor();
 			if (this.fallbackToDefaultTypeMatch && element.isDefaultName && !factory.containsBean(name)) {
+				// 属性名称或者方法名称不规范,不是依赖bean的name
 				autowiredBeanNames = new LinkedHashSet<>();
 				resource = beanFactory.resolveDependency(descriptor, requestingBeanName, autowiredBeanNames, null);
 				if (resource == null) {
 					throw new NoSuchBeanDefinitionException(element.getLookupType(), "No resolvable resource object");
 				}
 			} else {
+				// 指明了Resource注解的name,或者属性名和方法名很规范
 				resource = beanFactory.resolveBeanByName(name, descriptor);
 				autowiredBeanNames = Collections.singleton(name);
 			}

@@ -101,16 +101,28 @@ public final class CandidateComponentsIndexLoader {
 		return cache.computeIfAbsent(classLoaderToUse, CandidateComponentsIndexLoader::doLoadIndex);
 	}
 
+	/**
+	 * <p>
+	 * {@link CandidateComponentsIndexLoader#loadIndex(java.lang.ClassLoader)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param classLoader
+	 * @return
+	 */
 	@Nullable
 	private static CandidateComponentsIndex doLoadIndex(ClassLoader classLoader) {
 		if (shouldIgnoreIndex) {
+			/**
+			 * 如果设置了"spring.index.ignore",则不生成CandidateComponentsIndex
+			 */
 			return null;
 		}
 
 		try {
 			/**
 			 * 关于{@link CandidateComponentsIndexLoader#COMPONENTS_RESOURCE_LOCATION}
-			 * 可以参考https://blog.csdn.net/szhlcy/article/details/102811156
+			 * 可以参考 https://blog.csdn.net/szhlcy/article/details/102811156
 			 */
 			Enumeration<URL> urls = classLoader.getResources(COMPONENTS_RESOURCE_LOCATION);
 			if (!urls.hasMoreElements()) {
