@@ -88,8 +88,8 @@ abstract class ConfigurationClassUtils {
 	 * @param metadataReaderFactory the current factory in use by the caller
 	 * @return whether the candidate qualifies as (any kind of) configuration class
 	 */
-	public static boolean checkConfigurationClassCandidate(
-			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
+	public static boolean checkConfigurationClassCandidate(BeanDefinition beanDef,
+														   MetadataReaderFactory metadataReaderFactory) {
 
 		String className = beanDef.getBeanClassName();
 		if (className == null || beanDef.getFactoryMethodName() != null) {
@@ -130,6 +130,11 @@ abstract class ConfigurationClassUtils {
 
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
+			/**
+			 * 注意这两个value，不一样。如果是{@link Configuration}注解,
+			 * 且该注解的{@link Configuration#proxyBeanMethods()}为true，默认是true,
+			 * 会增强
+			 */
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		} else if (config != null || isConfigurationCandidate(metadata)) {
 			/**

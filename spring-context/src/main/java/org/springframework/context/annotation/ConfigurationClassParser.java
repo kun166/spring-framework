@@ -353,9 +353,9 @@ class ConfigurationClassParser {
 	 * @return the superclass, or {@code null} if none found or previously processed.父类，如果没有父类或者以前处理过，返回null
 	 */
 	@Nullable
-	protected final SourceClass doProcessConfigurationClass(
-			ConfigurationClass configClass, SourceClass sourceClass, Predicate<String> filter)
-			throws IOException {
+	protected final SourceClass doProcessConfigurationClass(ConfigurationClass configClass,
+															SourceClass sourceClass,
+															Predicate<String> filter) throws IOException {
 
 		if (configClass.getMetadata().isAnnotated(Component.class.getName())) {
 			// Recursively process any member (nested) classes first

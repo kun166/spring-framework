@@ -72,8 +72,8 @@ final class PostProcessorRegistrationDelegate {
 	 * @param beanFactory
 	 * @param beanFactoryPostProcessors
 	 */
-	public static void invokeBeanFactoryPostProcessors(
-			ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
+	public static void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory,
+													   List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
 
 		// WARNING: Although it may appear that the body of this method can be easily
 		// refactored to avoid the use of multiple loops and multiple lists, the use
