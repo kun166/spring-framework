@@ -290,8 +290,8 @@ public class AnnotatedBeanDefinitionReader {
 	 * 中被调用
 	 * </p>
 	 *
-	 * @param beanClass   the class of the bean
-	 * @param name        an explicit name for the bean
+	 * @param beanClass   the class of the bean,要创建bean的class
+	 * @param name        an explicit name for the bean,bean的name
 	 * @param qualifiers  specific qualifier annotations to consider, if any,
 	 *                    in addition to qualifiers at the bean class level
 	 * @param supplier    a callback for creating an instance of the bean
@@ -300,8 +300,10 @@ public class AnnotatedBeanDefinitionReader {
 	 *                    {@link BeanDefinition}, e.g. setting a lazy-init or primary flag
 	 * @since 5.0
 	 */
-	private <T> void doRegisterBean(Class<T> beanClass, @Nullable String name,
-									@Nullable Class<? extends Annotation>[] qualifiers, @Nullable Supplier<T> supplier,
+	private <T> void doRegisterBean(Class<T> beanClass,
+									@Nullable String name,
+									@Nullable Class<? extends Annotation>[] qualifiers,
+									@Nullable Supplier<T> supplier,
 									@Nullable BeanDefinitionCustomizer[] customizers) {
 
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);

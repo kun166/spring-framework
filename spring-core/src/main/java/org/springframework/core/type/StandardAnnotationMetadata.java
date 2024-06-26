@@ -52,6 +52,7 @@ public class StandardAnnotationMetadata extends StandardClassMetadata implements
 	/**
 	 * {@link StandardAnnotationMetadata#StandardAnnotationMetadata(java.lang.Class, boolean)}
 	 * 中被调用,传入true
+	 * 镶套注解作为map?
 	 */
 	private final boolean nestedAnnotationsAsMap;
 

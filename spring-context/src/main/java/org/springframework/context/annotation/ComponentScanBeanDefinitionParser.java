@@ -365,8 +365,9 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Object instantiateUserDefinedStrategy(
-			String className, Class<?> strategyType, @Nullable ClassLoader classLoader) {
+	private Object instantiateUserDefinedStrategy(String className,
+												  Class<?> strategyType,
+												  @Nullable ClassLoader classLoader) {
 
 		Object result;
 		try {
