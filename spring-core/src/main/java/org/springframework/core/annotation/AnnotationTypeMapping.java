@@ -70,7 +70,9 @@ final class AnnotationTypeMapping {
 	private final Class<? extends Annotation> annotationType;
 
 	/**
-	 * 合并的注解，包括当前注解和所有父注解的注解。注意List是有序的
+	 * 这个是有序的,第一个是根注解的class,最后一个是当前注解的class。
+	 * 中间的是串联起根注解的class和当前注解的class的注解class。
+	 * 这个List串联起来根注解class和当前注解class的整个路径
 	 */
 	private final List<Class<? extends Annotation>> metaTypes;
 
@@ -86,6 +88,11 @@ final class AnnotationTypeMapping {
 
 	private final int[] aliasMappings;
 
+	/**
+	 * 记录的是当前mapping中属性方法名字和{@link AnnotationTypeMapping#root}属性方法名字相同……
+	 * 其中下标是当前mapping{@link AnnotationTypeMapping#attributes}的下标，
+	 * 值是{@link AnnotationTypeMapping#root}中{@link AnnotationTypeMapping#attributes}的下标
+	 */
 	private final int[] conventionMappings;
 
 	private final int[] annotationValueMappings;
@@ -95,11 +102,21 @@ final class AnnotationTypeMapping {
 	/**
 	 * 注解{@link AnnotationTypeMapping#annotationType}上属性方法上，如果标注了{@link AliasFor}注解的对应关系
 	 * 注意key是转换后的方法,value是原方法
+	 * <p>
+	 * 遍历{@link AnnotationTypeMapping#attributes}的每一个方法,
+	 * 如果方法上标有{@link AliasFor}注解,
+	 * 则获取{@link AliasFor}注解指定的方法为key,{@link AnnotationTypeMapping#attributes}记录的方法组成的List为value
 	 */
 	private final Map<Method, List<Method>> aliasedBy;
 
 	private final boolean synthesizable;
 
+	/**
+	 * 通过{@link AliasFor}指向当前mapping的那些方法。这些方法可能属于当前mapping，也可能属于父mapping
+	 * 比如当前mapping有一个方法A,还有一个方法B通过{@link AliasFor}指向A。
+	 * 比如当前mapping有一个方法C,还有一个方法D通过{@link AliasFor}指向C。
+	 * 然后A,B,C,D都会被记录下来
+	 */
 	private final Set<Method> claimedAliases = new HashSet<>();
 
 
@@ -117,8 +134,10 @@ final class AnnotationTypeMapping {
 	 * @param annotation
 	 * @param visitedAnnotationTypes 访问过的AnnotationType
 	 */
-	AnnotationTypeMapping(@Nullable AnnotationTypeMapping source, Class<? extends Annotation> annotationType,
-						  @Nullable Annotation annotation, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+	AnnotationTypeMapping(@Nullable AnnotationTypeMapping source,
+						  Class<? extends Annotation> annotationType,
+						  @Nullable Annotation annotation,
+						  Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 		/**
 		 * 参数annotationType这个注解归属的注解。也可以理解为父注解。如果传入的参数为空，则说明该注解是根注解。
 		 */
@@ -136,18 +155,26 @@ final class AnnotationTypeMapping {
 		 */
 		this.annotationType = annotationType;
 		/**
-		 * 合并的注解，包括当前注解和所有子注解的注解。注意List是有序的
+		 * 这个是有序的,第一个是根注解的class,最后一个是当前注解的class。
+		 * 中间的是串联起根注解的class和当前注解的class的注解class。
+		 * 这个List串联起来根注解class和当前注解class的整个路径
 		 */
 		this.metaTypes = merge(
 				source != null ? source.getMetaTypes() : null,
 				annotationType);
-		// 归属的注解？
+		/**
+		 * 注解本身
+		 * {@link AnnotationTypeMapping#annotationType}记录的是注解的class
+		 */
 		this.annotation = annotation;
 		/**
 		 * 注解annotationType上的属性方法，即参数长度为0，且返回不为void的方法集合
 		 */
 		this.attributes = AttributeMethods.forAnnotationType(annotationType);
 		this.mirrorSets = new MirrorSets();
+		/**
+		 * 创建一个int数组,数组长度为传入参数size，元素默认值都为-1。
+		 */
 		this.aliasMappings = filledIntArray(this.attributes.size());
 		this.conventionMappings = filledIntArray(this.attributes.size());
 		this.annotationValueMappings = filledIntArray(this.attributes.size());
@@ -155,6 +182,10 @@ final class AnnotationTypeMapping {
 		 * 这个数组待看
 		 */
 		this.annotationValueSource = new AnnotationTypeMapping[this.attributes.size()];
+		/**
+		 * 注解{@link AnnotationTypeMapping#annotationType}上属性方法上，如果标注了{@link AliasFor}注解的对应关系
+		 * 注意key是转换后的方法,value是原方法
+		 */
 		this.aliasedBy = resolveAliasedForTargets();
 		/**
 		 * 代码太复杂了， 有时间再看吧
@@ -171,13 +202,17 @@ final class AnnotationTypeMapping {
 	 * 中调用。
 	 * 将existing和element合并到一个新的List里
 	 *
-	 * @param existing
+	 * @param existing 已经存在的list
 	 * @param element
 	 * @param <T>
 	 * @return
 	 */
 	private static <T> List<T> merge(@Nullable List<T> existing, T element) {
 		if (existing == null) {
+			/**
+			 * 根注解初始化。
+			 * 将根注解element加入其中
+			 */
 			return Collections.singletonList(element);
 		}
 		List<T> merged = new ArrayList<>(existing.size() + 1);
@@ -187,11 +222,13 @@ final class AnnotationTypeMapping {
 	}
 
 	/**
-	 * 处理{@link AnnotationTypeMapping#annotationType}上的属性方法上标注了{@link AliasFor}的方法关系
 	 * <p>
 	 * {@link AnnotationTypeMapping#AnnotationTypeMapping(org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
 	 * 中调用
 	 * </p>
+	 * 遍历{@link AnnotationTypeMapping#attributes}的每一个方法,
+	 * 如果方法上标有{@link AliasFor}注解,
+	 * 则获取{@link AliasFor}注解指定的方法为key,{@link AnnotationTypeMapping#attributes}记录的方法组成的List为value
 	 *
 	 * @return
 	 */
@@ -202,9 +239,14 @@ final class AnnotationTypeMapping {
 			Method attribute = this.attributes.get(i);
 			/**
 			 * 获取属性方法上的{@link AliasFor}注解
+			 * 参考:
+			 * {@link org.springframework.stereotype.Service}
 			 */
 			AliasFor aliasFor = AnnotationsScanner.getDeclaredAnnotation(attribute, AliasFor.class);
 			if (aliasFor != null) {
+				/**
+				 * 说明该属性方法上有{@link AliasFor}注解
+				 */
 				Method target = resolveAliasTarget(attribute, aliasFor);
 				// 注意这个key是转换后的方法，value是原方法
 				aliasedBy.computeIfAbsent(target, key -> new ArrayList<>()).add(attribute);
@@ -251,7 +293,7 @@ final class AnnotationTypeMapping {
 		Class<? extends Annotation> targetAnnotation = aliasFor.annotation();
 		if (targetAnnotation == Annotation.class) {
 			/**
-			 * {@link Annotation}是默认值,
+			 * {@link AliasFor#annotation()}默认值。说明是和当前注解的其它属性方法互为别名,
 			 * 走这个分支，说明方法属性返回的就是{@link AnnotationTypeMapping#annotationType}它本身
 			 * 可以参考{@link AliasFor}它自身
 			 */
@@ -271,10 +313,15 @@ final class AnnotationTypeMapping {
 			 * 例子:{@link org.springframework.stereotype.Service}
 			 * {@link org.springframework.stereotype.Service}和{@link org.springframework.stereotype.Component}
 			 * 属性方法名称一样
+			 *
+			 * 下面的方法名称,不是类名称……
 			 */
 			targetAttributeName = attribute.getName();
 		}
 
+		/**
+		 * 目的地注解上的方法
+		 */
 		Method target = AttributeMethods.forAnnotationType(targetAnnotation).get(targetAttributeName);
 		if (target == null) {
 			/**
@@ -291,6 +338,9 @@ final class AnnotationTypeMapping {
 					AttributeMethods.describe(targetAnnotation, targetAttributeName)));
 		}
 		if (target.equals(attribute)) {
+			/**
+			 * 两个方法为同一个方法……
+			 */
 			throw new AnnotationConfigurationException(String.format(
 					"@AliasFor declaration on %s points to itself. " +
 							"Specify 'annotation' to point to a same-named attribute on a meta-annotation.",
@@ -308,6 +358,10 @@ final class AnnotationTypeMapping {
 			if (targetAliasFor != null) {
 				Method mirror = resolveAliasTarget(target, targetAliasFor, false);
 				if (!mirror.equals(attribute)) {
+					/**
+					 * 目的方法上也有{@link AliasFor}注解,
+					 * 且该注解指定的方法却不是当前方法
+					 */
 					throw new AnnotationConfigurationException(String.format(
 							"%s must be declared as an @AliasFor %s, not %s.",
 							StringUtils.capitalize(AttributeMethods.describe(target)),
@@ -341,14 +395,18 @@ final class AnnotationTypeMapping {
 	}
 
 	/**
+	 * <p>
 	 * {@link AnnotationTypeMapping#AnnotationTypeMapping(org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
 	 * 构造函数中调用
+	 * </p>
 	 */
 	private void processAliases() {
 		List<Method> aliases = new ArrayList<>();
 		for (int i = 0; i < this.attributes.size(); i++) {
 			/**
 			 * 遍历该注解上的属性方法
+			 * <p>
+			 * aliases只记录当前方法属性
 			 * 先清空aliases
 			 */
 			aliases.clear();
@@ -356,13 +414,21 @@ final class AnnotationTypeMapping {
 			aliases.add(this.attributes.get(i));
 			collectAliases(aliases);
 			if (aliases.size() > 1) {
+				/**
+				 * 说明当前方法被标注了{@link AliasFor}注解的自身注解的其它方法指向,
+				 * 或者是被标注了{@link AliasFor}注解的父注解的方法指向
+				 */
 				processAliases(i, aliases);
 			}
 		}
 	}
 
 	/**
+	 * <p>
 	 * {@link AnnotationTypeMapping#processAliases()}中调用
+	 * </p>
+	 * aliases的第一个元素可以称之为元方法。即后面的所有方法都通过{@link AliasFor}注解直接指向它,或者是间接执行它。
+	 * 比如方法D通过{@link AliasFor}指向方法C，而方法C又通过{@link AliasFor}指向B。则D是间接指向B
 	 *
 	 * @param aliases
 	 */
@@ -379,11 +445,16 @@ final class AnnotationTypeMapping {
 				 */
 				List<Method> additional = mapping.aliasedBy.get(aliases.get(j));
 				if (additional != null) {
+					/**
+					 * 走到这个分支,有两种情况:
+					 * 1,{@link AliasFor}转换后的方法还是自身注解拥有的方法，当然并不表明当前方法有{@link AliasFor}注解。
+					 * 2,{@link AliasFor}转换后的方法是子注解的方法,当下面代码遍历{@link AnnotationTypeMapping#source}的时候命中。
+					 */
 					aliases.addAll(additional);
 				}
 			}
 			/**
-			 * 从自身向子注解查找
+			 * 从自身向父注解查找
 			 */
 			mapping = mapping.source;
 		}
@@ -392,16 +463,29 @@ final class AnnotationTypeMapping {
 	/**
 	 * {@link AnnotationTypeMapping#processAliases()}中调用
 	 *
-	 * @param attributeIndex
-	 * @param aliases
+	 * @param attributeIndex {@link AnnotationTypeMapping#attributes}中的方法下标
+	 * @param aliases        aliases中记录的第一个方法,为attributeIndex下标指向的{@link AnnotationTypeMapping#attributes}方法,可以称之为元方法。
+	 *                       剩余方法都通过{@link AliasFor}指向元方法。
 	 */
 	private void processAliases(int attributeIndex, List<Method> aliases) {
+		/**
+		 * 寻找根注解中第一个在aliases中的属性方法。有可能是元方法，有可能不是
+		 */
 		int rootAttributeIndex = getFirstRootAttributeIndex(aliases);
 		AnnotationTypeMapping mapping = this;
 		while (mapping != null) {
 			if (rootAttributeIndex != -1 && mapping != this.root) {
 				for (int i = 0; i < mapping.attributes.size(); i++) {
+					/**
+					 * {@link AnnotationTypeMapping#root}中有被{@link AliasFor}指向的方法,
+					 * 且当前mapping不是{@link AnnotationTypeMapping#root}
+					 */
 					if (aliases.contains(mapping.attributes.get(i))) {
+						/**
+						 * 1,在{@link AnnotationTypeMapping#root}找到了别名方法。
+						 * 2,当前mapping不是{@link AnnotationTypeMapping#root}
+						 * 设置当前mapping的当前方法(即下标为i的属性方法)别名为{@link AnnotationTypeMapping#root}的下标为rootAttributeIndex的方法
+						 */
 						mapping.aliasMappings[i] = rootAttributeIndex;
 					}
 				}
@@ -418,18 +502,29 @@ final class AnnotationTypeMapping {
 					}
 				}
 			}
+			/**
+			 * 向父注解逐级查找
+			 */
 			mapping = mapping.source;
 		}
 	}
 
 	/**
+	 * <p>
 	 * {@link AnnotationTypeMapping#processAliases(int, java.util.List)}中调用
-	 * 寻找根注解中第一个被标注了{@link AliasFor}映射后的Method,该Method未必自身标注了{@link AliasFor}
+	 * </p>
+	 * <p>
+	 * 寻找根注解中第一个包含在aliases中的方法。
+	 * 有可能是aliases中的元方法,即第一个方法;也有可能不是。
+	 * 如果不是的话，则一定标有{@link AliasFor}注解
 	 *
 	 * @param aliases
 	 * @return
 	 */
 	private int getFirstRootAttributeIndex(Collection<Method> aliases) {
+		/**
+		 * 从根注解开始查找
+		 */
 		AttributeMethods rootAttributes = this.root.getAttributes();
 		for (int i = 0; i < rootAttributes.size(); i++) {
 			if (aliases.contains(rootAttributes.get(i))) {
@@ -439,16 +534,34 @@ final class AnnotationTypeMapping {
 		return -1;
 	}
 
+	/**
+	 * <p>
+	 * {@link AnnotationTypeMapping#AnnotationTypeMapping(org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
+	 * 构造函数中调用
+	 * </p>
+	 */
 	private void addConventionMappings() {
 		if (this.distance == 0) {
+			/**
+			 * 如果当前注解是根注解,则退出
+			 */
 			return;
 		}
 		AttributeMethods rootAttributes = this.root.getAttributes();
 		int[] mappings = this.conventionMappings;
 		for (int i = 0; i < mappings.length; i++) {
+			/**
+			 * 当前属性方法的名字
+			 */
 			String name = this.attributes.get(i).getName();
+			/**
+			 * 根据名字去root属性方法中查找
+			 */
 			int mapped = rootAttributes.indexOf(name);
 			if (!MergedAnnotation.VALUE.equals(name) && mapped != -1) {
+				/**
+				 * 方法名称不是"value",且在root属性方法中找到了……
+				 */
 				mappings[i] = mapped;
 				MirrorSet mirrors = getMirrorSets().getAssigned(i);
 				if (mirrors != null) {
@@ -460,6 +573,12 @@ final class AnnotationTypeMapping {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link AnnotationTypeMapping#AnnotationTypeMapping(org.springframework.core.annotation.AnnotationTypeMapping, java.lang.Class, java.lang.annotation.Annotation, java.util.Set)}
+	 * 中调用
+	 * </p>
+	 */
 	private void addConventionAnnotationValues() {
 		for (int i = 0; i < this.attributes.size(); i++) {
 			Method attribute = this.attributes.get(i);
@@ -820,8 +939,14 @@ final class AnnotationTypeMapping {
 	 */
 	class MirrorSets {
 
+		/**
+		 * 那些最少两个以上互为别名的方法，创建的MirrorSet数组
+		 */
 		private MirrorSet[] mirrorSets;
 
+		/**
+		 * 如果assigned[i]有值,说明{@link AnnotationTypeMapping#attributes}的第i个坐标是互为别名的方法
+		 */
 		private final MirrorSet[] assigned;
 
 		MirrorSets() {
@@ -829,6 +954,13 @@ final class AnnotationTypeMapping {
 			this.mirrorSets = EMPTY_MIRROR_SETS;
 		}
 
+		/**
+		 * <p>
+		 * {@link AnnotationTypeMapping#processAliases(int, java.util.List)}中调用
+		 * </p>
+		 *
+		 * @param aliases
+		 */
 		void updateFrom(Collection<Method> aliases) {
 			MirrorSet mirrorSet = null;
 			int size = 0;
@@ -838,16 +970,29 @@ final class AnnotationTypeMapping {
 				if (aliases.contains(attribute)) {
 					size++;
 					if (size > 1) {
+						/**
+						 * 注意,进这个分支的条件是size>1,
+						 * 初始值是0,得++两次才能进来
+						 */
 						if (mirrorSet == null) {
 							mirrorSet = new MirrorSet();
+							/**
+							 * 这last记录的仅仅是第一次碰到的那个坐标
+							 */
 							this.assigned[last] = mirrorSet;
 						}
+						/**
+						 * 这个是最后的坐标
+						 */
 						this.assigned[i] = mirrorSet;
 					}
 					last = i;
 				}
 			}
 			if (mirrorSet != null) {
+				/**
+				 * 说明当前mapping最少两个方法互为别名
+				 */
 				mirrorSet.update();
 				Set<MirrorSet> unique = new LinkedHashSet<>(Arrays.asList(this.assigned));
 				unique.remove(null);
@@ -889,10 +1034,22 @@ final class AnnotationTypeMapping {
 		 */
 		class MirrorSet {
 
+			/**
+			 * 当前MirrorSet对应的那个方法,在当前mapping中通过{@link AliasFor}互为别名的数量
+			 */
 			private int size;
 
+			/**
+			 * 下标从0往下顺延到{@link MirrorSet#size}
+			 * 值为{@link MirrorSets#assigned}中等于当前对象this的下标
+			 */
 			private final int[] indexes = new int[attributes.size()];
 
+			/**
+			 * <p>
+			 * {@link MirrorSets#updateFrom(java.util.Collection)}中调用
+			 * </p>
+			 */
 			void update() {
 				this.size = 0;
 				Arrays.fill(this.indexes, -1);

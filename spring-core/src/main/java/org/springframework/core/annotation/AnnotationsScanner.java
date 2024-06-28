@@ -18,10 +18,7 @@ package org.springframework.core.annotation;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -530,9 +527,21 @@ abstract class AnnotationsScanner {
 		return null;
 	}
 
+	/**
+	 * <p>
+	 * {@link AnnotationTypeMapping#resolveAliasedForTargets()}中调用
+	 * </p>
+	 * 返回source上直接注解中包含的那个和annotationType匹配的注解
+	 *
+	 * @param source
+	 * @param annotationType
+	 * @param <A>
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	@Nullable
-	static <A extends Annotation> A getDeclaredAnnotation(AnnotatedElement source, Class<A> annotationType) {
+	static <A extends Annotation> A getDeclaredAnnotation(AnnotatedElement source,
+														  Class<A> annotationType) {
 		Annotation[] annotations = getDeclaredAnnotations(source, false);
 		for (Annotation annotation : annotations) {
 			if (annotation != null && annotationType == annotation.annotationType()) {
@@ -543,16 +552,21 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
-	 * 返回source上的注解数组。
-	 * 这些注解，所有声明的方法上，参数长度都为0，且返回值不能是void
+	 * <p>
 	 * {@link AnnotationsScanner#processElement(java.lang.Object, java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.AnnotationsProcessor)}
 	 * 中被调用
+	 * {@link AnnotationsScanner#getDeclaredAnnotation(java.lang.reflect.AnnotatedElement, java.lang.Class)}
+	 * 中被调用
+	 * </p>
+	 * 返回source上的直接注解数组。
+	 * 不包含标注的注解上的注解。
 	 *
 	 * @param source
 	 * @param defensive false,防御的。即返回原来的数据，还是clone一份返回
 	 * @return
 	 */
 	static Annotation[] getDeclaredAnnotations(AnnotatedElement source, boolean defensive) {
+		// 标识是不是从缓存中找的?
 		boolean cached = false;
 		// 去缓存中找
 		Annotation[] annotations = declaredAnnotationCache.get(source);
@@ -575,7 +589,7 @@ abstract class AnnotationsScanner {
 							/**
 							 * AttributeMethods.forAnnotationType方法返回的是
 							 * {@link AttributeMethods},该对象持有了annotation.annotationType()的class,
-							 * 并且缓存了该注解的那些参数长度为0,即无参且返回不为void的那些方法
+							 * 并且缓存了该注解的那些参数长度为0,即无参且返回不为void的那些方法。
 							 * isValid方法，将上述的那些方法都在annotation上调用一遍，看是否有异常
 							 */
 							!AttributeMethods.forAnnotationType(annotation.annotationType()).isValid(annotation)) {
@@ -598,10 +612,12 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
-	 * 传入的annotationType所在的包名，
-	 * 是否以"java.lang", "org.springframework.lang"等开头
+	 * <p>
 	 * {@link AnnotationsScanner#getDeclaredAnnotations(java.lang.reflect.AnnotatedElement, boolean)}
 	 * 中调用
+	 * </p>
+	 * 传入的annotationType所在的包名，
+	 * 是否以"java.lang", "org.springframework.lang"等开头
 	 *
 	 * @param annotationType
 	 * @return
@@ -621,8 +637,13 @@ abstract class AnnotationsScanner {
 	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 * @return
 	 */
-	static boolean isKnownEmpty(AnnotatedElement source, SearchStrategy searchStrategy) {
+	static boolean isKnownEmpty(AnnotatedElement source,
+								SearchStrategy searchStrategy) {
 		if (hasPlainJavaAnnotationsOnly(source)) {
+			/**
+			 * 如果source是{@link Member},则取声明它的class,
+			 * 判断class是否以java开头的包里,或者是接口{@link Ordered}本身,用的==比较的
+			 */
 			return true;
 		}
 		if (searchStrategy == SearchStrategy.DIRECT || isWithoutHierarchy(source, searchStrategy)) {
@@ -633,17 +654,22 @@ abstract class AnnotationsScanner {
 			if (source instanceof Method && ((Method) source).isBridge()) {
 				return false;
 			}
+			/**
+			 * 注解为空
+			 */
 			return getDeclaredAnnotations(source, false).length == 0;
 		}
 		return false;
 	}
 
 	/**
+	 * <p>
+	 * {@link AnnotationsScanner#isKnownEmpty(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy)}
+	 * 中调用
+	 * </p>
 	 * 判断传入的class是否以包名java开头,或者自身是{@link Ordered}
 	 * 如果传入的是{@link Member},则看归属的class是否符合上述规则
 	 * 其它返回false
-	 * {@link AnnotationsScanner#isKnownEmpty(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy)}
-	 * 中调用
 	 *
 	 * @param annotatedElement
 	 * @return
@@ -655,6 +681,10 @@ abstract class AnnotationsScanner {
 			/**
 			 * 关于Member的资料:https://blog.csdn.net/yaomingyang/article/details/81412180
 			 * 获取该方法所归属的类
+			 * {@link Member}的实现类:
+			 * {@link Constructor}
+			 * {@link Field}
+			 * {@link Method}
 			 */
 			return hasPlainJavaAnnotationsOnly(((Member) annotatedElement).getDeclaringClass());
 		} else {
@@ -663,11 +693,13 @@ abstract class AnnotationsScanner {
 	}
 
 	/**
-	 * 判断是否在java下面的包里，或者自身是{@link Ordered}
+	 * <p>
 	 * {@link AnnotationsScanner#hasPlainJavaAnnotationsOnly(java.lang.Object)}
 	 * 中调用
 	 * {@link AnnotationsScanner#processClassInheritedAnnotations(java.lang.Object, java.lang.Class, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.AnnotationsProcessor)}
 	 * 中被调用
+	 * </p>
+	 * 判断是否在java开头的包里，或者自身是{@link Ordered}
 	 *
 	 * @param type
 	 * @return
@@ -684,6 +716,7 @@ abstract class AnnotationsScanner {
 	 * 中被调用
 	 * </p>
 	 * 无等级的。即该类要么是Object.class，要么是未实现任何接口且父类是Object.class
+	 * 方法名称就是 无等级的
 	 *
 	 * @param source         源class
 	 * @param searchStrategy 选择策略
@@ -709,9 +742,15 @@ abstract class AnnotationsScanner {
 		}
 		if (source instanceof Method) {
 			Method sourceMethod = (Method) source;
+			/**
+			 * 方法如果是private的,则需要外部继续判断
+			 */
 			return (Modifier.isPrivate(sourceMethod.getModifiers()) ||
 					isWithoutHierarchy(sourceMethod.getDeclaringClass(), searchStrategy));
 		}
+		/**
+		 * 只判断Class和Method,其它还需要外部继续判断
+		 */
 		return true;
 	}
 

@@ -18,8 +18,7 @@ package org.springframework.core.annotation;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -362,6 +361,13 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * {@link StandardAnnotationMetadata#StandardAnnotationMetadata(java.lang.Class, boolean)}
 	 * 中被调用
 	 * </p>
+	 * {@link AnnotatedElement}的实现类主要有以下几个:
+	 * {@link Class}
+	 * {@link Constructor}
+	 * {@link Field}
+	 * {@link Method}
+	 * {@link Package}
+	 * {@link Parameter}
 	 *
 	 * @param element              the source element
 	 * @param searchStrategy       {@link SearchStrategy#INHERITED_ANNOTATIONS}
@@ -369,7 +375,8 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * @return a {@code MergedAnnotations} instance containing the merged
 	 * element annotations
 	 */
-	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
+	static MergedAnnotations from(AnnotatedElement element,
+								  SearchStrategy searchStrategy,
 								  RepeatableContainers repeatableContainers) {
 
 		/**
@@ -394,8 +401,10 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 	 * @return a {@code MergedAnnotations} instance containing the merged
 	 * annotations for the supplied element
 	 */
-	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
-								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+	static MergedAnnotations from(AnnotatedElement element,
+								  SearchStrategy searchStrategy,
+								  RepeatableContainers repeatableContainers,
+								  AnnotationFilter annotationFilter) {
 
 		Assert.notNull(repeatableContainers, "RepeatableContainers must not be null");
 		Assert.notNull(annotationFilter, "AnnotationFilter must not be null");

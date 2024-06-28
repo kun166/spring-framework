@@ -130,8 +130,8 @@ public abstract class RepeatableContainers {
 	 * @throws AnnotationConfigurationException if the supplied container type
 	 *                                          is not a properly configured container for a repeatable annotation
 	 */
-	public static RepeatableContainers of(
-			Class<? extends Annotation> repeatable, @Nullable Class<? extends Annotation> container) {
+	public static RepeatableContainers of(Class<? extends Annotation> repeatable,
+										  @Nullable Class<? extends Annotation> container) {
 
 		return new ExplicitRepeatableContainer(null, repeatable, container);
 	}
@@ -178,6 +178,19 @@ public abstract class RepeatableContainers {
 		Annotation[] findRepeatedAnnotations(Annotation annotation) {
 			Method method = getRepeatedAnnotationsMethod(annotation.annotationType());
 			if (method != null) {
+				/**
+				 * 如果一个注解A上标注了{@link Repeatable},
+				 * 则{@link Repeatable#value()}一定也是一个注解,我们暂计为B。
+				 * 且该注解B一定有一个方法,该方法名字为value,无参,且返回值为A的数组。
+				 * 参考:
+				 * {@link org.springframework.context.annotation.ComponentScan}
+				 * {@link org.springframework.context.annotation.ComponentScans}
+				 *
+				 * 可以参考:https://blog.csdn.net/a232884c/article/details/124827155
+				 *
+				 * 这个其实就是用了方法反射,从类似于{@link org.springframework.context.annotation.ComponentScans#value()}
+				 * 上获取到{@link org.springframework.context.annotation.ComponentScan}数组
+				 */
 				return (Annotation[]) AnnotationUtils.invokeAnnotationMethod(method, annotation);
 			}
 			return super.findRepeatedAnnotations(annotation);
@@ -214,7 +227,6 @@ public abstract class RepeatableContainers {
 		 * {@link StandardRepeatableContainers#getRepeatedAnnotationsMethod(java.lang.Class)}
 		 * 中调用
 		 * </p>
-		 * <p>
 		 * https://blog.csdn.net/a232884c/article/details/124827155
 		 * 如果annotationType注解如例子中的RepeaDemos注解
 		 * 则返回该注解的value方法
@@ -235,9 +247,13 @@ public abstract class RepeatableContainers {
 				Class<?> returnType = method.getReturnType();
 				if (returnType.isArray()) {
 					/**
-					 * 如果返回类型为数组
-					 * 数组类型
-					 * 关于{@link Repeatable}
+					 * 如果一个注解A上标注了{@link Repeatable},
+					 * 则{@link Repeatable#value()}一定也是一个注解,我们暂计为B。
+					 * 且该注解B一定有一个方法,该方法名字为value,无参,且返回值为A的数组。
+					 * 参考:
+					 * {@link org.springframework.context.annotation.ComponentScan}
+					 * {@link org.springframework.context.annotation.ComponentScans}
+					 *
 					 * 可以参考:https://blog.csdn.net/a232884c/article/details/124827155
 					 */
 					Class<?> componentType = returnType.getComponentType();

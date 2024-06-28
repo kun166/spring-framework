@@ -18,7 +18,7 @@ package org.springframework.core.annotation;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
-import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -58,13 +58,20 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	private final Object source;
 
 	/**
-	 * 每一个Class对象都是一个AnnotatedElement
+	 * {@link AnnotatedElement}的实现类主要有以下几个:
+	 * {@link Class}
+	 * {@link Constructor}
+	 * {@link Field}
+	 * {@link Method}
+	 * {@link Package}
+	 * {@link Parameter}
 	 */
 	@Nullable
 	private final AnnotatedElement element;
 
 	/**
 	 * 注解的搜索策略
+	 * {@link SearchStrategy}
 	 * {@link SearchStrategy#INHERITED_ANNOTATIONS}
 	 */
 	@Nullable
@@ -78,12 +85,19 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 	/**
 	 * {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}
+	 * {@link RepeatableContainers}容器的
+	 * {@link RepeatableContainers.StandardRepeatableContainers}
+	 * {@link RepeatableContainers.ExplicitRepeatableContainer}
+	 * {@link RepeatableContainers.NoRepeatableContainers}
 	 */
 	private final RepeatableContainers repeatableContainers;
 
 	/**
 	 * 注解过滤器
 	 * {@link AnnotationFilter#PLAIN}
+	 * {@link AnnotationFilter#JAVA}
+	 * {@link AnnotationFilter#ALL}
+	 * {@link AnnotationFilter#NONE}
 	 */
 	private final AnnotationFilter annotationFilter;
 
@@ -109,9 +123,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	 * @param repeatableContainers {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}
 	 * @param annotationFilter     {@link AnnotationFilter#PLAIN}
 	 */
-	private TypeMappedAnnotations(AnnotatedElement element, SearchStrategy searchStrategy,
-								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
-
+	private TypeMappedAnnotations(AnnotatedElement element,
+								  SearchStrategy searchStrategy,
+								  RepeatableContainers repeatableContainers,
+								  AnnotationFilter annotationFilter) {
 		this.source = element;
 		this.element = element;
 		this.searchStrategy = searchStrategy;
@@ -120,9 +135,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		this.annotationFilter = annotationFilter;
 	}
 
-	private TypeMappedAnnotations(@Nullable Object source, Annotation[] annotations,
-								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
-
+	private TypeMappedAnnotations(@Nullable Object source,
+								  Annotation[] annotations,
+								  RepeatableContainers repeatableContainers,
+								  AnnotationFilter annotationFilter) {
 		this.source = source;
 		this.element = null;
 		this.searchStrategy = null;
@@ -145,8 +161,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			// 给定的注解,符合过滤器规则，返回false
 			return false;
 		}
-		return Boolean.TRUE.equals(scan(annotationType,
-				IsPresent.get(this.repeatableContainers, this.annotationFilter, false)));
+		return Boolean.TRUE.equals(scan(annotationType, IsPresent.get(this.repeatableContainers, this.annotationFilter, false)));
 	}
 
 	@Override
@@ -342,6 +357,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	 * {@link TypeMappedAnnotations#getAggregates()}中调用
 	 * {@link TypeMappedAnnotations#get(java.lang.String, java.util.function.Predicate, org.springframework.core.annotation.MergedAnnotationSelector)}
 	 * 中调用
+	 * {@link TypeMappedAnnotations#isPresent(java.lang.Class)}中调用
 	 *
 	 * @param criteria  {@link TypeMappedAnnotations}
 	 * @param processor {@link AggregatesCollector}
@@ -378,8 +394,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	 * @param annotationFilter     {@link AnnotationFilter#PLAIN} 注解过滤器
 	 * @return
 	 */
-	static MergedAnnotations from(AnnotatedElement element, SearchStrategy searchStrategy,
-								  RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+	static MergedAnnotations from(AnnotatedElement element,
+								  SearchStrategy searchStrategy,
+								  RepeatableContainers repeatableContainers,
+								  AnnotationFilter annotationFilter) {
 
 		if (AnnotationsScanner.isKnownEmpty(element, searchStrategy)) {
 			return NONE;
@@ -437,8 +455,20 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			SHARED[3] = new IsPresent(RepeatableContainers.standardRepeatables(), AnnotationFilter.PLAIN, false);
 		}
 
+		/**
+		 * {@link RepeatableContainers.StandardRepeatableContainers}
+		 * {@link RepeatableContainers.ExplicitRepeatableContainer}
+		 * {@link RepeatableContainers.NoRepeatableContainers}
+		 */
 		private final RepeatableContainers repeatableContainers;
 
+		/**
+		 * 注解过滤器
+		 * {@link AnnotationFilter#PLAIN}
+		 * {@link AnnotationFilter#JAVA}
+		 * {@link AnnotationFilter#ALL}
+		 * {@link AnnotationFilter#NONE}
+		 */
 		private final AnnotationFilter annotationFilter;
 
 		private final boolean directOnly;
@@ -454,23 +484,39 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		/**
 		 * 有用的好像只有这一个方法
 		 *
-		 * @param requiredType
+		 * @param requiredType   要查询的注解类型
 		 * @param aggregateIndex the aggregate index of the provided annotations
+		 *                       提供注解的聚合索引
 		 * @param source         the original source of the annotations, if known
+		 *                       注解的原始来源
 		 * @param annotations    the annotations to process (this array may contain
 		 *                       {@code null} elements)
 		 * @return
 		 */
 		@Override
 		@Nullable
-		public Boolean doWithAnnotations(Object requiredType, int aggregateIndex,
-										 @Nullable Object source, Annotation[] annotations) {
+		public Boolean doWithAnnotations(Object requiredType,
+										 int aggregateIndex,
+										 @Nullable Object source,
+										 Annotation[] annotations) {
 
 			for (Annotation annotation : annotations) {
+				/**
+				 * 遍历注解数组
+				 */
 				if (annotation != null) {
+					/**
+					 * 当前遍历的注解不为null,获取注解class
+					 */
 					Class<? extends Annotation> type = annotation.annotationType();
 					if (type != null && !this.annotationFilter.matches(type)) {
+						/**
+						 * 当前遍历的注解class不为空,且也不符合过滤条件
+						 */
 						if (type == requiredType || type.getName().equals(requiredType)) {
+							/**
+							 * 当前遍历的注解class就是查询的注解
+							 */
 							return Boolean.TRUE;
 						}
 						Annotation[] repeatedAnnotations =
@@ -483,6 +529,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 							}
 						}
 						if (!this.directOnly) {
+							/**
+							 * 非直属?
+							 */
 							AnnotationTypeMappings mappings = AnnotationTypeMappings.forAnnotationType(type);
 							for (int i = 0; i < mappings.size(); i++) {
 								AnnotationTypeMapping mapping = mappings.get(i);
@@ -494,25 +543,38 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 					}
 				}
 			}
+			/**
+			 * 返回null
+			 */
 			return null;
 		}
 
 		static IsPresent get(RepeatableContainers repeatableContainers,
-							 AnnotationFilter annotationFilter, boolean directOnly) {
+							 AnnotationFilter annotationFilter,
+							 boolean directOnly) {
 
 			// Use a single shared instance for common combinations
-			/**
-			 * 如果传入的{@link AnnotationFilter}是{@link AnnotationFilter.PLAIN}
-			 * 则和repeatableContainers就没关系了。只和directOnly有关系
-			 */
 			if (annotationFilter == AnnotationFilter.PLAIN) {
+				/**
+				 * {@link RepeatableContainers}有
+				 * {@link RepeatableContainers.StandardRepeatableContainers}
+				 * {@link RepeatableContainers.ExplicitRepeatableContainer}
+				 * {@link RepeatableContainers.NoRepeatableContainers}
+				 */
 				if (repeatableContainers == RepeatableContainers.none()) {
 					return SHARED[directOnly ? 0 : 1];
 				}
 				if (repeatableContainers == RepeatableContainers.standardRepeatables()) {
 					return SHARED[directOnly ? 2 : 3];
 				}
+				/**
+				 * 如果是{@link RepeatableContainers.ExplicitRepeatableContainer}
+				 * 则走下面的逻辑了
+				 */
 			}
+			/**
+			 * 上面其实和这个是一样的构造器和传参，仅仅只是缓存一下加快速度？
+			 */
 			return new IsPresent(repeatableContainers, annotationFilter, directOnly);
 		}
 	}

@@ -1121,6 +1121,10 @@ public abstract class AnnotationUtils {
 	 * <p>An attempt will first be made to invoke the method via the annotation's
 	 * {@link InvocationHandler} (if the annotation instance is a JDK dynamic proxy).
 	 * If that fails, an attempt will be made to invoke the method via reflection.
+	 * <p>
+	 * {@link RepeatableContainers.StandardRepeatableContainers#findRepeatedAnnotations(java.lang.annotation.Annotation)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param method     the method to invoke
 	 * @param annotation the annotation on which to invoke the method

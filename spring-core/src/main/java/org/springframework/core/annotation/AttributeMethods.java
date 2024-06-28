@@ -37,14 +37,30 @@ import org.springframework.util.ReflectionUtils;
  */
 final class AttributeMethods {
 
+	/**
+	 * 注解没有方法属性
+	 */
 	static final AttributeMethods NONE = new AttributeMethods(null, new Method[0]);
 
+	/**
+	 * 缓存,以注解为key，属性方法为value
+	 */
 	static final Map<Class<? extends Annotation>, AttributeMethods> cache = new ConcurrentReferenceHashMap<>();
 
+	/**
+	 * 方法比较器
+	 */
 	private static final Comparator<Method> methodComparator = (m1, m2) -> {
 		if (m1 != null && m2 != null) {
+			/**
+			 * 方法都不为空,比较两个方法的name
+			 */
 			return m1.getName().compareTo(m2.getName());
 		}
+		/**
+		 * m1不为空,则m1排前面。否则m1排后面。
+		 * 就是如果两者都为空的话，m1也排后面
+		 */
 		return m1 != null ? -1 : 1;
 	};
 
@@ -94,6 +110,9 @@ final class AttributeMethods {
 			Method method = this.attributeMethods[i];
 			Class<?> type = method.getReturnType();
 			if (!foundDefaultValueMethod && (method.getDefaultValue() != null)) {
+				/**
+				 * {@link Method#getDefaultValue()}返回注解的默认值
+				 */
 				foundDefaultValueMethod = true;
 			}
 			/**
@@ -308,10 +327,20 @@ final class AttributeMethods {
 	 * @return
 	 */
 	private static AttributeMethods compute(Class<? extends Annotation> annotationType) {
+		/**
+		 * 取注解定义的所有方法
+		 */
 		Method[] methods = annotationType.getDeclaredMethods();
 		int size = methods.length;
 		for (int i = 0; i < methods.length; i++) {
+			/**
+			 * 遍历
+			 */
 			if (!isAttributeMethod(methods[i])) {
+				/**
+				 * 该方法返回传入的参数:无参且返回不能是void
+				 * 前面加的!,就是上述两者起码有一个不满足
+				 */
 				methods[i] = null;
 				size--;
 			}
