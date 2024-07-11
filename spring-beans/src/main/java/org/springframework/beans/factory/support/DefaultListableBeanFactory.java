@@ -1646,6 +1646,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 * <p>
 	 * {@link DefaultListableBeanFactory#resolveDependency(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String, java.util.Set, org.springframework.beans.TypeConverter)}
 	 * 中调用
+	 * {@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver#buildLazyResolutionProxy(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String)}中调用
 	 * </p>
 	 *
 	 * @param descriptor

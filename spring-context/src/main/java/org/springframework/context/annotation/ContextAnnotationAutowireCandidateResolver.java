@@ -92,7 +92,7 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 	 * 中调用
 	 * </p>
 	 *
-	 * @param descriptor
+	 * @param descriptor 标注了{@link Lazy}的属性或者方法
 	 * @param beanName
 	 * @return
 	 */
@@ -103,7 +103,7 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 		final DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) beanFactory;
 
 		/**
-		 * 匿名内部类
+		 * 方法里面的匿名内部类
 		 */
 		TargetSource ts = new TargetSource() {
 			@Override

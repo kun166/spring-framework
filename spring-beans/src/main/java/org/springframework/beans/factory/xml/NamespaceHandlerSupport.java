@@ -88,7 +88,14 @@ public abstract class NamespaceHandlerSupport implements NamespaceHandler {
 	 */
 	@Nullable
 	private BeanDefinitionParser findParserForElement(Element element, ParserContext parserContext) {
+		/**
+		 * 从xml中读取命名空间
+		 */
 		String localName = parserContext.getDelegate().getLocalName(element);
+		/**
+		 * 这是一个Map<String, BeanDefinitionParser>
+		 * 从哪初始化的呢?下面会讲到。
+		 */
 		BeanDefinitionParser parser = this.parsers.get(localName);
 		if (parser == null) {
 			parserContext.getReaderContext().fatal(

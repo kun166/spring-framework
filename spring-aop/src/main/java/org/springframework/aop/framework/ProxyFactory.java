@@ -111,6 +111,8 @@ public class ProxyFactory extends ProxyCreatorSupport {
 	 * <p>
 	 * {@link AbstractAutoProxyCreator#createProxy(java.lang.Class, java.lang.String, java.lang.Object[], org.springframework.aop.TargetSource)}
 	 * 中调用
+	 * {@link org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver#buildLazyResolutionProxy(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String)}
+	 * 中调用
 	 * </p>
 	 *
 	 * @param classLoader the class loader to create the proxy with
