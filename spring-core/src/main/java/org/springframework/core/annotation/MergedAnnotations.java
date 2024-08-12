@@ -544,7 +544,7 @@ public interface MergedAnnotations extends Iterable<MergedAnnotation<Annotation>
 		 * {@link Inherited @Inherited}.
 		 * <p>This strategy does not search implemented interfaces.
 		 * <p>
-		 * 当前类 + 父类
+		 * 当前类 + 父类。父类的注解不需要有{@link Inherited}也能被扫描到
 		 * </p>
 		 */
 		SUPERCLASS,

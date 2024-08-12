@@ -387,6 +387,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 	/**
 	 * {@link MergedAnnotations#from(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.RepeatableContainers, org.springframework.core.annotation.AnnotationFilter)}
 	 * 中被调用
+	 * <p>
+	 * 实现了接口{@link AnnotatedElement}的有
+	 * {@link }
 	 *
 	 * @param element              目标源class,我们就是要处理它上面的注解
 	 * @param searchStrategy       {@link SearchStrategy#INHERITED_ANNOTATIONS} 查询策略
@@ -549,6 +552,14 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			return null;
 		}
 
+		/**
+		 * 构造一个{@link IsPresent}的静态方法
+		 *
+		 * @param repeatableContainers
+		 * @param annotationFilter
+		 * @param directOnly
+		 * @return
+		 */
 		static IsPresent get(RepeatableContainers repeatableContainers,
 							 AnnotationFilter annotationFilter,
 							 boolean directOnly) {

@@ -47,6 +47,9 @@ public abstract class RepeatableContainers {
 
 	static final Map<Class<? extends Annotation>, Object> cache = new ConcurrentReferenceHashMap<>();
 
+	/**
+	 * 父容器
+	 */
 	@Nullable
 	private final RepeatableContainers parent;
 
@@ -150,6 +153,7 @@ public abstract class RepeatableContainers {
 	/**
 	 * Standard {@link RepeatableContainers} implementation that searches using
 	 * Java's {@link Repeatable @Repeatable} annotation.
+	 * 标准的,用Java的{@link Repeatable}实现的
 	 */
 	private static class StandardRepeatableContainers extends RepeatableContainers {
 
@@ -176,6 +180,9 @@ public abstract class RepeatableContainers {
 		@Override
 		@Nullable
 		Annotation[] findRepeatedAnnotations(Annotation annotation) {
+			/**
+			 * {@link Annotation#annotationType()}返回的是该注解的class类
+			 */
 			Method method = getRepeatedAnnotationsMethod(annotation.annotationType());
 			if (method != null) {
 				/**
@@ -270,7 +277,7 @@ public abstract class RepeatableContainers {
 
 	/**
 	 * A single explicit mapping.
-	 * 清晰，明确的
+	 * 清晰，明确的。就是注解上明确的有且只有一个{@link Repeatable}
 	 */
 	private static class ExplicitRepeatableContainer extends RepeatableContainers {
 
@@ -281,7 +288,8 @@ public abstract class RepeatableContainers {
 		private final Method valueMethod;
 
 		ExplicitRepeatableContainer(@Nullable RepeatableContainers parent,
-									Class<? extends Annotation> repeatable, @Nullable Class<? extends Annotation> container) {
+									Class<? extends Annotation> repeatable,
+									@Nullable Class<? extends Annotation> container) {
 
 			super(parent);
 			Assert.notNull(repeatable, "Repeatable must not be null");
@@ -313,7 +321,19 @@ public abstract class RepeatableContainers {
 			this.valueMethod = valueMethod;
 		}
 
+		/**
+		 * <p>
+		 * {@link ExplicitRepeatableContainer#ExplicitRepeatableContainer(org.springframework.core.annotation.RepeatableContainers, java.lang.Class, java.lang.Class)}
+		 * 中调用
+		 * </p>
+		 *
+		 * @param repeatable
+		 * @return
+		 */
 		private Class<? extends Annotation> deduceContainer(Class<? extends Annotation> repeatable) {
+			/**
+			 * 注解上获取{@link Repeatable}注解
+			 */
 			Repeatable annotation = repeatable.getAnnotation(Repeatable.class);
 			Assert.notNull(annotation, () -> "Annotation type must be a repeatable annotation: " +
 					"failed to resolve container type for " + repeatable.getName());
