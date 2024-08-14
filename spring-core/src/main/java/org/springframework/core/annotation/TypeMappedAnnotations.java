@@ -161,6 +161,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 			// 给定的注解,符合过滤器规则，返回false
 			return false;
 		}
+		/**
+		 *{@link IsPresent}的泛型是<Object, Boolean>
+		 */
 		return Boolean.TRUE.equals(scan(annotationType, IsPresent.get(this.repeatableContainers, this.annotationFilter, false)));
 	}
 

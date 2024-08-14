@@ -62,8 +62,14 @@ abstract class AnnotationsScanner {
 	 * Scan the hierarchy of the specified element for relevant annotations and
 	 * call the processor as required.
 	 * 扫描给定的具有层次结构的element,以查找相关注解，并根据需要调用处理器。
-	 *
-	 *
+	 * <p>
+	 * {@link AnnotatedElement}的实现类主要有以下几个:
+	 * {@link Class}
+	 * {@link Constructor}
+	 * {@link Field}
+	 * {@link Method}
+	 * {@link Package}
+	 * {@link Parameter}
 	 * <p>
 	 * {@link TypeMappedAnnotations#scan(java.lang.Object, org.springframework.core.annotation.AnnotationsProcessor)}
 	 * 中调用
@@ -76,7 +82,9 @@ abstract class AnnotationsScanner {
 	 * @return the result of {@link AnnotationsProcessor#finish(Object)}
 	 */
 	@Nullable
-	static <C, R> R scan(C context, AnnotatedElement source, SearchStrategy searchStrategy,
+	static <C, R> R scan(C context,
+						 AnnotatedElement source,
+						 SearchStrategy searchStrategy,
 						 AnnotationsProcessor<C, R> processor) {
 
 		R result = process(context, source, searchStrategy, processor);
@@ -130,8 +138,10 @@ abstract class AnnotationsScanner {
 	 * @return
 	 */
 	@Nullable
-	private static <C, R> R processClass(C context, Class<?> source,
-										 SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
+	private static <C, R> R processClass(C context,
+										 Class<?> source,
+										 SearchStrategy searchStrategy,
+										 AnnotationsProcessor<C, R> processor) {
 
 		switch (searchStrategy) {
 			case DIRECT:
@@ -514,13 +524,24 @@ abstract class AnnotationsScanner {
 	 * @return
 	 */
 	@Nullable
-	private static <C, R> R processElement(C context, AnnotatedElement source,
+	private static <C, R> R processElement(C context,
+										   AnnotatedElement source,
 										   AnnotationsProcessor<C, R> processor) {
 
 		try {
+			/**
+			 * {@link AnnotationsProcessor#doWithAggregate(java.lang.Object, int)}默认返回null
+			 * <p>
+			 * {@link TypeMappedAnnotations.MergedAnnotationFinder#doWithAggregate(java.lang.Object, int)}
+			 * 中有实现该方法
+			 *
+			 */
 			R result = processor.doWithAggregate(context, 0);
-			return (result != null ? result : processor.doWithAnnotations(
-					context, 0, source, getDeclaredAnnotations(source, false)));
+			return (result != null ? result :
+					processor.doWithAnnotations(context,
+							0,
+							source,
+							getDeclaredAnnotations(source, false)));
 		} catch (Throwable ex) {
 			AnnotationUtils.handleIntrospectionFailure(source, ex);
 		}
@@ -600,6 +621,9 @@ abstract class AnnotationsScanner {
 				}
 				annotations = (allIgnored ? NO_ANNOTATIONS : annotations);
 				if (source instanceof Class || source instanceof Member) {
+					/**
+					 * 只对{@link Class}和{@link Member}进行缓存
+					 */
 					declaredAnnotationCache.put(source, annotations);
 					cached = true;
 				}
