@@ -497,6 +497,7 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		 *                       注解的原始来源
 		 * @param annotations    the annotations to process (this array may contain
 		 *                       {@code null} elements)
+		 *                       source上的直接注解
 		 * @return
 		 */
 		@Override
