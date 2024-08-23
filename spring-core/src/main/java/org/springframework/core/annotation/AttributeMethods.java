@@ -30,6 +30,10 @@ import org.springframework.util.ReflectionUtils;
 /**
  * Provides a quick way to access the attribute methods of an {@link Annotation}
  * with consistent ordering as well as a few useful utility methods.
+ * <p>
+ * 对Class<? extends Annotation> annotationType进行解析,寻找出所有属性方法(无参且返回值不为void的方法),构建的对象。
+ * 这个类的作用就是记录annotationType的属性方法
+ * </p>
  *
  * @author Phillip Webb
  * @author Sam Brannen
@@ -48,7 +52,11 @@ final class AttributeMethods {
 	static final Map<Class<? extends Annotation>, AttributeMethods> cache = new ConcurrentReferenceHashMap<>();
 
 	/**
-	 * 方法比较器
+	 * 方法比较器。
+	 * 对于注解定义的属性方法(无参,且返回值不为void),铁定两个方法不可能名字一样。
+	 * 下面的排序方法总结一下就是:
+	 * 1,非属性方法排后面
+	 * 2,属性方法按属性名排序
 	 */
 	private static final Comparator<Method> methodComparator = (m1, m2) -> {
 		if (m1 != null && m2 != null) {
@@ -93,25 +101,39 @@ final class AttributeMethods {
 
 
 	/**
+	 * <p>
 	 * {@link AttributeMethods#compute(java.lang.Class)}中调用
+	 * <p>
+	 * 私有构造函数。
+	 * 感觉主要就是记录annotationType,以及该注解上的所有属性方法(无参,且返回值不为void)
 	 *
-	 * @param annotationType
-	 * @param attributeMethods
+	 * @param annotationType   注解的class
+	 * @param attributeMethods annotationType上的属性方法(无参,且返回值不为void)。注意这个是根据属性名排好序有序数组
 	 */
-	private AttributeMethods(@Nullable Class<? extends Annotation> annotationType, Method[] attributeMethods) {
+	private AttributeMethods(@Nullable Class<? extends Annotation> annotationType,
+							 Method[] attributeMethods) {
 		this.annotationType = annotationType;
 		this.attributeMethods = attributeMethods;
 		this.canThrowTypeNotPresentException = new boolean[attributeMethods.length];
-		// 是否有默认值
+		/**
+		 * 所有的属性方法,只要有一个有默认值,就是true
+		 */
 		boolean foundDefaultValueMethod = false;
 		// 镶套注解，即注解持有的方法里面，含有属性方法返回的对象是注解
 		boolean foundNestedAnnotation = false;
 		for (int i = 0; i < attributeMethods.length; i++) {
+			/**
+			 * 遍历该annotationType定义的所有属性方法
+			 */
 			Method method = this.attributeMethods[i];
+			/**
+			 * 方法返回类型
+			 */
 			Class<?> type = method.getReturnType();
 			if (!foundDefaultValueMethod && (method.getDefaultValue() != null)) {
 				/**
-				 * {@link Method#getDefaultValue()}返回注解的默认值
+				 * {@link Method#getDefaultValue()}返回注解的默认值。
+				 * 呃，好像这个方法，就是为了注解定义的属性方法用的。
 				 */
 				foundDefaultValueMethod = true;
 			}
@@ -173,8 +195,7 @@ final class AttributeMethods {
 				try {
 					AnnotationUtils.invokeAnnotationMethod(get(i), annotation);
 				} catch (Throwable ex) {
-					throw new IllegalStateException("Could not obtain annotation attribute value for " +
-							get(i).getName() + " declared on " + annotation.annotationType(), ex);
+					throw new IllegalStateException("Could not obtain annotation attribute value for " + get(i).getName() + " declared on " + annotation.annotationType(), ex);
 				}
 			}
 		}
@@ -334,7 +355,7 @@ final class AttributeMethods {
 		int size = methods.length;
 		for (int i = 0; i < methods.length; i++) {
 			/**
-			 * 遍历
+			 * 遍历。过滤掉非属性方法
 			 */
 			if (!isAttributeMethod(methods[i])) {
 				/**
@@ -348,6 +369,7 @@ final class AttributeMethods {
 		if (size == 0) {
 			return NONE;
 		}
+		// 根据方法名称排序
 		Arrays.sort(methods, methodComparator);
 		Method[] attributeMethods = Arrays.copyOf(methods, size);
 		return new AttributeMethods(annotationType, attributeMethods);

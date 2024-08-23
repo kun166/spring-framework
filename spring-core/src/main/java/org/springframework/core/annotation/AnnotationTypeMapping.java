@@ -86,6 +86,9 @@ final class AnnotationTypeMapping {
 
 	private final MirrorSets mirrorSets;
 
+	/**
+	 * 记录的是{@link AnnotationTypeMapping#root}的,和当前下标的属性方法通过{@link AliasFor}关联的那个属性方法下标
+	 */
 	private final int[] aliasMappings;
 
 	/**
@@ -100,7 +103,7 @@ final class AnnotationTypeMapping {
 	private final AnnotationTypeMapping[] annotationValueSource;
 
 	/**
-	 * 注解{@link AnnotationTypeMapping#annotationType}上属性方法上，如果标注了{@link AliasFor}注解的对应关系
+	 * 注解{@link AnnotationTypeMapping#annotationType}属性方法上，如果标注了{@link AliasFor}注解的对应关系
 	 * 注意key是转换后的方法,value是原方法
 	 * <p>
 	 * 遍历{@link AnnotationTypeMapping#attributes}的每一个方法,
@@ -140,6 +143,7 @@ final class AnnotationTypeMapping {
 						  Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 		/**
 		 * 参数annotationType这个注解归属的注解。也可以理解为父注解。如果传入的参数为空，则说明该注解是根注解。
+		 * 就是当前注解标注在其上的那个注解，产生的{@link AnnotationTypeMapping}
 		 */
 		this.source = source;
 		/**
@@ -174,6 +178,7 @@ final class AnnotationTypeMapping {
 		this.mirrorSets = new MirrorSets();
 		/**
 		 * 创建一个int数组,数组长度为传入参数size，元素默认值都为-1。
+		 * 从下面申请的数组的长度来看，都和属性方法有关系啊……
 		 */
 		this.aliasMappings = filledIntArray(this.attributes.size());
 		this.conventionMappings = filledIntArray(this.attributes.size());
@@ -259,8 +264,8 @@ final class AnnotationTypeMapping {
 	/**
 	 * {@link AnnotationTypeMapping#resolveAliasedForTargets()}中调用
 	 *
-	 * @param attribute
-	 * @param aliasFor
+	 * @param attribute 标注{@link AliasFor}的原始方法
+	 * @param aliasFor  标注的{@link AliasFor}注解
 	 * @return
 	 */
 	private Method resolveAliasTarget(Method attribute, AliasFor aliasFor) {
@@ -268,8 +273,11 @@ final class AnnotationTypeMapping {
 	}
 
 	/**
+	 * <p>
 	 * {@link AnnotationTypeMapping#resolveAliasTarget(java.lang.reflect.Method, org.springframework.core.annotation.AliasFor)}
 	 * 中调用
+	 * </p>
+	 * 获取attribute上标注的aliasFor注解，指向的目标{@link Method}
 	 *
 	 * @param attribute      注解的属性方法
 	 * @param aliasFor       该属性方法上的{@link AliasFor}注解
@@ -290,6 +298,9 @@ final class AnnotationTypeMapping {
 					AttributeMethods.describe(attribute), aliasFor.attribute(),
 					aliasFor.value()));
 		}
+		/**
+		 * {@link AliasFor}注解标明的,当前方法的别名方法,归属的注解类。如果是默认值，则说明是当前注解类本身。
+		 */
 		Class<? extends Annotation> targetAnnotation = aliasFor.annotation();
 		if (targetAnnotation == Annotation.class) {
 			/**
@@ -299,9 +310,15 @@ final class AnnotationTypeMapping {
 			 */
 			targetAnnotation = this.annotationType;
 		}
+		/**
+		 * 目标方法的方法名称
+		 */
 		String targetAttributeName = aliasFor.attribute();
 		if (!StringUtils.hasLength(targetAttributeName)) {
-			// 如果attribute无值，就取value
+			/**
+			 * {@link AliasFor#attribute()}和{@link AliasFor#value()}只有一个有值,
+			 * 那个有值就取那个
+			 */
 			targetAttributeName = aliasFor.value();
 		}
 		if (!StringUtils.hasLength(targetAttributeName)) {
@@ -354,6 +371,10 @@ final class AnnotationTypeMapping {
 					AttributeMethods.describe(target)));
 		}
 		if (isAliasPair(target) && checkAliasPair) {
+			/**
+			 * checkAliasPair起效的前提,即走下面这个流程的前提是:
+			 * 两个属性方法的声明类都是{@link AnnotationTypeMapping#annotationType}
+			 */
 			AliasFor targetAliasFor = target.getAnnotation(AliasFor.class);
 			if (targetAliasFor != null) {
 				Method mirror = resolveAliasTarget(target, targetAliasFor, false);
@@ -415,8 +436,8 @@ final class AnnotationTypeMapping {
 			collectAliases(aliases);
 			if (aliases.size() > 1) {
 				/**
-				 * 说明当前方法被标注了{@link AliasFor}注解的自身注解的其它方法指向,
-				 * 或者是被标注了{@link AliasFor}注解的父注解的方法指向
+				 * 当前注解上,以及父注解上,存在通过标注{@link AliasFor}指向本方法的方法
+				 * 本方法未必有{@link AliasFor}注解.
 				 */
 				processAliases(i, aliases);
 			}
@@ -427,7 +448,7 @@ final class AnnotationTypeMapping {
 	 * <p>
 	 * {@link AnnotationTypeMapping#processAliases()}中调用
 	 * </p>
-	 * aliases的第一个元素可以称之为元方法。即后面的所有方法都通过{@link AliasFor}注解直接指向它,或者是间接执行它。
+	 * aliases的第一个元素可以称之为元方法。即后面的所有方法都通过{@link AliasFor}注解直接指向它,或者是间接指向它。
 	 * 比如方法D通过{@link AliasFor}指向方法C，而方法C又通过{@link AliasFor}指向B。则D是间接指向B
 	 *
 	 * @param aliases
@@ -469,7 +490,8 @@ final class AnnotationTypeMapping {
 	 */
 	private void processAliases(int attributeIndex, List<Method> aliases) {
 		/**
-		 * 寻找根注解中第一个在aliases中的属性方法。有可能是元方法，有可能不是
+		 * 寻找根注解中第一个在aliases中的属性方法。有可能是元方法，有可能不是。
+		 * 返回的是根注解中{@link AnnotationTypeMapping#attributes}中的位置
 		 */
 		int rootAttributeIndex = getFirstRootAttributeIndex(aliases);
 		AnnotationTypeMapping mapping = this;

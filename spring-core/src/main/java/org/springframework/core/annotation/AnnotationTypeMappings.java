@@ -56,8 +56,14 @@ final class AnnotationTypeMappings {
 
 	private static final IntrospectionFailureLogger failureLogger = IntrospectionFailureLogger.DEBUG;
 
+	/**
+	 * {@link RepeatableContainers.StandardRepeatableContainers#INSTANCE}的缓存
+	 */
 	private static final Map<AnnotationFilter, Cache> standardRepeatablesCache = new ConcurrentReferenceHashMap<>();
 
+	/**
+	 * {@link RepeatableContainers.NoRepeatableContainers#INSTANCE}的缓存
+	 */
 	private static final Map<AnnotationFilter, Cache> noRepeatablesCache = new ConcurrentReferenceHashMap<>();
 
 	/**
@@ -81,16 +87,14 @@ final class AnnotationTypeMappings {
 	 * <p>
 	 * 为annotationType创建对应的{@link AnnotationTypeMappings}
 	 * </p>
+	 * 构造函数,解析annotationType,最终把annotationType封装成一个{@link AnnotationTypeMappings}
 	 *
 	 * @param repeatableContainers   {@link RepeatableContainers#standardRepeatables()}
 	 * @param filter                 {@link AnnotationFilter#PLAIN}
 	 * @param annotationType         注解的class类对象
 	 * @param visitedAnnotationTypes 这个外面接口传入了一个空的Set
 	 */
-	private AnnotationTypeMappings(RepeatableContainers repeatableContainers,
-								   AnnotationFilter filter,
-								   Class<? extends Annotation> annotationType,
-								   Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+	private AnnotationTypeMappings(RepeatableContainers repeatableContainers, AnnotationFilter filter, Class<? extends Annotation> annotationType, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 
 		/**
 		 * {@link Repeatable}查找容器
@@ -116,8 +120,7 @@ final class AnnotationTypeMappings {
 	 * @param annotationType         注解的class类
 	 * @param visitedAnnotationTypes
 	 */
-	private void addAllMappings(Class<? extends Annotation> annotationType,
-								Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+	private void addAllMappings(Class<? extends Annotation> annotationType, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 		/**
 		 * 初始化一个双端队列。
 		 */
@@ -180,9 +183,7 @@ final class AnnotationTypeMappings {
 	 * @param source 父AnnotationTypeMapping
 	 * @param ann    {@link AnnotationTypeMapping#annotationType}上的注解
 	 */
-	private void addIfPossible(Deque<AnnotationTypeMapping> queue,
-							   AnnotationTypeMapping source,
-							   Annotation ann) {
+	private void addIfPossible(Deque<AnnotationTypeMapping> queue, AnnotationTypeMapping source, Annotation ann) {
 		addIfPossible(queue, source, ann.annotationType(), ann, new HashSet<>());
 	}
 
@@ -196,16 +197,12 @@ final class AnnotationTypeMappings {
 	 * </p>
 	 *
 	 * @param queue                  双端队列
-	 * @param source                 原始的class,此处是null
-	 * @param annotationType         source上的所有注解中的其中一个
+	 * @param source                 {@link AnnotationTypeMapping}是分层的,父{@link AnnotationTypeMapping}
+	 * @param annotationType         当前注解的class
 	 * @param ann                    此处传入的null
 	 * @param visitedAnnotationTypes
 	 */
-	private void addIfPossible(Deque<AnnotationTypeMapping> queue,
-							   @Nullable AnnotationTypeMapping source,
-							   Class<? extends Annotation> annotationType,
-							   @Nullable Annotation ann,
-							   Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+	private void addIfPossible(Deque<AnnotationTypeMapping> queue, @Nullable AnnotationTypeMapping source, Class<? extends Annotation> annotationType, @Nullable Annotation ann, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 
 		try {
 			/**
@@ -215,8 +212,7 @@ final class AnnotationTypeMappings {
 		} catch (Exception ex) {
 			AnnotationUtils.rethrowAnnotationConfigurationException(ex);
 			if (failureLogger.isEnabled()) {
-				failureLogger.log("Failed to introspect meta-annotation " + annotationType.getName(),
-						(source != null ? source.getAnnotationType() : null), ex);
+				failureLogger.log("Failed to introspect meta-annotation " + annotationType.getName(), (source != null ? source.getAnnotationType() : null), ex);
 			}
 		}
 	}
@@ -233,9 +229,7 @@ final class AnnotationTypeMappings {
 	 * @return
 	 */
 	private boolean isMappable(AnnotationTypeMapping source, @Nullable Annotation metaAnnotation) {
-		return (metaAnnotation != null && !this.filter.matches(metaAnnotation) &&
-				!AnnotationFilter.PLAIN.matches(source.getAnnotationType()) &&
-				!isAlreadyMapped(source, metaAnnotation));
+		return (metaAnnotation != null && !this.filter.matches(metaAnnotation) && !AnnotationFilter.PLAIN.matches(source.getAnnotationType()) && !isAlreadyMapped(source, metaAnnotation));
 	}
 
 	/**
@@ -326,15 +320,13 @@ final class AnnotationTypeMappings {
 	 *                               我们已经访问过的注解的set,用来避免无穷递归调用注解
 	 * @return type mappings for the annotation type
 	 */
-	static AnnotationTypeMappings forAnnotationType(Class<? extends Annotation> annotationType,
-													Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+	static AnnotationTypeMappings forAnnotationType(Class<? extends Annotation> annotationType, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 
 		/**
 		 * 默认使用的是{@link RepeatableContainers#standardRepeatables()}作为缓存
 		 * 默认使用的过滤器是{@link AnnotationFilter#PLAIN}
 		 */
-		return forAnnotationType(annotationType, RepeatableContainers.standardRepeatables(),
-				AnnotationFilter.PLAIN, visitedAnnotationTypes);
+		return forAnnotationType(annotationType, RepeatableContainers.standardRepeatables(), AnnotationFilter.PLAIN, visitedAnnotationTypes);
 	}
 
 	/**
@@ -347,8 +339,7 @@ final class AnnotationTypeMappings {
 	 *                             annotations are considered
 	 * @return type mappings for the annotation type
 	 */
-	static AnnotationTypeMappings forAnnotationType(Class<? extends Annotation> annotationType,
-													RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
+	static AnnotationTypeMappings forAnnotationType(Class<? extends Annotation> annotationType, RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter) {
 
 		return forAnnotationType(annotationType, repeatableContainers, annotationFilter, new HashSet<>());
 	}
@@ -369,10 +360,7 @@ final class AnnotationTypeMappings {
 	 *                               some JVM languages support (such as Kotlin)
 	 * @return type mappings for the annotation type
 	 */
-	private static AnnotationTypeMappings forAnnotationType(Class<? extends Annotation> annotationType,
-															RepeatableContainers repeatableContainers,
-															AnnotationFilter annotationFilter,
-															Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+	private static AnnotationTypeMappings forAnnotationType(Class<? extends Annotation> annotationType, RepeatableContainers repeatableContainers, AnnotationFilter annotationFilter, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 
 		if (repeatableContainers == RepeatableContainers.standardRepeatables()) {
 			/**
@@ -387,12 +375,10 @@ final class AnnotationTypeMappings {
 			 * 第一层用了{@link AnnotationFilter}作为key,{@link Cache}为value的map
 			 * 第二层在{@link Cache}里面,用了参数中传入的annotationType为key，方法返回对象AnnotationTypeMappings为value的map
 			 */
-			return standardRepeatablesCache.computeIfAbsent(annotationFilter, key -> new Cache(repeatableContainers, key))
-					.get(annotationType, visitedAnnotationTypes);
+			return standardRepeatablesCache.computeIfAbsent(annotationFilter, key -> new Cache(repeatableContainers, key)).get(annotationType, visitedAnnotationTypes);
 		}
 		if (repeatableContainers == RepeatableContainers.none()) {
-			return noRepeatablesCache.computeIfAbsent(annotationFilter, key -> new Cache(repeatableContainers, key))
-					.get(annotationType, visitedAnnotationTypes);
+			return noRepeatablesCache.computeIfAbsent(annotationFilter, key -> new Cache(repeatableContainers, key)).get(annotationType, visitedAnnotationTypes);
 		}
 		/**
 		 * 对于其它类型的{@link RepeatableContainers},没必要缓存了,直接new返回?
@@ -462,8 +448,7 @@ final class AnnotationTypeMappings {
 		 *                               已经访问过的annotationType。防止重复加载
 		 * @return a new or existing {@link AnnotationTypeMappings} instance
 		 */
-		AnnotationTypeMappings get(Class<? extends Annotation> annotationType,
-								   Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+		AnnotationTypeMappings get(Class<? extends Annotation> annotationType, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 
 			/**
 			 * 如果存在以annotationType为key的value {@link AnnotationTypeMappings},则返回
@@ -482,8 +467,7 @@ final class AnnotationTypeMappings {
 		 * @param visitedAnnotationTypes
 		 * @return
 		 */
-		private AnnotationTypeMappings createMappings(Class<? extends Annotation> annotationType,
-													  Set<Class<? extends Annotation>> visitedAnnotationTypes) {
+		private AnnotationTypeMappings createMappings(Class<? extends Annotation> annotationType, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
 			/**
 			 * 注意:
 			 * 第一个参数是{@link Cache#repeatableContainers}
