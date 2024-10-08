@@ -185,7 +185,8 @@ abstract class AnnotationsScanner {
 	 */
 	@Nullable
 	private static <C, R> R processClassInheritedAnnotations(C context, Class<?> source,
-															 SearchStrategy searchStrategy, AnnotationsProcessor<C, R> processor) {
+															 SearchStrategy searchStrategy,
+															 AnnotationsProcessor<C, R> processor) {
 
 		try {
 			if (isWithoutHierarchy(source, searchStrategy)) {
