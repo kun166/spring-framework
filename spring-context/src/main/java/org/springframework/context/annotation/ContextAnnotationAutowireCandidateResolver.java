@@ -27,10 +27,12 @@ import java.util.Set;
 
 import org.springframework.aop.TargetSource;
 import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.beans.TypeConverter;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver;
 import org.springframework.beans.factory.config.DependencyDescriptor;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -42,12 +44,23 @@ import org.springframework.util.Assert;
  * {@link org.springframework.beans.factory.support.AutowireCandidateResolver} strategy
  * interface, providing support for qualifier annotations as well as for lazy resolution
  * driven by the {@link Lazy} annotation in the {@code context.annotation} package.
+ * {@link AnnotationConfigUtils#registerAnnotationConfigProcessors(BeanDefinitionRegistry, Object)}
+ * 方法中引入该类
  *
  * @author Juergen Hoeller
  * @since 4.0
  */
 public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotationAutowireCandidateResolver {
 
+
+	/**
+	 * {@link DefaultListableBeanFactory#resolveDependency(DependencyDescriptor, String, Set, TypeConverter)}
+	 * 中调用
+	 *
+	 * @param descriptor the descriptor for the target method parameter or field
+	 * @param beanName   the name of the bean that contains the injection point
+	 * @return
+	 */
 	@Override
 	@Nullable
 	public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, @Nullable String beanName) {
@@ -91,6 +104,7 @@ public class ContextAnnotationAutowireCandidateResolver extends QualifierAnnotat
 	 * {@link ContextAnnotationAutowireCandidateResolver#getLazyResolutionProxyIfNecessary(org.springframework.beans.factory.config.DependencyDescriptor, java.lang.String)}
 	 * 中调用
 	 * </p>
+	 * {@link Lazy}注解的实现
 	 *
 	 * @param descriptor 标注了{@link Lazy}的属性或者方法
 	 * @param beanName

@@ -24,6 +24,9 @@ import org.springframework.context.annotation.ComponentScanBeanDefinitionParser;
 /**
  * {@link org.springframework.beans.factory.xml.NamespaceHandler}
  * for the '{@code context}' namespace.
+ * <p>
+ * <context />标签对应的解析类
+ * <xmlns:context="http://www.springframework.org/schema/context" />
  *
  * @author Mark Fisher
  * @author Juergen Hoeller
@@ -40,6 +43,9 @@ public class ContextNamespaceHandler extends NamespaceHandlerSupport {
 		registerBeanDefinitionParser("property-placeholder", new PropertyPlaceholderBeanDefinitionParser());
 		registerBeanDefinitionParser("property-override", new PropertyOverrideBeanDefinitionParser());
 		registerBeanDefinitionParser("annotation-config", new AnnotationConfigBeanDefinitionParser());
+		/**
+		 * <context:component-scan base-package=""/>的解析类
+		 */
 		registerBeanDefinitionParser("component-scan", new ComponentScanBeanDefinitionParser());
 		registerBeanDefinitionParser("load-time-weaver", new LoadTimeWeaverBeanDefinitionParser());
 		registerBeanDefinitionParser("spring-configured", new SpringConfiguredBeanDefinitionParser());

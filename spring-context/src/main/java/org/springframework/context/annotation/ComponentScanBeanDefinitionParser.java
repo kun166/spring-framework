@@ -20,8 +20,10 @@ import java.lang.annotation.Annotation;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.xml.*;
 import org.springframework.context.config.ContextNamespaceHandler;
+import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
@@ -48,6 +50,8 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * <context:component-scan base-package=""/>的解析类
+ * 实现的功能和{@link ComponentScan}一样
  * Parser for the {@code <context:component-scan/>} element.
  * <p>
  * 多说一句，为啥类名取为ComponentScanBeanDefinitionParser？
@@ -110,7 +114,11 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	 */
 	@Override
 	@Nullable
-	public BeanDefinition parse(Element element, ParserContext parserContext) {
+	public BeanDefinition parse(Element element,
+								ParserContext parserContext) {
+		/**
+		 * 获取<context:component-scan base-package=""/>标签上"base-package"的值
+		 */
 		String basePackage = element.getAttribute(BASE_PACKAGE_ATTRIBUTE);
 		// 替换通配符 Environment /ɪnˈvaɪrənmənt/ 环境
 		basePackage = parserContext.getReaderContext().getEnvironment().resolvePlaceholders(basePackage);
@@ -122,9 +130,13 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 
 		// Actually scan for bean definitions and register them.
 		ClassPathBeanDefinitionScanner scanner = configureScanner(parserContext, element);
+		/**
+		 * 把配置的base-package目录下的class封装成{@link ScannedGenericBeanDefinition#ScannedGenericBeanDefinition(MetadataReader)}
+		 */
 		Set<BeanDefinitionHolder> beanDefinitions = scanner.doScan(basePackages);
 		/**
 		 * 下面这个方法非常重要
+		 * 开启了好多{@link org.springframework.beans.factory.config.BeanFactoryPostProcessor}
 		 */
 		registerComponents(parserContext.getReaderContext(), beanDefinitions, element);
 
@@ -141,7 +153,8 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	 * @param element
 	 * @return
 	 */
-	protected ClassPathBeanDefinitionScanner configureScanner(ParserContext parserContext, Element element) {
+	protected ClassPathBeanDefinitionScanner configureScanner(ParserContext parserContext,
+															  Element element) {
 		// 默认true
 		boolean useDefaultFilters = true;
 		// use-default-filters
@@ -197,7 +210,8 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	 * @param useDefaultFilters 是否使用默认的filters
 	 * @return
 	 */
-	protected ClassPathBeanDefinitionScanner createScanner(XmlReaderContext readerContext, boolean useDefaultFilters) {
+	protected ClassPathBeanDefinitionScanner createScanner(XmlReaderContext readerContext,
+														   boolean useDefaultFilters) {
 		return new ClassPathBeanDefinitionScanner(readerContext.getRegistry(), useDefaultFilters,
 				readerContext.getEnvironment(), readerContext.getResourceLoader());
 	}
@@ -205,6 +219,8 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	/**
 	 * {@link ComponentScanBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
 	 * 中调用
+	 * <p>
+	 * 该方法最重要的部分就是调用{@link AnnotationConfigUtils#registerAnnotationConfigProcessors(BeanDefinitionRegistry, Object)}
 	 *
 	 * @param readerContext
 	 * @param beanDefinitions
@@ -248,7 +264,8 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	 * @param element
 	 * @param scanner
 	 */
-	protected void parseBeanNameGenerator(Element element, ClassPathBeanDefinitionScanner scanner) {
+	protected void parseBeanNameGenerator(Element element,
+										  ClassPathBeanDefinitionScanner scanner) {
 		if (element.hasAttribute(NAME_GENERATOR_ATTRIBUTE)) {
 			BeanNameGenerator beanNameGenerator = (BeanNameGenerator) instantiateUserDefinedStrategy(
 					element.getAttribute(NAME_GENERATOR_ATTRIBUTE), BeanNameGenerator.class,
