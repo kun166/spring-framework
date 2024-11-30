@@ -328,6 +328,8 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * {@link ComponentScanBeanDefinitionParser#parse(org.w3c.dom.Element, org.springframework.beans.factory.xml.ParserContext)}
 	 * 中调用
 	 * </p>
+	 * <p>
+	 * 注意，这个方法获取的结合中的{@link BeanDefinitionHolder},均已经注册到{@link BeanDefinitionRegistry}中了
 	 *
 	 * @param basePackages the packages to check for annotated classes
 	 * @return set of beans registered if any for tooling registration purposes (never {@code null})
@@ -372,6 +374,9 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 					definitionHolder =
 							AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 					beanDefinitions.add(definitionHolder);
+					/**
+					 * 扫描到的符合条件的class，注册到{@link BeanDefinitionRegistry}
+					 */
 					registerBeanDefinition(definitionHolder, this.registry);
 				}
 			}

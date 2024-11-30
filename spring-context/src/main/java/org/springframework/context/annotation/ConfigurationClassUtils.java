@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.context.event.EventListenerFactory;
 import org.springframework.core.Conventions;
@@ -57,6 +58,9 @@ abstract class ConfigurationClassUtils {
 
 	/**
 	 * org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass
+	 * {@link ConfigurationClassUtils#checkConfigurationClassCandidate(BeanDefinition, MetadataReaderFactory)}中使用到
+	 * <p>
+	 * {@link ConfigurationClassPostProcessor#enhanceConfigurationClasses(ConfigurableListableBeanFactory)}中会判断是否有该属性，然后加强
 	 */
 	public static final String CONFIGURATION_CLASS_ATTRIBUTE =
 			Conventions.getQualifiedAttributeName(ConfigurationClassPostProcessor.class, "configurationClass");
@@ -97,6 +101,11 @@ abstract class ConfigurationClassUtils {
 		}
 
 		AnnotationMetadata metadata;
+		/**
+		 * 下面的代码，就是根据不同的{@link BeanDefinition},
+		 * 分别用不同的方式获取其{@link AnnotationMetadata}
+		 * 目的就是获取它的{@link AnnotationMetadata}
+		 */
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
@@ -115,7 +124,7 @@ abstract class ConfigurationClassUtils {
 		} else {
 			try {
 				/**
-				 * 这一步来看，xml配置的bean会非常的耗费性能
+				 * 这一步来看，xml配置的bean采用asm方式获取{@link AnnotationMetadata}
 				 */
 				MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(className);
 				metadata = metadataReader.getAnnotationMetadata();
@@ -128,6 +137,16 @@ abstract class ConfigurationClassUtils {
 			}
 		}
 
+
+		/**
+		 * 从下面的代码中可以看出,{@link Configuration}注解的{@link Configuration#proxyBeanMethods()}如果设置为false,
+		 * 就和
+		 * {@link Component}
+		 * {@link ComponentScan}
+		 * {@link Import}
+		 * {@link ImportResource}
+		 * 效果一样，不增强
+		 */
 		Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			/**

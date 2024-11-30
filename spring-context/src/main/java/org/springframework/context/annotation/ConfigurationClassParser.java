@@ -193,7 +193,8 @@ class ConfigurationClassParser {
 	 * {@link ConfigurationClassPostProcessor#processConfigBeanDefinitions(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
 	 * 中被调用
 	 *
-	 * @param configCandidates
+	 * @param configCandidates 候选者{@link BeanDefinitionHolder}集合。
+	 *                         有{@link ConfigurationClassUtils#candidateIndicators}注解，或者是方法上有{@link Bean}注解
 	 */
 	public void parse(Set<BeanDefinitionHolder> configCandidates) {
 		for (BeanDefinitionHolder holder : configCandidates) {
@@ -219,18 +220,33 @@ class ConfigurationClassParser {
 		this.deferredImportSelectorHandler.process();
 	}
 
+	/**
+	 * {@link ConfigurationClassParser#parse(java.util.Set)}中调用
+	 *
+	 * @param className
+	 * @param beanName
+	 * @throws IOException
+	 */
 	protected final void parse(@Nullable String className, String beanName) throws IOException {
 		Assert.notNull(className, "No bean class name for configuration class bean definition");
 		MetadataReader reader = this.metadataReaderFactory.getMetadataReader(className);
 		processConfigurationClass(new ConfigurationClass(reader, beanName), DEFAULT_EXCLUSION_FILTER);
 	}
 
+	/**
+	 * {@link ConfigurationClassParser#parse(java.util.Set)}中调用
+	 *
+	 * @param clazz
+	 * @param beanName
+	 * @throws IOException
+	 */
 	protected final void parse(Class<?> clazz, String beanName) throws IOException {
 		processConfigurationClass(new ConfigurationClass(clazz, beanName), DEFAULT_EXCLUSION_FILTER);
 	}
 
 	/**
 	 * {@link ConfigurationClassParser#parse(java.util.Set)}中调用
+	 * 处理{@link AnnotatedBeanDefinition}
 	 *
 	 * @param metadata
 	 * @param beanName
@@ -267,6 +283,7 @@ class ConfigurationClassParser {
 	 * 中调用
 	 * {@link ConfigurationClassParser#processImports(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.Collection, java.util.function.Predicate, boolean)}
 	 * 中调用
+	 * {@link ConfigurationClassParser#processMemberClasses(ConfigurationClass, SourceClass, Predicate)}
 	 *
 	 * @param configClass
 	 * @param filter      {@link ConfigurationClassParser#DEFAULT_EXCLUSION_FILTER}
@@ -304,6 +321,9 @@ class ConfigurationClassParser {
 			} else {
 				// Explicit bean definition found, probably replacing an import.
 				// Let's remove the old one and go with the new one.
+				/**
+				 * 不是通过{@link Import}导入的，这种bean更重要
+				 */
 				this.configurationClasses.remove(configClass);
 				this.knownSuperclasses.values().removeIf(configClass::equals);
 			}
@@ -315,6 +335,9 @@ class ConfigurationClassParser {
 		 * configClass 不变，sourceClass有可能是父类或者父类的父类，或者继续往上找
 		 * A父类是B，B是Object，没有父类
 		 * 则A进来的时候，在此会循环一次B
+		 *
+		 * 这里有一个例外,{@link ConfigurationClassParser#processMemberClasses(ConfigurationClass, SourceClass, Predicate)}
+		 * 过来的,configClass变了。
 		 */
 		SourceClass sourceClass = asSourceClass(configClass, filter);
 		do {
@@ -710,6 +733,7 @@ class ConfigurationClassParser {
 	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
 	 * 中调用
 	 * </p>
+	 * 获取参数sourceClass上的注解{@link Import},{@link Import#value()}指定的class封装成的{@link SourceClass}集合
 	 */
 	private Set<SourceClass> getImports(SourceClass sourceClass) throws IOException {
 		Set<SourceClass> imports = new LinkedHashSet<>();
@@ -764,12 +788,14 @@ class ConfigurationClassParser {
 	 *
 	 * @param configClass
 	 * @param currentSourceClass
-	 * @param importCandidates        {@link Import}的候选者
+	 * @param importCandidates        第二个参数currentSourceClass上标注{@link Import}的候选者
 	 * @param exclusionFilter
 	 * @param checkForCircularImports
 	 */
-	private void processImports(ConfigurationClass configClass, SourceClass currentSourceClass,
-								Collection<SourceClass> importCandidates, Predicate<String> exclusionFilter,
+	private void processImports(ConfigurationClass configClass,
+								SourceClass currentSourceClass,
+								Collection<SourceClass> importCandidates,
+								Predicate<String> exclusionFilter,
 								boolean checkForCircularImports) {
 
 		if (importCandidates.isEmpty()) {
@@ -783,10 +809,12 @@ class ConfigurationClassParser {
 			this.importStack.push(configClass);
 			try {
 				for (SourceClass candidate : importCandidates) {
-					// 遍历收集的所有{@link Import}注解的value
+					/**
+					 * 遍历收集的所有{@link Import}注解的value
+					 */
 					if (candidate.isAssignable(ImportSelector.class)) {
 						/**
-						 * 如果{@link Import}注解的value是{@link ImportSelector}集合
+						 * 如果{@link Import}注解的value是{@link ImportSelector}接口的实现类集合
 						 */
 						// Candidate class is an ImportSelector -> delegate to it to determine imports
 						Class<?> candidateClass = candidate.loadClass();
@@ -826,7 +854,8 @@ class ConfigurationClassParser {
 						this.importStack.registerImport(
 								currentSourceClass.getMetadata(), candidate.getMetadata().getClassName());
 						/**
-						 * 如果是普通的class[],递归外层处理
+						 * 如果是普通的class[],递归外层处理,即这是一个spring的{@link BeanDefinition},
+						 * 需要像外层一样处理各种注解
 						 */
 						processConfigurationClass(candidate.asConfigClass(configClass), exclusionFilter);
 					}
@@ -1181,6 +1210,9 @@ class ConfigurationClassParser {
 	/**
 	 * Simple wrapper that allows annotated source classes to be dealt with
 	 * in a uniform manner, regardless of how they are loaded.
+	 * <p>
+	 * 允许处理带注释的源类的简单包装器
+	 * 以统一的方式，不管它们是如何加载的。
 	 */
 	private class SourceClass implements Ordered {
 

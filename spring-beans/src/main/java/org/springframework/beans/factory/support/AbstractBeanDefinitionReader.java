@@ -18,6 +18,7 @@ package org.springframework.beans.factory.support;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -248,6 +249,9 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	/**
 	 * 在{@link AbstractBeanDefinitionReader#loadBeanDefinitions(java.lang.String...)}
 	 * 中被调用
+	 * <p>
+	 * {@link org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsFromImportedResources(Map)}
+	 * 中调用
 	 *
 	 * @param location the resource location, to be loaded with the {@code ResourceLoader}
 	 *                 (or {@code ResourcePatternResolver}) of this bean definition reader

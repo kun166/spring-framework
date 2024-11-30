@@ -169,6 +169,9 @@ class ConfigurationClassBeanDefinitionReader {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
+			/**
+			 * 注册通过注解{@link Bean}收集到的bean
+			 */
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
 
@@ -394,7 +397,8 @@ class ConfigurationClassBeanDefinitionReader {
 	 * {@link ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader.TrackedConditionEvaluator)}
 	 * 中调用
 	 *
-	 * @param importedResources
+	 * @param importedResources 这个记录的是{@link ImportResource}注解相关的信息,
+	 *                          key为Resource所在的路径,value为{@link ImportResource#reader()}
 	 */
 	private void loadBeanDefinitionsFromImportedResources(
 			Map<String, Class<? extends BeanDefinitionReader>> importedResources) {

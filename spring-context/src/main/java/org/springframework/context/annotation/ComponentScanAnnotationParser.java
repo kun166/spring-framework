@@ -142,7 +142,9 @@ class ComponentScanAnnotationParser {
 			Collections.addAll(basePackages, tokenized);
 		}
 		for (Class<?> clazz : componentScan.getClassArray("basePackageClasses")) {
-			// 即是把这个clazz所在的包，也添加到basePackages里。添加到扫描里面
+			/**
+			 * 扫描这个clazz所在的包,包括子包
+			 */
 			basePackages.add(ClassUtils.getPackageName(clazz));
 		}
 		if (basePackages.isEmpty()) {

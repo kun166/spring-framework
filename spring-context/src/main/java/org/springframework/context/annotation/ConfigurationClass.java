@@ -66,6 +66,7 @@ final class ConfigurationClass {
 	/**
 	 * 标注{@link Import}注解的原始类
 	 * 如果该{@link ConfigurationClass} 不是通过{@link Import}加载的，则为空
+	 * {@link ConfigurationClassParser.SourceClass#asConfigClass(ConfigurationClass)}
 	 */
 	private final Set<ConfigurationClass> importedBy = new LinkedHashSet<>(1);
 
@@ -80,6 +81,9 @@ final class ConfigurationClass {
 	/**
 	 * {@link ConfigurationClassParser#doProcessConfigurationClass(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.function.Predicate)}
 	 * 中调用
+	 * <p>
+	 * 这个记录的是{@link ImportResource}注解相关的信息,
+	 * key为Resource所在的路径,value为{@link ImportResource#reader()}
 	 */
 	private final Map<String, Class<? extends BeanDefinitionReader>> importedResources =
 			new LinkedHashMap<>();
@@ -87,6 +91,9 @@ final class ConfigurationClass {
 	/**
 	 * {@link ConfigurationClassParser#processImports(org.springframework.context.annotation.ConfigurationClass, org.springframework.context.annotation.ConfigurationClassParser.SourceClass, java.util.Collection, java.util.function.Predicate, boolean)}
 	 * 中调用
+	 * 保存的是{@link Import}引入的实现了{@link ImportBeanDefinitionRegistrar}接口的class
+	 * key即为上述实现了{@link ImportBeanDefinitionRegistrar}接口的class,
+	 * value即为该{@link Import}所在的那个class对应的{@link AnnotationMetadata}
 	 */
 	private final Map<ImportBeanDefinitionRegistrar, AnnotationMetadata> importBeanDefinitionRegistrars =
 			new LinkedHashMap<>();
@@ -96,6 +103,9 @@ final class ConfigurationClass {
 
 	/**
 	 * Create a new {@link ConfigurationClass} with the given name.
+	 * <p>
+	 * {@link ConfigurationClassParser#parse(String, String)}中调用
+	 * </p>
 	 *
 	 * @param metadataReader reader used to parse the underlying {@link Class}
 	 * @param beanName       must not be {@code null}
@@ -125,6 +135,9 @@ final class ConfigurationClass {
 
 	/**
 	 * Create a new {@link ConfigurationClass} with the given name.
+	 * <p>
+	 * {@link ConfigurationClassParser#parse(Class, String)}中调用
+	 * </p>
 	 *
 	 * @param clazz    the underlying {@link Class} to represent
 	 * @param beanName name of the {@code @Configuration} class bean

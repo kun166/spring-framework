@@ -16,14 +16,7 @@
 
 package org.springframework.context.annotation;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -253,6 +246,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	}
 
 	/**
+	 * <p>
+	 * {@link PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors(Collection, ConfigurableListableBeanFactory)}
+	 * 中调用
+	 * </p>
 	 * Prepare the Configuration classes for servicing bean requests at runtime
 	 * by replacing them with CGLIB-enhanced subclasses.
 	 */
@@ -279,6 +276,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 * {@link Configuration} classes.
 	 * {@link ConfigurationClassPostProcessor#postProcessBeanDefinitionRegistry(org.springframework.beans.factory.support.BeanDefinitionRegistry)}
 	 * 中调用
+	 * {@link ConfigurationClassPostProcessor#postProcessBeanFactory(ConfigurableListableBeanFactory)}中调用
 	 */
 	public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
 		// 定义候选者
@@ -356,10 +354,22 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		// 已经处理的
 		Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
 		do {
+			/**
+			 * 解析候选{@link BeanDefinition}上的那些注解,包括
+			 * {@link Conditional}
+			 * {@link PropertySource}
+			 * {@link ComponentScan}
+			 * {@link Import}
+			 * {@link ImportResource}
+			 * {@link Bean}
+			 */
 			StartupStep processConfig = this.applicationStartup.start("spring.context.config-classes.parse");
 			parser.parse(candidates);
 			parser.validate();
 
+			/**
+			 * 从这里再处理经过上述注解标注的class，封装成的所有{@link ConfigurationClass}集合
+			 */
 			Set<ConfigurationClass> configClasses = new LinkedHashSet<>(parser.getConfigurationClasses());
 			configClasses.removeAll(alreadyParsed);
 
@@ -370,26 +380,49 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 						this.importBeanNameGenerator, parser.getImportRegistry());
 			}
 			this.reader.loadBeanDefinitions(configClasses);
+			/**
+			 * 成功加载过的configClasses
+			 */
 			alreadyParsed.addAll(configClasses);
 			processConfig.tag("classCount", () -> String.valueOf(configClasses.size())).end();
-
+			/**
+			 * 清空上一批候选者
+			 */
 			candidates.clear();
 			if (registry.getBeanDefinitionCount() > candidateNames.length) {
+				/**
+				 * 说明有新的{@link BeanDefinition}加载进来
+				 *
+				 * 继续获取所有{@link BeanDefinition}集合
+				 */
 				String[] newCandidateNames = registry.getBeanDefinitionNames();
+				/**
+				 * 旧有的所有{@link BeanDefinition}
+				 */
 				Set<String> oldCandidateNames = new HashSet<>(Arrays.asList(candidateNames));
+				/**
+				 * 已经处理过的候选{@link BeanDefinition}
+				 */
 				Set<String> alreadyParsedClasses = new HashSet<>();
 				for (ConfigurationClass configurationClass : alreadyParsed) {
 					alreadyParsedClasses.add(configurationClass.getMetadata().getClassName());
 				}
 				for (String candidateName : newCandidateNames) {
 					if (!oldCandidateNames.contains(candidateName)) {
+
 						BeanDefinition bd = registry.getBeanDefinition(candidateName);
 						if (ConfigurationClassUtils.checkConfigurationClassCandidate(bd, this.metadataReaderFactory) &&
 								!alreadyParsedClasses.contains(bd.getBeanClassName())) {
+							/**
+							 * 这次处理注解新加进来的{@link BeanDefinition},且未处理其上那些注解的{@link BeanDefinition}
+							 */
 							candidates.add(new BeanDefinitionHolder(bd, candidateName));
 						}
 					}
 				}
+				/**
+				 * 用新的所有{@link BeanDefinition}数组，替代老的，用作下一轮筛选
+				 */
 				candidateNames = newCandidateNames;
 			}
 		}
