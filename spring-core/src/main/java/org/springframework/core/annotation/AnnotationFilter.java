@@ -51,6 +51,8 @@ public interface AnnotationFilter {
 	 * <p>
 	 * {@link PackagesAnnotationFilter#PackagesAnnotationFilter(java.lang.String...)}
 	 * </p>
+	 * <p>
+	 * 仅仅只匹配"java.lang"或者"org.springframework.lang",以及它们的子包
 	 */
 	AnnotationFilter PLAIN = packages("java.lang", "org.springframework.lang");
 

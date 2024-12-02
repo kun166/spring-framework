@@ -142,7 +142,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 
 
 	/**
-	 * 判断给定的注解是否存在
+	 * 根据{@link TypeMappedAnnotations#element}或者{@link TypeMappedAnnotations#annotations},
+	 * 具体就是上述两者有且只有一个不为空,
+	 * 判断上述实例上是否有,参数给定的注解annotationType
 	 *
 	 * @param annotationType the annotation type to check
 	 * @param <A>
@@ -156,6 +158,8 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		}
 		/**
 		 *{@link IsPresent}的泛型是<Object, Boolean>
+		 *通过调用的{@link TypeMappedAnnotations#scan(Object, AnnotationsProcessor)}方法来看,
+		 * {@link IsPresent}的实际上是<Class,Boolean>
 		 */
 		return Boolean.TRUE.equals(scan(annotationType, IsPresent.get(this.repeatableContainers, this.annotationFilter, false)));
 	}
@@ -326,7 +330,10 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		if (aggregates == null) {
 			/**
 			 * 如果没收集过,就去收集
-			 * 收集器采用{@link AggregatesCollector}
+			 * 收集器采用{@link AggregatesCollector},泛型<Object, List<Aggregate>>,
+			 * 通过下面的{@link TypeMappedAnnotations#scan(Object, AnnotationsProcessor)}方法,可以获知,
+			 *
+			 * {@link AggregatesCollector}的泛型<TypeMappedAnnotations, List<Aggregate>>,
 			 */
 			aggregates = scan(this, new AggregatesCollector());
 			if (aggregates == null || aggregates.isEmpty()) {
@@ -714,7 +721,9 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		@Override
 		@Nullable
 		public List<Aggregate> doWithAnnotations(Object criteria, int aggregateIndex, @Nullable Object source, Annotation[] annotations) {
-
+			/**
+			 * 从下面的逻辑看,第一个参数criteria舍弃了,可能想着留作后续用?
+			 */
 			this.aggregates.add(createAggregate(aggregateIndex, source, annotations));
 			return null;
 		}

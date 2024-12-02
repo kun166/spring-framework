@@ -657,6 +657,8 @@ abstract class AnnotationsScanner {
 	/**
 	 * {@link TypeMappedAnnotations#from(java.lang.reflect.AnnotatedElement, org.springframework.core.annotation.MergedAnnotations.SearchStrategy, org.springframework.core.annotation.RepeatableContainers, org.springframework.core.annotation.AnnotationFilter)}
 	 * 中调用
+	 * <p>
+	 * 简而言之，就是明显不会有想要的注解的。即包名以"java"开头,Java的系统类
 	 *
 	 * @param source
 	 * @param searchStrategy {@link SearchStrategy#INHERITED_ANNOTATIONS}

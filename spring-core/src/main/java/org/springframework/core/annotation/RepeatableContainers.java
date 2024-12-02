@@ -62,6 +62,11 @@ public abstract class RepeatableContainers {
 	/**
 	 * Add an additional explicit relationship between a contained and
 	 * repeatable annotation.
+	 * <p>
+	 * 任何{@link RepeatableContainers},只要调用了该方法
+	 * 就会返回一个{@link ExplicitRepeatableContainer}
+	 * <p>
+	 * 合并{@link Repeatable}容器?或者说添加?
 	 *
 	 * @param container  the container type
 	 * @param repeatable the contained repeatable type
@@ -76,7 +81,9 @@ public abstract class RepeatableContainers {
 	/**
 	 * 整个{@link RepeatableContainers}应该就这一个方法有用了。
 	 * 默认实现就是委托给父容器查找
-	 * {@link StandardRepeatableContainers}重写了该方法
+	 * {@link StandardRepeatableContainers}
+	 * 和{@link ExplicitRepeatableContainer#findRepeatedAnnotations(Annotation)}
+	 * 重写了该方法
 	 *
 	 * @param annotation
 	 * @return
@@ -173,8 +180,12 @@ public abstract class RepeatableContainers {
 		 * <p>
 		 * https://blog.csdn.net/a232884c/article/details/124827155
 		 * 获取有注解{@link Repeatable}的方法返回注解数组
+		 * <p>
+		 * 假设注解A上标注了{@link Repeatable}，且标注的时候用了@Repeatable(B),
+		 * 则通过传入一个B的实例,获取其上的所有A的实力的集合
 		 *
-		 * @param annotation
+		 * @param annotation 假设注解A上标注了{@link Repeatable}，且标注的时候用了@Repeatable(B)
+		 *                   则该 annotation即是B的一个实例
 		 * @return
 		 */
 		@Override
@@ -281,12 +292,32 @@ public abstract class RepeatableContainers {
 	 */
 	private static class ExplicitRepeatableContainer extends RepeatableContainers {
 
+		/**
+		 * 构造器中初始化,即父{@link RepeatableContainers}容器
+		 */
 		private final Class<? extends Annotation> repeatable;
 
+		/**
+		 * 构造器中初始化,即定义注解的时候,标注{@link Repeatable}传递的那个注解
+		 */
 		private final Class<? extends Annotation> container;
 
+		/**
+		 * {@link ExplicitRepeatableContainer#container}的value方法
+		 */
 		private final Method valueMethod;
 
+		/**
+		 * 构造器，这个没啥说的
+		 * 关于{@link Repeatable}可以继续重温下https://blog.csdn.net/demon7552003/article/details/85223445
+		 * 关于泛型:https://zhuanlan.zhihu.com/p/331620060
+		 *
+		 * @param parent     父{@link RepeatableContainers}
+		 * @param repeatable {@link Repeatable}标注的那个注解,也即其上标注了{@link Repeatable}的那个注解
+		 * @param container  参数repeatable注解的容器，也即定义repeatable注解的时候,
+		 *                   标注的{@link Repeatable}的构造器()里面的那个注解
+		 *                   该注解的value(),是repeatable集合
+		 */
 		ExplicitRepeatableContainer(@Nullable RepeatableContainers parent,
 									Class<? extends Annotation> repeatable,
 									@Nullable Class<? extends Annotation> container) {
@@ -303,6 +334,9 @@ public abstract class RepeatableContainers {
 				}
 				Class<?> returnType = valueMethod.getReturnType();
 				if (!returnType.isArray() || returnType.getComponentType() != repeatable) {
+					/**
+					 * 这个算是校验repeatable和container的关系
+					 */
 					throw new AnnotationConfigurationException("Container type [" +
 							container.getName() +
 							"] must declare a 'value' attribute for an array of type [" +
@@ -326,6 +360,7 @@ public abstract class RepeatableContainers {
 		 * {@link ExplicitRepeatableContainer#ExplicitRepeatableContainer(org.springframework.core.annotation.RepeatableContainers, java.lang.Class, java.lang.Class)}
 		 * 中调用
 		 * </p>
+		 * deduce:/dɪˈdjuːs/ 推断，演绎；<古>对……追本溯源
 		 *
 		 * @param repeatable
 		 * @return
@@ -340,6 +375,12 @@ public abstract class RepeatableContainers {
 			return annotation.value();
 		}
 
+		/**
+		 * 获取传入的{@link Repeatable}注解容器实例对象上的所有注解
+		 *
+		 * @param annotation
+		 * @return
+		 */
 		@Override
 		@Nullable
 		Annotation[] findRepeatedAnnotations(Annotation annotation) {

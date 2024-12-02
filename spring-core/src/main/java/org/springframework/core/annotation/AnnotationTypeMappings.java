@@ -154,7 +154,11 @@ final class AnnotationTypeMappings {
 		Annotation[] metaAnnotations = AnnotationsScanner.getDeclaredAnnotations(source.getAnnotationType(), false);
 		for (Annotation metaAnnotation : metaAnnotations) {
 			if (!isMappable(source, metaAnnotation)) {
-				// 已经加载过,不需要再加载
+				/**
+				 * 已经加载过,不需要再加载
+				 * 加载过的判断依据是source的{@link AnnotationTypeMapping#annotationType}和metaAnnotation是同一个注解,
+				 * 或者source的各级父注解的{@link AnnotationTypeMapping#annotationType}和metaAnnotation是同一个注解
+				 */
 				continue;
 			}
 			/**
@@ -199,7 +203,8 @@ final class AnnotationTypeMappings {
 	 * @param queue                  双端队列
 	 * @param source                 {@link AnnotationTypeMapping}是分层的,父{@link AnnotationTypeMapping}
 	 * @param annotationType         当前注解的class
-	 * @param ann                    此处传入的null
+	 * @param ann                    如果有值的话，就是当前注解。如果有值,其中第三个参数annotationType,就是通过
+	 *                               {@link Annotation#annotationType()}获取的
 	 * @param visitedAnnotationTypes
 	 */
 	private void addIfPossible(Deque<AnnotationTypeMapping> queue, @Nullable AnnotationTypeMapping source, Class<? extends Annotation> annotationType, @Nullable Annotation ann, Set<Class<? extends Annotation>> visitedAnnotationTypes) {
