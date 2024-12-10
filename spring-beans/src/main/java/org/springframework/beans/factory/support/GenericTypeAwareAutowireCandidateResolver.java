@@ -88,7 +88,8 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 	 * 中调用
 	 * </p>
 	 */
-	protected boolean checkGenericTypeMatch(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+	protected boolean checkGenericTypeMatch(BeanDefinitionHolder bdHolder,
+											DependencyDescriptor descriptor) {
 		ResolvableType dependencyType = descriptor.getResolvableType();
 		if (dependencyType.getType() instanceof Class) {
 			// No generic type -> we know it's a Class type-match, so no need to check again.

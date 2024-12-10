@@ -28,6 +28,7 @@ import org.springframework.beans.TypeConverter;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.support.*;
 import org.springframework.core.MethodParameter;
@@ -113,6 +114,11 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	 * <p>This implementation only supports annotations as qualifier types.
 	 * The default is Spring's {@link Qualifier} annotation which serves
 	 * as a qualifier for direct use and also as a meta annotation.
+	 * <p>
+	 * 通过搜索
+	 * {@link CustomAutowireConfigurer#postProcessBeanFactory(ConfigurableListableBeanFactory)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @param qualifierType the annotation type to register
 	 */
@@ -152,7 +158,8 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	 * @see Qualifier
 	 */
 	@Override
-	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
+	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder,
+									   DependencyDescriptor descriptor) {
 		boolean match = super.isAutowireCandidate(bdHolder, descriptor);
 		if (match) {
 			match = checkQualifiers(bdHolder, descriptor.getAnnotations());
@@ -442,7 +449,8 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	protected Object findValue(Annotation[] annotationsToSearch) {
 		if (annotationsToSearch.length > 0) {   // qualifier annotations have to be local
 			AnnotationAttributes attr = AnnotatedElementUtils.getMergedAnnotationAttributes(
-					AnnotatedElementUtils.forAnnotations(annotationsToSearch), this.valueAnnotationType);
+					AnnotatedElementUtils.forAnnotations(annotationsToSearch),
+					this.valueAnnotationType);
 			if (attr != null) {
 				return extractValue(attr);
 			}

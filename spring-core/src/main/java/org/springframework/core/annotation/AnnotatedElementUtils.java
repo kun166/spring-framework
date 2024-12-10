@@ -261,7 +261,8 @@ public abstract class AnnotatedElementUtils {
 	 */
 	@Nullable
 	public static AnnotationAttributes getMergedAnnotationAttributes(
-			AnnotatedElement element, Class<? extends Annotation> annotationType) {
+			AnnotatedElement element,
+			Class<? extends Annotation> annotationType) {
 
 		MergedAnnotation<?> mergedAnnotation = getAnnotations(element)
 				.get(annotationType, null, MergedAnnotationSelectors.firstDirectlyDeclared());
@@ -802,6 +803,15 @@ public abstract class AnnotatedElementUtils {
 				.collect(MergedAnnotationCollectors.toAnnotationSet());
 	}
 
+	/**
+	 * <p>
+	 * {@link AnnotatedElementUtils#getMergedAnnotationAttributes(AnnotatedElement, Class)}
+	 * 中调用
+	 * </p>
+	 *
+	 * @param element
+	 * @return
+	 */
 	private static MergedAnnotations getAnnotations(AnnotatedElement element) {
 		return MergedAnnotations.from(element, SearchStrategy.INHERITED_ANNOTATIONS, RepeatableContainers.none());
 	}

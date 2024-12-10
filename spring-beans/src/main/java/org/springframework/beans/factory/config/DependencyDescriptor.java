@@ -35,6 +35,7 @@ import org.springframework.beans.factory.InjectionPoint;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.support.ConstructorResolver;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.GenericTypeAwareAutowireCandidateResolver;
 import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterNameDiscoverer;
@@ -336,6 +337,10 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 	/**
 	 * Build a {@link ResolvableType} object for the wrapped parameter/field.
+	 * <p>
+	 * {@link GenericTypeAwareAutowireCandidateResolver#checkGenericTypeMatch(BeanDefinitionHolder, DependencyDescriptor)}
+	 * 中调用
+	 * </p>
 	 *
 	 * @since 4.0
 	 */

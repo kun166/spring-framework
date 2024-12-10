@@ -199,6 +199,20 @@ final class TypeMappedAnnotations implements MergedAnnotations {
 		return get(annotationType, predicate, null);
 	}
 
+	/**
+	 * <p>
+	 * {@link AnnotatedElementUtils#getMergedAnnotationAttributes(AnnotatedElement, Class)}中调用
+	 * </p>
+	 *
+	 * @param annotationType the annotation type to get
+	 * @param predicate      a predicate that must match, or {@code null} if only
+	 *                       type matching is required
+	 * @param selector       a selector used to choose the most appropriate annotation
+	 *                       within an aggregate, or {@code null} to select the
+	 *                       {@linkplain MergedAnnotationSelectors#nearest() nearest}
+	 * @param <A>
+	 * @return
+	 */
 	@Override
 	public <A extends Annotation> MergedAnnotation<A> get(Class<A> annotationType, @Nullable Predicate<? super MergedAnnotation<A>> predicate, @Nullable MergedAnnotationSelector<A> selector) {
 

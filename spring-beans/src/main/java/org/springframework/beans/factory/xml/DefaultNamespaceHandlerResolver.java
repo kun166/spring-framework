@@ -69,6 +69,7 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 	/**
 	 * Resource location to search for.
 	 * {@link DefaultNamespaceHandlerResolver#DEFAULT_HANDLER_MAPPINGS_LOCATION}
+	 * {@link DefaultNamespaceHandlerResolver#DefaultNamespaceHandlerResolver()}默认构造器中传入
 	 */
 	private final String handlerMappingsLocation;
 
