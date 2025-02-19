@@ -293,6 +293,8 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		 *{@link DefaultSingletonBeanRegistry#singletonsCurrentlyInCreation}
 		 *{@link DefaultSingletonBeanRegistry#earlySingletonObjects}
 		 *{@link DefaultSingletonBeanRegistry#singletonFactories}
+		 *
+		 * 关于三级缓存,可以参考下这篇文章:https://www.zhihu.com/question/594297402/answer/36110490693
 		 */
 		Object singletonObject = this.singletonObjects.get(beanName);
 		// isSingletonCurrentlyInCreation方法判断要获取的beanName，是否正在创建
