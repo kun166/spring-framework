@@ -50,6 +50,7 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
 import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
 import org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory;
 import org.springframework.core.SmartClassLoader;
@@ -300,6 +301,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * {@link AbstractAutowireCapableBeanFactory#applyBeanPostProcessorsBeforeInstantiation(java.lang.Class, java.lang.String)}
 	 * 中调用
 	 * </p>
+	 * 该方法实现了接口{@link InstantiationAwareBeanPostProcessor#postProcessAfterInstantiation(Object, String)}的方法
 	 *
 	 * @param beanClass the class of the bean to be instantiated
 	 * @param beanName  the name of the bean
